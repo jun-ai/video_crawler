@@ -411,8 +411,8 @@ onMounted(() => {
 
 .fav-back-btn:hover {
   background: var(--color-brand-subtle);
-  border-color: var(--color-brand);
-  color: var(--color-brand);
+  border-color: var(--color-brand-bright);
+  color: var(--color-brand-bright);
 }
 
 .fav-page-title {
@@ -434,8 +434,8 @@ onMounted(() => {
 }
 
 .fav-manage-btn:hover {
-  color: var(--color-brand);
-  border-color: var(--color-brand);
+  color: var(--color-brand-bright);
+  border-color: var(--color-brand-bright);
   background: var(--color-brand-subtle);
 }
 
@@ -467,7 +467,7 @@ onMounted(() => {
 }
 
 .fav-tab.active {
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
   font-weight: 600;
 }
 
@@ -499,7 +499,7 @@ onMounted(() => {
 
 .fav-tab.active .tab-count {
   background: var(--color-brand-subtle);
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
 }
 
 .tab-content {
@@ -550,13 +550,13 @@ onMounted(() => {
   bottom: 12px;
   width: 3px;
   border-radius: 0 3px 3px 0;
-  background: var(--color-brand);
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
   opacity: 0;
   transition: opacity 0.2s var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 .subtitle-fav-card:hover {
-  border-color: var(--color-brand);
+  border-color: var(--color-brand-bright);
   box-shadow: var(--shadow-sm);
 }
 
@@ -606,7 +606,7 @@ onMounted(() => {
 .fav-practice-count {
   font-size: 11px;
   color: #fff;
-  background: var(--color-brand);
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
   padding: 2px 10px;
   border-radius: var(--radius-full, 9999px);
   font-weight: 500;
@@ -640,8 +640,8 @@ onMounted(() => {
 
 .fav-practice-btn {
   font-size: var(--text-sm, 13px);
-  background: var(--color-brand) !important;
-  border-color: var(--color-brand) !important;
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%)) !important;
+  border-color: var(--color-brand-bright) !important;
   min-height: 44px;
 }
 
@@ -684,7 +684,7 @@ onMounted(() => {
 }
 
 .vocab-card:hover {
-  border-color: var(--color-brand);
+  border-color: var(--color-brand-bright);
   background: var(--color-brand-subtle);
 }
 
@@ -726,8 +726,8 @@ onMounted(() => {
 .vocab-speak-btn {
   width: 32px !important;
   height: 32px !important;
-  background: var(--color-brand) !important;
-  border-color: var(--color-brand) !important;
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%)) !important;
+  border-color: var(--color-brand-bright) !important;
   color: #fff !important;
   min-height: 44px !important;
   min-width: 44px !important;

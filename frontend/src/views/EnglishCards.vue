@@ -700,7 +700,7 @@ onMounted(() => {
 }
 
 .ec-search-input:focus {
-  border-color: var(--color-brand);
+  border-color: var(--color-brand-bright);
   box-shadow: 0 0 0 3px rgba(15, 76, 58, 0.1);
 }
 
@@ -741,7 +741,7 @@ onMounted(() => {
 
 .ec-sidebar-item.active {
   background: var(--color-brand-subtle);
-  border-left-color: var(--color-brand);
+  border-left-color: var(--color-brand-bright);
 }
 
 .ec-sidebar-thumb {
@@ -772,7 +772,7 @@ onMounted(() => {
 }
 
 .ec-sidebar-item.active .ec-sidebar-title {
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
 }
 
 .ec-sidebar-meta {
@@ -798,7 +798,7 @@ onMounted(() => {
   text-align: center;
   font-size: 11px;
   font-weight: 700;
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
   background: var(--color-brand-subtle);
   border-radius: 10px;
 }
@@ -862,8 +862,8 @@ onMounted(() => {
 .ec-tab.active {
   color: #fff;
   font-weight: 600;
-  background: var(--color-brand);
-  border-color: var(--color-brand);
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  border-color: var(--color-brand-bright);
 }
 
 .ec-tab .el-icon {
@@ -933,11 +933,11 @@ onMounted(() => {
 }
 
 .ec-vocab-card:hover {
-  border-color: var(--color-brand);
+  border-color: var(--color-brand-bright);
 }
 
 .ec-vocab-card.ec-card-known {
-  border-color: var(--color-brand);
+  border-color: var(--color-brand-bright);
   background: var(--color-brand-subtle);
 }
 
@@ -948,7 +948,7 @@ onMounted(() => {
 
 .ec-vocab-card.ec-card-selected {
   background: var(--color-brand-light);
-  border-color: var(--color-brand);
+  border-color: var(--color-brand-bright);
   box-shadow: 0 4px 16px rgba(15, 76, 58, 0.12);
 }
 
@@ -982,7 +982,7 @@ onMounted(() => {
 }
 
 .ec-card-phonetic:hover {
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
 }
 
 /* Speak button */
@@ -1003,7 +1003,7 @@ onMounted(() => {
 }
 
 .ec-speak-btn:hover {
-  background: var(--color-brand);
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
   color: #fff;
 }
 
@@ -1013,13 +1013,13 @@ onMounted(() => {
 }
 
 .ec-card-word:hover {
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
 }
 
 .ec-card-pos {
   font-size: 11px;
   font-weight: 600;
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
   background: var(--color-brand-subtle);
   padding: 2px 7px;
   border-radius: 4px;
@@ -1049,7 +1049,7 @@ onMounted(() => {
 /* Card Example */
 .ec-card-example {
   background: var(--color-bg-elevated);
-  border-left: 3px solid var(--color-brand);
+  border-left: 3px solid var(--color-brand-bright);
   padding: 8px 12px;
   border-radius: 0 6px 6px 0;
 }
@@ -1057,7 +1057,7 @@ onMounted(() => {
 .ec-example-label {
   font-size: 10px;
   font-weight: 700;
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 4px;
@@ -1138,7 +1138,7 @@ onMounted(() => {
 .ec-expand-label {
   font-size: 11px;
   font-weight: 700;
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
   text-transform: uppercase;
   letter-spacing: 0.3px;
   margin-bottom: 4px;
@@ -1210,7 +1210,7 @@ onMounted(() => {
   font-size: 12px;
   font-weight: 600;
   color: #fff;
-  background: var(--color-brand);
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
   border: none;
   border-radius: 14px;
   cursor: pointer;
@@ -1236,7 +1236,7 @@ onMounted(() => {
 
 .ec-card-expand-indicator .el-icon.rotated {
   transform: rotate(90deg);
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
 }
 
 /* ==================== Transitions ==================== */
@@ -1329,7 +1329,7 @@ onMounted(() => {
 
   .ec-sidebar-item.active {
     border-left-color: transparent;
-    border-bottom-color: var(--color-brand);
+    border-bottom-color: var(--color-brand-bright);
   }
 
   .ec-sidebar-thumb {
@@ -1496,12 +1496,12 @@ onMounted(() => {
 }
 
 .dark .ec-vocab-card:hover {
-  border-color: var(--color-brand);
+  border-color: var(--color-brand-bright);
 }
 
 .dark .ec-vocab-card.ec-card-known {
   background: rgba(15, 76, 58, 0.08);
-  border-color: var(--color-brand);
+  border-color: var(--color-brand-bright);
 }
 
 .dark .ec-vocab-card.ec-card-unknown {
@@ -1511,7 +1511,7 @@ onMounted(() => {
 
 .dark .ec-vocab-card.ec-card-selected {
   background: rgba(15, 76, 58, 0.12);
-  border-color: var(--color-brand);
+  border-color: var(--color-brand-bright);
 }
 
 .dark .ec-card-example {

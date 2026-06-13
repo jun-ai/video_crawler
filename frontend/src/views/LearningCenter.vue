@@ -64,7 +64,7 @@
               <!-- 区域填充 -->
               <path :d="getAreaPath()" fill="rgba(15, 76, 58, 0.08)" />
               <!-- 折线 -->
-              <path :d="getChartPath()" fill="none" stroke="var(--color-brand)" stroke-width="0.6" stroke-linejoin="round" />
+              <path :d="getChartPath()" fill="none" stroke="var(--color-brand-bright)" stroke-width="0.6" stroke-linejoin="round" />
               <!-- 数据点 -->
               <circle
                 v-for="(dot, i) in getChartDots()"
@@ -72,7 +72,7 @@
                 :cx="dot.x"
                 :cy="dot.y"
                 r="0.8"
-                fill="var(--color-brand)"
+                fill="var(--color-brand-bright)"
               />
             </svg>
             <div class="chart-labels">
@@ -484,7 +484,7 @@ onMounted(() => {
   align-items: center;
   gap: 4px;
   padding: 6px 12px;
-  background: var(--color-brand);
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
   color: #fff;
   border-radius: var(--radius-full);
   font-size: 13px;
@@ -524,7 +524,7 @@ onMounted(() => {
 }
 
 .stat-card.completed .stat-value {
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
 }
 
 .stat-card.progress .stat-value {
@@ -533,11 +533,11 @@ onMounted(() => {
 
 .stat-card.vocabulary .stat-value {
   font-size: 22px;
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
 }
 
 .stat-card.watch-time .stat-value {
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
 }
 
 .stat-card.watch-time .stat-value :deep(small),
@@ -547,7 +547,7 @@ onMounted(() => {
 }
 
 .streak-flame-icon {
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
 }
 
 .streak-hot {
@@ -580,7 +580,7 @@ onMounted(() => {
 }
 
 .streak-item .el-icon {
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
 }
 
 .streak-item strong {
@@ -635,7 +635,7 @@ onMounted(() => {
 .chart-count {
   font-size: 13px;
   font-weight: 700;
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
   min-height: 18px;
 }
 
@@ -689,8 +689,8 @@ onMounted(() => {
 .tab-item.active {
   color: #fff;
   font-weight: 600;
-  background: var(--color-brand);
-  border-color: var(--color-brand);
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  border-color: var(--color-brand-bright);
 }
 
 .tab-item .el-icon {

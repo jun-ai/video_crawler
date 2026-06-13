@@ -244,7 +244,7 @@ onMounted(() => {
 /* ── Hero 用户信息 ── */
 .profile-hero {
   margin-bottom: 24px;
-  background: var(--color-brand);
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
   border-radius: var(--radius-lg);
   padding: 28px 32px;
   color: #fff;
@@ -332,7 +332,7 @@ onMounted(() => {
 .stat-value {
   font-size: 26px;
   font-weight: 800;
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
   margin-bottom: 4px;
   letter-spacing: -0.01em;
 }

@@ -639,7 +639,7 @@ onMounted(() => {
   border-radius: 50%;
   border: 1.5px solid var(--color-border);
   background: var(--color-bg-elevated);
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
   cursor: pointer;
   flex-shrink: 0;
   transition:
@@ -651,8 +651,8 @@ onMounted(() => {
 
 .tts-btn:hover {
   background: var(--color-brand-subtle);
-  border-color: var(--color-brand);
-  color: var(--color-brand);
+  border-color: var(--color-brand-bright);
+  color: var(--color-brand-bright);
   transform: scale(1.08);
 }
 
@@ -678,7 +678,7 @@ onMounted(() => {
   padding: 12px 16px;
   background: var(--color-bg-elevated);
   border-radius: var(--radius-sm, 8px);
-  border-left: 3px solid var(--color-brand);
+  border-left: 3px solid var(--color-brand-bright);
 }
 
 /* ---- 复习进度可视化 ---- */
@@ -715,7 +715,7 @@ onMounted(() => {
 
 .mastery-ring-fill {
   fill: none;
-  stroke: var(--color-brand);
+  stroke: var(--color-brand-bright);
   stroke-width: 3;
   stroke-linecap: round;
   transition: stroke-dasharray 0.4s var(--ease-standard);
@@ -814,11 +814,11 @@ onMounted(() => {
 
 .vocab-context:hover .speak-icon-small {
   opacity: 1;
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
 }
 
 .context-label {
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
   font-weight: 600;
   white-space: nowrap;
   flex-shrink: 0;
@@ -876,7 +876,7 @@ onMounted(() => {
 
 .vocab-source:hover {
   background: var(--color-brand-subtle);
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
   border-color: var(--color-border-brand, #B8D4C5);
 }
 

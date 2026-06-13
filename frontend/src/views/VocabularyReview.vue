@@ -301,7 +301,7 @@ onMounted(() => {
 
 .stat-badge.learning {
   background: var(--color-brand-subtle);
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
 }
 
 .stat-badge.mastered {
@@ -322,7 +322,7 @@ onMounted(() => {
 }
 
 .empty-emoji-icon {
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
   margin-bottom: 8px;
 }
 
@@ -521,7 +521,7 @@ onMounted(() => {
 }
 
 .btn-recall:hover:not(:disabled) {
-  border-color: var(--color-brand);
+  border-color: var(--color-brand-bright);
   background: var(--color-brand-subtle);
 }
 
@@ -531,7 +531,7 @@ onMounted(() => {
 }
 
 .btn-perfect:hover:not(:disabled) {
-  border-color: var(--color-brand);
+  border-color: var(--color-brand-bright);
   background: var(--color-brand-subtle);
 }
 
@@ -586,7 +586,7 @@ onMounted(() => {
 }
 
 .summary-item.perfect .summary-value {
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
 }
 
 .summary-item.recall .summary-value {
@@ -610,8 +610,8 @@ onMounted(() => {
 }
 
 .summary-actions .sf-btn--primary {
-  background: var(--color-brand);
-  border-color: var(--color-brand);
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  border-color: var(--color-brand-bright);
 }
 
 /* 响应式 */

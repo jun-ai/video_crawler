@@ -626,7 +626,7 @@ watch(() => props.currentIndex, () => {
 .sf-dictation-progress__count {
   font-size: var(--text-xs, 12px);
   font-weight: 600;
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
   font-variant-numeric: tabular-nums;
 }
 
@@ -654,7 +654,7 @@ watch(() => props.currentIndex, () => {
 .sf-dictation-progress__percent {
   font-size: var(--text-xs, 12px);
   font-weight: 700;
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
   min-width: 36px;
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -677,7 +677,7 @@ watch(() => props.currentIndex, () => {
 .sf-dictation-audio__icon {
   width: 72px;
   height: 72px;
-  background: var(--color-brand);
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -759,7 +759,7 @@ watch(() => props.currentIndex, () => {
 }
 
 .sf-dictation-sentence:focus-within {
-  border-color: var(--color-brand);
+  border-color: var(--color-brand-bright);
 }
 
 .sf-dictation-text {
@@ -777,7 +777,7 @@ watch(() => props.currentIndex, () => {
 }
 
 .sf-dictation-blank:focus-within {
-  border-bottom-color: var(--color-brand);
+  border-bottom-color: var(--color-brand-bright);
 }
 
 .sf-dictation-input {
@@ -869,15 +869,15 @@ watch(() => props.currentIndex, () => {
 }
 
 .sf-dictation-choice-btn:hover {
-  border-color: var(--color-brand);
-  color: var(--color-brand);
+  border-color: var(--color-brand-bright);
+  color: var(--color-brand-bright);
   transform: translateY(-1px);
   box-shadow: var(--shadow-sm);
 }
 
 .sf-dictation-choice-btn.selected {
-  background: var(--color-brand);
-  border-color: var(--color-brand);
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  border-color: var(--color-brand-bright);
   color: #fff;
 }
 
@@ -1122,7 +1122,7 @@ watch(() => props.currentIndex, () => {
 .sf-complete-modal__stat-value {
   font-size: var(--text-2xl, 24px);
   font-weight: 800;
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
   font-variant-numeric: tabular-nums;
 }
 
