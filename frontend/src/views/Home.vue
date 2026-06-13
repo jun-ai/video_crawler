@@ -1372,10 +1372,15 @@ onMounted(async () => {
     min-height: auto;
   }
 
+  /* Phase 4: Hero CTA mobile 加大触摸目标 (>= 44px) */
+  .hero-actions :deep(.sf-btn) {
+    padding: 14px 28px;
+    min-height: 48px;
+  }
+
   .hero-title {
     font-size: 26px;
   }
-
   .hero-subtitle {
     font-size: 14px;
     margin-bottom: 20px;
