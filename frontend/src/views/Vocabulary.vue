@@ -532,8 +532,8 @@ onMounted(() => {
 
 .vocab-card:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--color-border-brand, #B8D4C5);
+  box-shadow: 0 8px 24px rgba(15, 76, 58, 0.1);
+  border-color: var(--color-brand-bright);
 }
 
 /* 状态色条 — 左侧竖线 */

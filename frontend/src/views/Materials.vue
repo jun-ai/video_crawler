@@ -913,19 +913,22 @@ onMounted(() => {
   font-size: 13px;
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .mobile-chip:hover {
-  border-color: var(--color-brand);
-  color: var(--color-brand);
+  border-color: var(--color-brand-bright);
+  color: var(--color-brand-bright);
+  background: var(--color-bg-pale);
+  transform: translateY(-1px);
 }
 
 .mobile-chip.active {
-  background: var(--color-brand-subtle);
-  border-color: var(--color-brand);
-  color: var(--color-brand);
-  font-weight: 500;
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  border-color: transparent;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(63, 138, 91, 0.3);
 }
 
 .mobile-filter-footer {

@@ -260,20 +260,21 @@ const handleLogin = async () => {
   height: 48px !important;
   font-size: 16px;
   font-weight: 600;
-  background: var(--color-brand) !important;
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%)) !important;
   border: none;
-  border-radius: var(--radius-md);
-  transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-              box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: var(--radius-full, 9999px);
+  box-shadow: 0 6px 20px rgba(63, 138, 91, 0.3);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.25s ease;
 }
 
 .login-submit:hover {
-  background: var(--color-brand-hover) !important;
-  box-shadow: 0 4px 16px rgba(15, 76, 58, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(63, 138, 91, 0.4);
 }
 
 .login-submit:active {
-  transform: scale(0.98);
+  transform: translateY(0) scale(0.98);
 }
 
 /* ── Footer ── */
