@@ -62,7 +62,7 @@
           <div class="trend-chart">
             <svg viewBox="0 0 100 50" preserveAspectRatio="none" class="chart-svg">
               <!-- 区域填充 -->
-              <path :d="getAreaPath()" fill="rgba(16, 185, 129, 0.08)" />
+              <path :d="getAreaPath()" fill="rgba(15, 76, 58, 0.08)" />
               <!-- 折线 -->
               <path :d="getChartPath()" fill="none" stroke="var(--color-brand)" stroke-width="0.6" stroke-linejoin="round" />
               <!-- 数据点 -->
@@ -528,12 +528,12 @@ onMounted(() => {
 }
 
 .stat-card.progress .stat-value {
-  color: #f59e0b;
+  color: var(--color-accent);
 }
 
 .stat-card.vocabulary .stat-value {
   font-size: 22px;
-  color: #8B5CF6;
+  color: var(--color-brand);
 }
 
 .stat-card.watch-time .stat-value {
@@ -551,11 +551,11 @@ onMounted(() => {
 }
 
 .streak-hot {
-  color: #ef4444 !important;
+  color: var(--color-accent) !important;
 }
 
 .streak-highlight {
-  color: #f59e0b;
+  color: var(--color-accent);
   font-size: 1.1em;
 }
 
