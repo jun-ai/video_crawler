@@ -381,73 +381,85 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* ================================================
+   Favorites — Phase 2 CSS-only redesign
+   Design system: ink green #0F4C3A + warm orange #E2725B
+   ================================================ */
+
 .yt-favorites {
   max-width: 900px;
   margin: 0 auto;
 }
 
-/* ====== 页面头部 ====== */
+/* ====== Page header ====== */
 .fav-page-header {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 0 20px;
+  padding: 12px 0 24px;
+  position: relative;
 }
 
 .fav-back-btn {
   color: var(--color-text-primary);
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: 1px solid var(--color-border);
-  transition: all 0.2s;
+  transition: all 0.2s var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 .fav-back-btn:hover {
-  background: var(--color-bg-elevated);
-  border-color: var(--color-text-muted);
+  background: var(--color-brand-subtle);
+  border-color: var(--color-brand);
+  color: var(--color-brand);
 }
 
 .fav-page-title {
   flex: 1;
-  font-size: 22px;
+  font-size: var(--text-2xl, 24px);
   font-weight: 700;
   color: var(--color-text-primary);
   margin: 0;
+  letter-spacing: -0.01em;
 }
 
 .fav-manage-btn {
-  font-size: 13px;
+  font-size: var(--text-sm, 14px);
   color: var(--color-text-secondary);
   border-color: var(--color-border);
-  background: var(--color-bg-base);
+  background: var(--color-bg-card);
+  min-height: 44px;
+  transition: all 0.2s var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 .fav-manage-btn:hover {
   color: var(--color-brand);
   border-color: var(--color-brand);
+  background: var(--color-brand-subtle);
 }
 
-/* ====== Tab 导航 - 绿色下划线风格 ====== */
+/* ====== Tab navigation — underline style ====== */
 .fav-tabs {
   display: flex;
   gap: 32px;
   padding: 0 4px;
-  margin-bottom: 24px;
-  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 28px;
+  border-bottom: 2px solid var(--color-border);
 }
 
 .fav-tab {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   padding: 12px 4px;
-  font-size: 15px;
+  font-size: var(--text-base, 16px);
   font-weight: 500;
   color: var(--color-text-secondary);
   cursor: pointer;
   position: relative;
-  transition: color 0.2s;
+  transition: color 0.2s var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  min-height: 44px;
 }
 
 .fav-tab:hover {
@@ -462,11 +474,11 @@ onMounted(() => {
 .fav-tab.active::after {
   content: '';
   position: absolute;
-  bottom: -1px;
+  bottom: -2px;
   left: 0;
   right: 0;
   height: 3px;
-  background: var(--color-brand);
+  background: var(--yt-brand-gradient);
   border-radius: 3px 3px 0 0;
 }
 
@@ -474,18 +486,19 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 20px;
-  height: 18px;
-  padding: 0 5px;
-  font-size: 11px;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 6px;
+  font-size: var(--text-xs, 11px);
   font-weight: 600;
-  border-radius: 9px;
+  border-radius: 10px;
   background: var(--color-bg-elevated);
   color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
 .fav-tab.active .tab-count {
-  background: rgba(63, 138, 91, 0.1);
+  background: var(--color-brand-subtle);
   color: var(--color-brand);
 }
 
@@ -493,18 +506,20 @@ onMounted(() => {
   min-height: 200px;
 }
 
-/* ====== 字幕收藏列表 ====== */
+/* ====== Subtitle favorites list ====== */
 .subtitle-fav-list {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 28px;
 }
 
 .date-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  margin-bottom: 12px;
+  font-size: var(--text-xs, 12px);
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 14px;
   padding-left: 2px;
 }
 
@@ -518,16 +533,35 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  background: var(--color-bg-base);
-  border-radius: var(--radius-lg);
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg, 16px);
   border: 1px solid var(--color-border);
-  padding: 18px 20px;
+  padding: 20px;
   gap: 16px;
-  transition: border-color 0.2s;
+  transition: all 0.2s var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  position: relative;
+}
+
+.subtitle-fav-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--color-brand);
+  opacity: 0;
+  transition: opacity 0.2s var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 .subtitle-fav-card:hover {
   border-color: var(--color-brand);
+  box-shadow: var(--shadow-sm);
+}
+
+.subtitle-fav-card:hover::before {
+  opacity: 1;
 }
 
 .fav-card-content {
@@ -536,18 +570,18 @@ onMounted(() => {
 }
 
 .fav-card-english {
-  font-size: 15px;
+  font-size: var(--text-base, 15px);
   font-weight: 600;
   color: var(--color-text-primary);
-  line-height: 1.5;
-  margin-bottom: 4px;
+  line-height: 1.6;
+  margin-bottom: 6px;
 }
 
 .fav-card-chinese {
-  font-size: 14px;
+  font-size: var(--text-sm, 14px);
   color: var(--color-text-secondary);
   line-height: 1.5;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   font-style: italic;
 }
 
@@ -555,27 +589,26 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
-.fav-card-category .el-tag {
-  background: var(--color-bg-elevated);
-  border: none;
-  color: var(--color-text-secondary);
+.fav-card-category :deep(.sf-tag) {
   font-size: 11px;
 }
 
 .fav-card-duration {
-  font-size: 12px;
+  font-size: var(--text-xs, 12px);
   color: var(--color-text-muted);
-  font-family: 'Roboto Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
 }
 
 .fav-practice-count {
   font-size: 11px;
   color: #fff;
   background: var(--color-brand);
-  padding: 1px 8px;
-  border-radius: 10px;
+  padding: 2px 10px;
+  border-radius: var(--radius-full, 9999px);
   font-weight: 500;
 }
 
@@ -590,11 +623,11 @@ onMounted(() => {
   font-size: 16px;
   color: var(--color-text-muted);
   cursor: pointer;
-  padding: 8px;
-  border-radius: 8px;
-  transition: all 0.2s;
-  min-width: 36px;
-  min-height: 36px;
+  padding: 10px;
+  border-radius: var(--radius-md, 12px);
+  transition: all 0.2s var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  min-width: 44px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -606,21 +639,22 @@ onMounted(() => {
 }
 
 .fav-practice-btn {
-  font-size: 13px;
-  background: var(--color-brand);
-  border-color: var(--color-brand);
+  font-size: var(--text-sm, 13px);
+  background: var(--color-brand) !important;
+  border-color: var(--color-brand) !important;
+  min-height: 44px;
 }
 
 .fav-practice-btn:hover {
-  background: var(--color-brand-dark);
-  border-color: var(--color-brand-dark);
+  background: var(--color-brand-hover) !important;
+  border-color: var(--color-brand-hover) !important;
 }
 
 .practice-arrow {
   margin-left: 2px;
 }
 
-/* ====== 词汇收藏列表 ====== */
+/* ====== Vocabulary list ====== */
 .vocab-list {
   display: flex;
   flex-direction: column;
@@ -628,16 +662,34 @@ onMounted(() => {
 }
 
 .vocab-card {
-  background: var(--color-bg-base);
-  border-radius: var(--radius-lg);
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg, 16px);
   border: 1px solid var(--color-border);
-  padding: 18px 20px;
-  transition: border-color 0.2s;
+  padding: 20px;
+  transition: all 0.2s var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  position: relative;
+}
+
+.vocab-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--color-accent);
+  opacity: 0;
+  transition: opacity 0.2s var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 .vocab-card:hover {
   border-color: var(--color-brand);
   background: var(--color-brand-subtle);
+}
+
+.vocab-card:hover::before {
+  opacity: 1;
 }
 
 .vocab-main {
@@ -655,46 +707,52 @@ onMounted(() => {
 .vocab-word-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
+  gap: 10px;
+  margin-bottom: 6px;
 }
 
 .vocab-word {
-  font-size: 18px;
+  font-size: var(--text-lg, 18px);
   font-weight: 700;
   color: var(--color-text-primary);
 }
 
 .vocab-phonetic {
-  font-size: 13px;
+  font-size: var(--text-sm, 13px);
   color: var(--color-text-secondary);
   font-style: italic;
 }
 
 .vocab-speak-btn {
-  width: 28px !important;
-  height: 28px !important;
-  background: var(--color-brand);
-  border-color: var(--color-brand);
-  color: #fff;
+  width: 32px !important;
+  height: 32px !important;
+  background: var(--color-brand) !important;
+  border-color: var(--color-brand) !important;
+  color: #fff !important;
+  min-height: 44px !important;
+  min-width: 44px !important;
 }
 
 .vocab-speak-btn:hover {
-  background: var(--color-brand-dark);
-  border-color: var(--color-brand-dark);
+  background: var(--color-brand-hover) !important;
+  border-color: var(--color-brand-hover) !important;
 }
 
 .vocab-translation {
-  font-size: 14px;
+  font-size: var(--text-sm, 14px);
   color: var(--color-text-secondary);
   line-height: 1.5;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .vocab-context {
-  font-size: 12px;
+  font-size: var(--text-xs, 12px);
   color: var(--color-text-muted);
   line-height: 1.5;
+  background: var(--color-bg-elevated);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm, 8px);
+  display: inline-block;
 }
 
 .context-label {
@@ -708,25 +766,43 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-/* ====== 分页 ====== */
+/* ====== Pagination ====== */
 .pagination {
   display: flex;
   justify-content: center;
-  padding: 24px 0;
+  padding: 32px 0;
 }
 
-/* ====== 响应式 ====== */
+/* ====== Dropdown items ====== */
+:deep(.dropdown-item) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  font-size: var(--text-sm, 14px);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  border-radius: var(--radius-sm, 8px);
+  transition: background 0.15s;
+  min-height: 44px;
+}
+
+:deep(.dropdown-item:hover) {
+  background: var(--color-bg-elevated);
+}
+
+/* ====== Mobile responsive ====== */
 @media (max-width: 768px) {
   .yt-favorites {
     max-width: 100%;
   }
 
   .fav-page-header {
-    padding: 4px 0 16px;
+    padding: 8px 0 16px;
   }
 
   .fav-page-title {
-    font-size: 18px;
+    font-size: var(--text-xl, 20px);
   }
 
   .fav-tabs {
@@ -734,36 +810,44 @@ onMounted(() => {
   }
 
   .fav-tab {
-    font-size: 14px;
+    font-size: var(--text-sm, 14px);
   }
 
   .subtitle-fav-card {
     flex-direction: column;
     gap: 12px;
-    padding: 14px;
+    padding: 16px;
+  }
+
+  .subtitle-fav-card::before {
+    display: none;
   }
 
   .fav-card-actions {
     width: 100%;
     justify-content: space-between;
-    padding-top: 8px;
+    padding-top: 12px;
     border-top: 1px solid var(--color-border);
   }
 
   .fav-card-english {
-    font-size: 14px;
+    font-size: var(--text-sm, 14px);
   }
 
   .fav-card-chinese {
-    font-size: 13px;
+    font-size: var(--text-xs, 13px);
   }
 
   .vocab-card {
-    padding: 12px;
+    padding: 16px;
+  }
+
+  .vocab-card::before {
+    display: none;
   }
 
   .vocab-word {
-    font-size: 16px;
+    font-size: var(--text-base, 16px);
   }
 }
 
@@ -773,11 +857,11 @@ onMounted(() => {
   }
 
   .fav-page-title {
-    font-size: 16px;
+    font-size: var(--text-lg, 18px);
   }
 
   .fav-manage-btn {
-    font-size: 12px;
+    font-size: var(--text-xs, 12px);
     padding: 6px 12px;
   }
 
@@ -786,12 +870,12 @@ onMounted(() => {
   }
 
   .fav-tab {
-    font-size: 13px;
+    font-size: var(--text-xs, 13px);
     padding: 10px 2px;
   }
 
   .subtitle-fav-card {
-    padding: 12px;
+    padding: 14px;
   }
 
   .fav-card-meta {
@@ -800,17 +884,18 @@ onMounted(() => {
   }
 
   .fav-more-icon {
-    padding: 8px;
-    min-width: 40px;
-    min-height: 40px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    padding: 10px;
+    min-width: 44px;
+    min-height: 44px;
   }
 
   .vocab-speak-btn {
-    width: 36px !important;
-    height: 36px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+
+  .vocab-context {
+    font-size: 11px;
   }
 }
 </style>
