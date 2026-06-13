@@ -2068,7 +2068,7 @@ onUnmounted(() => {
 /* ==================== 主内容区 ==================== */
 .sf-main-content {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
   gap: 16px;
   align-items: start;
   animation: fadeSlideIn 0.3s var(--sf-easing-standard);
@@ -2105,34 +2105,34 @@ onUnmounted(() => {
 /* 左栏：视频 + 跟读卡片 */
 .sf-left-column {
   display: grid;
-  grid-template-rows: 1.8fr 1fr;
+  grid-template-rows: auto auto;
   gap: 0;
-  max-height: calc(100vh - 130px);
-  overflow-y: auto;
 }
 
 .sf-left-column .sf-card-inner:first-child {
-  padding: 16px 16px 12px;
+  padding: 20px 20px 14px;
 }
 
 .sf-left-column .sf-card-inner--secondary {
-  padding: 12px 16px 16px;
+  padding: 14px 20px 20px;
   border-top: 1px solid var(--color-border);
+  background: var(--color-bg-pale, var(--sf-bg-card));
 }
 
 /* 中栏 */
 .sf-middle-column {
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - 130px);
+  max-height: calc(100vh - 110px);
   overflow: hidden;
+  position: sticky;
+  top: 70px;
 }
 
 .sf-middle-column .sf-card-inner {
   flex: 1;
   overflow-y: auto;
   padding: 0;
-  max-height: calc(100vh - 130px);
 }
 
 /* 滚动条 */

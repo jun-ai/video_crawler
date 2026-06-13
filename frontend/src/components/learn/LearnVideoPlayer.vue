@@ -112,7 +112,8 @@ defineExpose({ playerRef })
   aspect-ratio: 16 / 9;
   display: block;
   border-radius: var(--sf-radius-lg);
-  object-fit: cover;
+  object-fit: contain;
+  background: #000;
 }
 
 /* 视频封面图 */
@@ -226,9 +227,9 @@ defineExpose({ playerRef })
 }
 
 .speed-selector__btn.active {
-  background: var(--color-brand);
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
   color: #fff;
-  box-shadow: var(--sf-shadow-xs);
+  box-shadow: 0 2px 8px rgba(63, 138, 91, 0.3);
 }
 
 /* 保留 el-select 样式兼容 */
@@ -279,7 +280,7 @@ defineExpose({ playerRef })
 
 .start-learning-hint .hint-icon {
   font-size: 16px;
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
 }
 
 .start-learning-hint span {

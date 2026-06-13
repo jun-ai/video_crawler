@@ -91,17 +91,18 @@ html {
   line-height: 1.4;
 }
 .sf-btn:focus-visible {
-  outline: 2px solid var(--color-brand);
+  outline: 2px solid var(--color-brand-bright);
   outline-offset: 2px;
 }
 .sf-btn--primary {
-  background: var(--color-brand);
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
   color: #fff;
-  border-color: var(--color-brand);
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(63, 138, 91, 0.25);
 }
 .sf-btn--primary:hover {
-  background: var(--color-brand-hover);
-  border-color: var(--color-brand-hover);
+  filter: brightness(1.08);
+  box-shadow: 0 6px 20px rgba(63, 138, 91, 0.35);
 }
 .sf-btn--ghost {
   background: transparent;

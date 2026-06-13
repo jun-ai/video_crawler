@@ -211,7 +211,7 @@ const getScoreClass = (score) => {
 .sf-shadowing-card__time {
   font-size: 12px;
   font-weight: 600;
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
   background: var(--sf-brand-subtle);
   padding: 2px 10px;
   border-radius: var(--sf-radius-full);
@@ -225,10 +225,10 @@ const getScoreClass = (score) => {
 
 /* 英文区 */
 .sf-shadowing-card__en {
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 700;
   color: var(--color-text-primary);
-  line-height: 1.5;
+  line-height: 1.45;
   letter-spacing: -0.3px;
   position: relative;
   padding-bottom: 16px;
@@ -242,7 +242,7 @@ const getScoreClass = (score) => {
   left: 0;
   width: 48px;
   height: 3px;
-  background: linear-gradient(90deg, var(--color-brand), var(--color-accent));
+  background: var(--yt-cta-gradient, linear-gradient(90deg, #4DA06C, #3F8A5B));
   border-radius: 2px;
 }
 
@@ -254,7 +254,7 @@ const getScoreClass = (score) => {
   padding: 12px 14px;
   background: var(--color-bg-elevated);
   border-radius: var(--sf-radius-lg);
-  border-left: 3px solid var(--color-brand);
+  border-left: 3px solid var(--color-brand-bright);
   margin-top: 12px;
 }
 
@@ -318,14 +318,14 @@ const getScoreClass = (score) => {
   border: none;
   cursor: pointer;
   transition: all var(--sf-duration-fast) var(--sf-ease-standard);
-  background: var(--color-brand);
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
   color: #fff;
   font-family: inherit;
-  box-shadow: 0 4px 12px rgba(15, 76, 58, 0.3);
+  box-shadow: 0 4px 12px rgba(63, 138, 91, 0.3);
 }
 .sf-record-btn:hover {
-  background: var(--sf-brand-hover);
-  box-shadow: 0 6px 16px rgba(15, 76, 58, 0.4);
+  filter: brightness(1.08);
+  box-shadow: 0 6px 16px rgba(63, 138, 91, 0.4);
   transform: translateY(-1px);
 }
 .sf-record-btn.recording {
@@ -365,16 +365,16 @@ const getScoreClass = (score) => {
   font-size: 14px;
   font-weight: 600;
   border-radius: var(--sf-radius-full);
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-card);
-  color: var(--color-brand);
+  border: 1px solid var(--color-border-brand);
+  background: var(--color-bg-mint);
+  color: var(--color-brand-bright);
   cursor: pointer;
   transition: all var(--sf-duration-fast) var(--sf-ease-standard);
   font-family: inherit;
 }
 .sf-eval-btn:hover {
-  background: var(--color-brand);
-  border-color: var(--color-brand);
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  border-color: transparent;
   color: #fff;
   transform: translateY(-1px);
 }
@@ -396,12 +396,12 @@ const getScoreClass = (score) => {
   font-family: inherit;
 }
 .sf-tool-btn:hover {
-  border-color: var(--color-brand);
-  color: var(--color-brand);
+  border-color: var(--color-border-brand);
+  color: var(--color-brand-bright);
 }
 .sf-tool-btn.active {
-  background: var(--color-brand);
-  border-color: var(--color-brand);
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  border-color: transparent;
   color: #fff;
 }
 .sf-tool-btn:disabled {
@@ -419,7 +419,7 @@ const getScoreClass = (score) => {
   padding: 10px 16px;
   background: rgba(15, 76, 58, 0.08);
   border-radius: var(--sf-radius-full);
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
   font-size: 13px;
   font-weight: 500;
   border: 1px solid rgba(15, 76, 58, 0.2);
@@ -428,7 +428,7 @@ const getScoreClass = (score) => {
 .sf-recording-dot {
   width: 10px;
   height: 10px;
-  background: var(--color-brand);
+  background: var(--color-brand-bright);
   border-radius: 50%;
   animation: recordingPulse 1.2s ease infinite;
 }
@@ -506,7 +506,7 @@ const getScoreClass = (score) => {
   border-radius: var(--sf-radius-lg);
   font-size: 24px;
   font-weight: 800;
-  background: linear-gradient(135deg, var(--color-brand), var(--color-accent));
+  background: linear-gradient(135deg, var(--color-brand-bright), var(--color-accent));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

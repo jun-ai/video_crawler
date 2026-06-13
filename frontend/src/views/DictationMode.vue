@@ -665,28 +665,29 @@ watch(() => props.currentIndex, () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 40px 24px;
+  padding: 48px 32px;
   background:
-    radial-gradient(ellipse at 50% 0%, var(--color-brand-subtle) 0%, transparent 70%),
+    radial-gradient(ellipse at 50% 0%, rgba(15, 76, 58, 0.08) 0%, transparent 70%),
     var(--color-bg-elevated);
   border-radius: var(--radius-xl, 24px);
   text-align: center;
   border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
 }
 
 .sf-dictation-audio__icon {
-  width: 72px;
-  height: 72px;
+  width: 80px;
+  height: 80px;
   background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   box-shadow:
-    0 4px 12px rgba(15, 76, 58, 0.25),
-    0 1px 3px rgba(15, 76, 58, 0.15);
+    0 6px 20px rgba(63, 138, 91, 0.3),
+    0 2px 6px rgba(63, 138, 91, 0.15);
   transition: transform 0.25s var(--ease-bounce, cubic-bezier(0.34, 1.56, 0.64, 1));
 }
 

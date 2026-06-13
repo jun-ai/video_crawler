@@ -53,8 +53,101 @@
       </div>
     </div>
 
-    <!-- 主内容区域：内容 + 桌面端侧边栏 -->
+    <!-- 主内容区域：全宽视频网格 -->
     <div class="materials-body">
+      <!-- 桌面端顶部筛选条 (替代右侧栏) -->
+      <div class="filter-bar" v-if="!isMobileOrTablet">
+        <div class="filter-bar__inner">
+          <!-- 清除按钮 -->
+          <button
+            v-if="activeFilterCount > 0"
+            class="filter-bar__clear"
+            @click="clearFilters"
+          >
+            <X :size="14" /> 清除
+          </button>
+
+          <!-- 场景 pills -->
+          <div class="filter-bar__group">
+            <span class="filter-bar__label">场景</span>
+            <div class="filter-bar__pills">
+              <button
+                :class="['filter-pill', { active: !filters.category }]"
+                @click="selectCategory('')"
+              >全部</button>
+              <button
+                v-for="(label, key) in categoryLabels"
+                :key="key"
+                :class="['filter-pill', { active: filters.category === key }]"
+                @click="selectCategory(key)"
+              >{{ label }}</button>
+            </div>
+          </div>
+
+          <!-- 分隔线 -->
+          <span class="filter-bar__divider"></span>
+
+          <!-- 难度 pills -->
+          <div class="filter-bar__group">
+            <span class="filter-bar__label">难度</span>
+            <div class="filter-bar__pills">
+              <button
+                :class="['filter-pill', { active: !filters.difficulty }]"
+                @click="selectDifficulty(0)"
+              >全部</button>
+              <button
+                v-for="(label, level) in difficultyLabels"
+                :key="level"
+                :class="['filter-pill', { active: filters.difficulty === Number(level) }]"
+                @click="selectDifficulty(Number(level))"
+              >
+                <span
+                  v-if="Number(level)"
+                  class="difficulty-dot"
+                  :style="{ background: difficultyColors[level] }"
+                ></span>
+                {{ label }}
+              </button>
+            </div>
+          </div>
+
+          <!-- 分隔线 -->
+          <span class="filter-bar__divider"></span>
+
+          <!-- 时长 pills -->
+          <div class="filter-bar__group">
+            <span class="filter-bar__label">时长</span>
+            <div class="filter-bar__pills">
+              <button
+                v-for="opt in durationOptions"
+                :key="opt.value"
+                :class="['filter-pill', { active: filters.duration === opt.value }]"
+                @click="selectDuration(opt.value)"
+              >{{ opt.label }}</button>
+            </div>
+          </div>
+
+          <!-- 标签 pills (如果有的话) -->
+          <template v-if="allTags.length > 0">
+            <span class="filter-bar__divider"></span>
+            <div class="filter-bar__group">
+              <span class="filter-bar__label">标签</span>
+              <div class="filter-bar__pills">
+                <span
+                  v-for="tag in allTags.slice(0, 10)"
+                  :key="tag.id"
+                  :class="['filter-pill tag-pill', { active: selectedTagId === tag.id }]"
+                  :style="selectedTagId === tag.id
+                    ? { background: tag.color || 'var(--yt-cta-gradient)', color: '#fff', borderColor: 'transparent' }
+                    : {}"
+                  @click="toggleTag(tag.id)"
+                >{{ tag.name }}</span>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+
       <!-- 左侧内容 -->
       <div class="materials-content">
         <!-- 加载骨架 -->
@@ -112,95 +205,6 @@
           />
         </div>
       </div>
-
-      <!-- 桌面端筛选侧边栏 -->
-      <aside class="filter-sidebar" v-if="!isMobileOrTablet">
-        <div class="sidebar-inner">
-          <div class="sidebar-header">
-            <h3 class="sidebar-title">
-              <SlidersHorizontal :size="16" />
-              筛选
-            </h3>
-            <button
-              v-if="activeFilterCount > 0"
-              class="clear-btn"
-              @click="clearFilters"
-            >
-              清除全部
-            </button>
-          </div>
-
-          <!-- 类别 -->
-          <div class="filter-section">
-            <h4 class="filter-section-title">场景</h4>
-            <div class="filter-options">
-              <button
-                :class="['filter-option', { active: !filters.category }]"
-                @click="selectCategory('')"
-              >全部</button>
-              <button
-                v-for="(label, key) in categoryLabels"
-                :key="key"
-                :class="['filter-option', { active: filters.category === key }]"
-                @click="selectCategory(key)"
-              >{{ label }}</button>
-            </div>
-          </div>
-
-          <!-- 难度 -->
-          <div class="filter-section">
-            <h4 class="filter-section-title">难度</h4>
-            <div class="filter-options">
-              <button
-                :class="['filter-option', { active: !filters.difficulty }]"
-                @click="selectDifficulty(0)"
-              >全部</button>
-              <button
-                v-for="(label, level) in difficultyLabels"
-                :key="level"
-                :class="['filter-option', { active: filters.difficulty === Number(level) }]"
-                @click="selectDifficulty(Number(level))"
-              >
-                <span
-                  v-if="Number(level)"
-                  class="difficulty-dot"
-                  :style="{ background: difficultyColors[level] }"
-                ></span>
-                {{ label }}
-              </button>
-            </div>
-          </div>
-
-          <!-- 时长 -->
-          <div class="filter-section">
-            <h4 class="filter-section-title">时长</h4>
-            <div class="filter-options">
-              <button
-                v-for="opt in durationOptions"
-                :key="opt.value"
-                :class="['filter-option', { active: filters.duration === opt.value }]"
-                @click="selectDuration(opt.value)"
-              >{{ opt.label }}</button>
-            </div>
-          </div>
-
-          <!-- 标签 -->
-          <div class="filter-section" v-if="allTags.length > 0">
-            <h4 class="filter-section-title">标签</h4>
-            <div class="filter-tags">
-              <span
-                v-for="tag in allTags.slice(0, 12)"
-                :key="tag.id"
-                :class="['sidebar-tag', { active: selectedTagId === tag.id }]"
-                :style="selectedTagId === tag.id
-                  ? { background: tag.color || 'var(--color-brand-bright)', color: '#fff', borderColor: tag.color || 'var(--color-brand-bright)' }
-                  : { borderColor: tag.color || 'var(--color-border)', color: tag.color || 'var(--color-text-secondary)' }"
-                @click="toggleTag(tag.id)"
-              >{{ tag.name }}</span>
-            </div>
-          </div>
-        </div>
-      </aside>
     </div>
 
     <!-- 移动端筛选 Sheet -->
@@ -318,7 +322,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { LayoutGrid, List, SlidersHorizontal, Search } from 'lucide-vue-next'
+import { LayoutGrid, List, SlidersHorizontal, Search, X } from 'lucide-vue-next'
 import SfInput from '@/components/ui/SfInput.vue'
 import SfPagination from '@/components/ui/SfPagination.vue'
 import SfButton from '@/components/ui/SfButton.vue'
@@ -685,8 +689,8 @@ onMounted(() => {
 /* ====== 主体布局 ====== */
 .materials-body {
   display: flex;
-  gap: 24px;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .materials-content {
@@ -706,65 +710,107 @@ onMounted(() => {
   gap: 12px;
 }
 
-/* ====== 桌面端筛选侧边栏 ====== */
-.filter-sidebar {
-  width: 260px;
-  flex-shrink: 0;
-  position: sticky;
-  top: 80px;
-  max-height: calc(100vh - 100px);
-  overflow-y: auto;
-}
-
-.sidebar-inner {
+/* ====== 桌面端顶部筛选条 ====== */
+.filter-bar {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg, 16px);
-  padding: 20px;
+  padding: 14px 20px;
   box-shadow: var(--shadow-sm);
 }
 
-.sidebar-header {
+.filter-bar__inner {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--color-border);
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
-.sidebar-title {
+.filter-bar__clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: 1px solid var(--color-accent);
+  background: var(--color-accent-subtle);
+  border-radius: var(--radius-full, 9999px);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-accent);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.filter-bar__clear:hover {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.filter-bar__group {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0;
 }
 
-.clear-btn {
+.filter-bar__label {
   font-size: 12px;
-  color: var(--color-accent);
-  background: none;
-  border: none;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.filter-bar__pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: var(--radius-full, 9999px);
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: var(--radius-sm, 8px);
-  transition: background 0.15s;
+  transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  white-space: nowrap;
 }
 
-.clear-btn:hover {
-  background: var(--color-accent-subtle);
+.filter-pill:hover {
+  border-color: var(--color-border-brand);
+  color: var(--color-brand-bright);
+  background: var(--color-bg-pale);
+  transform: translateY(-1px);
 }
 
-/* 筛选区块 */
-.filter-section {
-  margin-bottom: 20px;
+.filter-pill.active {
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  border-color: transparent;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(63, 138, 91, 0.3);
 }
 
-.filter-section:last-child {
-  margin-bottom: 0;
+.tag-pill {
+  cursor: pointer;
+}
+
+.filter-bar__divider {
+  width: 1px;
+  height: 20px;
+  background: var(--color-border);
+  flex-shrink: 0;
 }
 
 .filter-section-title {
