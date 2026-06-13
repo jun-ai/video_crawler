@@ -2049,16 +2049,19 @@ onUnmounted(() => {
   border-color: var(--color-border);
 }
 .sf-btn--ghost:hover {
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
   border-color: var(--color-border-brand);
 }
 .sf-btn--primary {
-  background: var(--color-brand);
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
   color: #fff;
-  border-color: var(--color-brand);
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(63, 138, 91, 0.3);
 }
 .sf-btn--primary:hover {
-  background: var(--color-brand-hover);
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  filter: brightness(1.08);
+  box-shadow: 0 6px 20px rgba(63, 138, 91, 0.4);
 }
 .sf-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -2159,13 +2162,13 @@ onUnmounted(() => {
   width: 40px;
   height: 40px;
   border-radius: var(--sf-radius-full);
-  background: var(--color-brand);
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: var(--sf-shadow-md);
+  box-shadow: 0 6px 20px rgba(63, 138, 91, 0.4);
   z-index: 100;
   transition: all var(--sf-duration-fast) var(--sf-ease-bounce);
   border: none;
@@ -2187,13 +2190,13 @@ onUnmounted(() => {
   height: 40px;
   padding: 0 16px;
   border-radius: var(--sf-radius-full);
-  background: var(--color-brand);
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
   color: #fff;
   display: flex;
   align-items: center;
   gap: 6px;
   cursor: pointer;
-  box-shadow: var(--sf-shadow-md);
+  box-shadow: 0 6px 20px rgba(63, 138, 91, 0.4);
   z-index: 100;
   transition: all var(--sf-duration-fast) var(--sf-ease-bounce);
   border: none;
@@ -2203,8 +2206,8 @@ onUnmounted(() => {
 
 .sf-interpretation-trigger:hover {
   transform: translateY(-2px);
-  box-shadow: var(--sf-shadow-lg);
-  background: var(--sf-brand-hover);
+  box-shadow: 0 8px 28px rgba(63, 138, 91, 0.5);
+  filter: brightness(1.05);
 }
 
 .sf-interpretation-trigger .sf-badge {
@@ -2322,7 +2325,7 @@ onUnmounted(() => {
 .sf-annotation-preview__text {
   font-size: 15px;
   font-weight: 600;
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
 }
 
 .sf-annotation-type-label {
@@ -2358,9 +2361,9 @@ onUnmounted(() => {
   color: var(--color-text-primary);
 }
 .sf-annotation-type-btn.selected {
-  border-color: var(--color-brand);
-  background: var(--sf-brand-subtle);
-  color: var(--color-brand);
+  border-color: var(--color-brand-bright);
+  background: var(--color-bg-mint);
+  color: var(--color-brand-bright);
 }
 .sf-annotation-type-dot {
   font-size: 10px;
@@ -2496,7 +2499,7 @@ onUnmounted(() => {
     transform: scale(0.96);
   }
   .sf-mobile-tab.active {
-    color: var(--color-brand);
+    color: var(--color-brand-bright);
     font-weight: 600;
   }
   .sf-mobile-tab-label {
@@ -2582,7 +2585,7 @@ onUnmounted(() => {
 
 /* ==================== 解读词汇高亮（跨组件生效） ==================== */
 :deep(.interp-word-highlight) {
-  border-bottom: 2px solid var(--color-brand);
+  border-bottom: 2px solid var(--color-brand-bright);
   background: var(--sf-brand-subtle);
   border-radius: 2px;
   cursor: pointer;
@@ -2591,7 +2594,7 @@ onUnmounted(() => {
 }
 :deep(.interp-word-highlight:hover) {
   background: var(--sf-brand-light);
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
 }
 
 /* ==================== 标注高亮 ==================== */
