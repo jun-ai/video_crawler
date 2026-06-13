@@ -1,73 +1,69 @@
 <template>
-  <div class="flex min-h-[calc(100vh-64px)] items-center justify-center -m-6 p-6"
-       style="background: var(--color-bg-base)">
+  <div class="register-page">
     <!-- 装饰背景 -->
-    <div class="fixed inset-0 overflow-hidden pointer-events-none">
-      <div class="absolute -top-1/4 -left-1/4 w-[600px] h-[600px] rounded-full opacity-20"
-           style="background: radial-gradient(circle, var(--color-accent) 0%, transparent 70%)" />
-      <div class="absolute -bottom-1/4 -right-1/4 w-[500px] h-[500px] rounded-full opacity-15"
-           style="background: radial-gradient(circle, var(--color-brand) 0%, transparent 70%)" />
+    <div class="register-decor">
+      <div class="register-glow register-glow-1" />
+      <div class="register-glow register-glow-2" />
+      <div class="register-grid" />
     </div>
 
-    <div class="relative w-full max-w-[420px] rounded-2xl p-10 border"
-         style="background: var(--color-bg-card); border-color: var(--color-border); box-shadow: var(--shadow-lg)">
+    <div class="register-card">
       <!-- Header -->
-      <div class="text-center mb-8">
-        <div class="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4"
-             style="background: var(--color-brand)">
+      <div class="register-header">
+        <div class="register-logo">
           <svg viewBox="0 0 24 24" width="24" height="24" fill="white">
             <path d="M12 3L1 9l11 6 9-4.91V17h2V9M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/>
           </svg>
         </div>
-        <h1 class="text-3xl font-bold tracking-tight" style="color: var(--color-text-primary)">创建账号</h1>
-        <p class="text-base mt-2" style="color: var(--color-text-secondary)">加入我们，开始你的英语学习之旅</p>
+        <h1 class="register-title">创建账号</h1>
+        <p class="register-subtitle">加入 Fluenty，开始你的英语学习之旅</p>
       </div>
 
       <!-- Form -->
-      <form @submit.prevent="handleRegister" class="flex flex-col gap-5">
-        <div class="flex flex-col gap-1.5">
+      <form @submit.prevent="handleRegister" class="register-form">
+        <div class="register-field">
           <SfInput v-model="form.username" placeholder="用户名">
             <template #prefix>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             </template>
           </SfInput>
-          <p v-if="errors.username" class="text-xs mt-0.5" style="color: var(--color-danger)">{{ errors.username }}</p>
+          <p v-if="errors.username" class="register-error">{{ errors.username }}</p>
         </div>
 
-        <div class="flex flex-col gap-1.5">
+        <div class="register-field">
           <SfInput v-model="form.phone" placeholder="手机号" maxlength="11">
             <template #prefix>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
             </template>
           </SfInput>
-          <p v-if="errors.phone" class="text-xs mt-0.5" style="color: var(--color-danger)">{{ errors.phone }}</p>
+          <p v-if="errors.phone" class="register-error">{{ errors.phone }}</p>
         </div>
 
-        <div class="flex flex-col gap-1.5">
+        <div class="register-field">
           <SfInput v-model="form.invite_code" placeholder="激活码（必填）">
             <template #prefix>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
             </template>
           </SfInput>
-          <p v-if="errors.invite_code" class="text-xs mt-0.5" style="color: var(--color-danger)">{{ errors.invite_code }}</p>
+          <p v-if="errors.invite_code" class="register-error">{{ errors.invite_code }}</p>
         </div>
 
-        <div class="flex flex-col gap-1.5">
+        <div class="register-field">
           <SfInput v-model="form.password" type="password" placeholder="密码">
             <template #prefix>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             </template>
           </SfInput>
-          <p v-if="errors.password" class="text-xs mt-0.5" style="color: var(--color-danger)">{{ errors.password }}</p>
+          <p v-if="errors.password" class="register-error">{{ errors.password }}</p>
         </div>
 
-        <div class="flex flex-col gap-1.5">
+        <div class="register-field">
           <SfInput v-model="form.confirmPassword" type="password" placeholder="确认密码">
             <template #prefix>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             </template>
           </SfInput>
-          <p v-if="errors.confirmPassword" class="text-xs mt-0.5" style="color: var(--color-danger)">{{ errors.confirmPassword }}</p>
+          <p v-if="errors.confirmPassword" class="register-error">{{ errors.confirmPassword }}</p>
         </div>
 
         <SfButton
@@ -76,15 +72,16 @@
           block
           :loading="loading"
           html-type="submit"
+          class="register-submit"
         >
           注 册
         </SfButton>
       </form>
 
       <!-- Footer -->
-      <div class="text-center mt-6 text-sm" style="color: var(--color-text-secondary)">
+      <div class="register-footer">
         已有账号？
-        <router-link to="/login" class="font-semibold" style="color: var(--color-brand)">立即登录</router-link>
+        <router-link to="/login" class="register-link">立即登录</router-link>
       </div>
     </div>
   </div>
@@ -170,3 +167,202 @@ const handleRegister = async () => {
   }
 }
 </script>
+
+<style scoped>
+.register-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 64px);
+  margin: -24px;
+  padding: 24px;
+  position: relative;
+  background: var(--color-bg-base);
+  font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ── 装饰背景 ── */
+.register-decor {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.register-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+}
+
+.register-glow-1 {
+  top: -12%;
+  left: -8%;
+  width: 520px;
+  height: 520px;
+  opacity: 0.16;
+  background: radial-gradient(circle, var(--color-accent) 0%, transparent 70%);
+  animation: register-float 11s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.register-glow-2 {
+  bottom: -10%;
+  right: -6%;
+  width: 440px;
+  height: 440px;
+  opacity: 0.14;
+  background: radial-gradient(circle, var(--color-brand) 0%, transparent 70%);
+  animation: register-float 13s cubic-bezier(0.4, 0, 0.2, 1) infinite reverse;
+}
+
+.register-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--color-border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-border) 1px, transparent 1px);
+  background-size: 64px 64px;
+  opacity: 0.15;
+  mask-image: radial-gradient(ellipse at center, black 10%, transparent 60%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 10%, transparent 60%);
+}
+
+@keyframes register-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(14px, -10px) scale(1.02); }
+}
+
+/* ── 卡片 ── */
+.register-card {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  padding: 44px 40px 36px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  animation: register-enter 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes register-enter {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Header ── */
+.register-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.register-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 18px;
+  background: var(--color-brand);
+  box-shadow: 0 6px 20px rgba(15, 76, 58, 0.22);
+}
+
+.register-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+  margin: 0 0 6px 0;
+}
+
+.register-subtitle {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* ── Form ── */
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.register-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.register-error {
+  font-size: 12px;
+  color: var(--color-danger);
+  margin: 0;
+}
+
+/* ── 提交按钮 ── */
+.register-submit {
+  margin-top: 6px;
+  height: 48px !important;
+  font-size: 16px;
+  font-weight: 600;
+  background: var(--color-brand) !important;
+  border: none;
+  border-radius: var(--radius-md);
+  width: 100%;
+  transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.register-submit:hover {
+  background: var(--color-brand-hover) !important;
+  box-shadow: 0 4px 16px rgba(15, 76, 58, 0.2);
+}
+
+.register-submit:active {
+  transform: scale(0.98);
+}
+
+/* ── Footer ── */
+.register-footer {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.register-link {
+  font-weight: 600;
+  color: var(--color-brand);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.register-link:hover {
+  color: var(--color-accent);
+}
+
+/* ── Mobile ── */
+@media (max-width: 480px) {
+  .register-page {
+    padding: 24px 16px;
+    align-items: flex-start;
+    padding-top: 40px;
+  }
+
+  .register-card {
+    padding: 28px 20px 24px;
+    border-radius: var(--radius-md);
+    max-width: 100%;
+  }
+
+  .register-title {
+    font-size: 22px;
+  }
+
+  .register-submit {
+    width: 100%;
+  }
+}
+</style>
