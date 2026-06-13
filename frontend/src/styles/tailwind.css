@@ -41,60 +41,64 @@
 }
 
 @theme {
-  /* ========== 品牌色 ========== */
-  --color-brand: #6366f1;
-  --color-brand-hover: #4f46e5;
-  --color-brand-light: #c7d2fe;
-  --color-brand-subtle: #eef2ff;
-  --color-accent: #06b6d4;
-  --color-accent-hover: #0891b2;
+  /* ========== 品牌色 (墨绿系 — Phase 0) ========== */
+  --color-brand: #0F4C3A;            /* 主品牌色 — 墨绿 */
+  --color-brand-hover: #0A3A2D;      /* 悬停 — 更深 */
+  --color-brand-light: #B8D4C5;      /* 浅 — 文字背景 */
+  --color-brand-subtle: #E8F0EB;     /* 极浅 — 高亮背景 */
 
-  /* ========== 语义色 ========== */
-  --color-success: #10b981;
-  --color-success-light: #d1fae5;
-  --color-warning: #f59e0b;
-  --color-warning-light: #fef3c7;
-  --color-danger: #ef4444;
-  --color-danger-light: #fee2e2;
-  --color-info: #6366f1;
-  --color-info-light: #e0e7ff;
+  /* ========== 强调色 (暖橙系 — Phase 0) ========== */
+  --color-accent: #E2725B;           /* 强调 — 暖橙 */
+  --color-accent-hover: #C95E47;
+  --color-accent-light: #F5C8B5;
+  --color-accent-subtle: #FBEDE6;
+
+  /* ========== 语义色 (Phase 0 去紫调) ========== */
+  --color-success: #2D8659;           /* 深绿，配合 brand */
+  --color-success-light: #D4ECDC;
+  --color-warning: #E2725B;           /* 用 accent 表示警告 */
+  --color-warning-light: #FBEDE6;
+  --color-danger: #C73E3A;            /* 警示红，去紫调 */
+  --color-danger-light: #F8D9D7;
+  --color-info: #0F4C3A;              /* 用 brand 色，去紫 */
+  --color-info-light: #E8F0EB;
 
   /* ========== 文字色（亮色） ========== */
-  --color-text-primary: #111827;
-  --color-text-secondary: #6b7280;
-  --color-text-muted: #9ca3af;
-  --color-text-quaternary: #d1d5db;
-  --color-text-inverse: #ffffff;
+  --color-text-primary: #1A2B22;      /* 深绿黑，主文字 */
+  --color-text-secondary: #5A6B62;
+  --color-text-muted: #8B9A91;
+  --color-text-quaternary: #C5CCC8;
+  --color-text-inverse: #FFFFFF;
 
   /* ========== 背景色（亮色） ========== */
-  --color-bg-base: #f9fafb;
-  --color-bg-card: #ffffff;
-  --color-bg-elevated: #f3f4f6;
-  --color-bg-hover: #f9fafb;
+  --color-bg-base: #FAFAF7;           /* 米白底 */
+  --color-bg-card: #FFFFFF;
+  --color-bg-elevated: #F0F0EB;
+  --color-bg-hover: #F5F5F0;
 
   /* Hover 背景色 */
-  --color-hover-fill: rgba(16, 185, 129, 0.08);
+  --color-hover-fill: rgba(45, 134, 89, 0.08);
 
   /* ========== 边框色（亮色） ========== */
-  --color-border: #e5e7eb;
-  --color-border-strong: #d1d5db;
-  --color-border-brand: #c7d2fe;
+  --color-border: #E5E5DE;
+  --color-border-strong: #D0D0C8;
+  --color-border-brand: #B8D4C5;
 
-  /* ========== 难度色 ========== */
-  --color-diff-easy-bg: #dbeafe;
-  --color-diff-easy-text: #1d4ed8;
-  --color-diff-medium-bg: #ddd6fe;
-  --color-diff-medium-text: #7c3aed;
-  --color-diff-hard-bg: #fce7f3;
-  --color-diff-hard-text: #be185d;
+  /* ========== 难度色 (Phase 0 去紫) ========== */
+  --color-diff-easy-bg: #D4ECDC;
+  --color-diff-easy-text: #1F6B47;
+  --color-diff-medium-bg: #E8F0EB;
+  --color-diff-medium-text: #0F4C3A;
+  --color-diff-hard-bg: #FBEDE6;
+  --color-diff-hard-text: #C73E3A;
 
-  /* ========== 标注色 ========== */
-  --color-annotation-vocabulary: #6366f1;
-  --color-annotation-phrase: #06b6d4;
-  --color-annotation-important: #f59e0b;
+  /* ========== 标注色 (Phase 0 墨绿/暖橙/暖黄) ========== */
+  --color-annotation-vocabulary: #0F4C3A;
+  --color-annotation-phrase: #E2725B;
+  --color-annotation-important: #C4922F;
 
-  /* ========== 字体 ========== */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* ========== 字体 (Phase 0 加 Noto Sans SC) ========== */
+  --font-sans: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
 
   /* ========== 字号 ========== */
