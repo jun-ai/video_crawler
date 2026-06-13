@@ -209,42 +209,60 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* ====== Phase 3 Admin — ActivationCodesManage (CSS-only dark) ====== */
+
 .activation-codes-manage {
   padding: 0;
+  max-width: 1200px;
 }
 
+/* -- Page Header -- */
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .page-header h2 {
   margin: 0;
-  font-size: 18px;
-  color: var(--color-text-primary);
+  font-size: 22px;
+  font-weight: 700;
+  color: #E2E8E2;
+  letter-spacing: -0.3px;
 }
 
+/* -- Table Card -- */
 .list-card {
-  border-radius: var(--radius-lg, 12px);
+  background: #0D1A13;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 4px;
+  overflow: hidden;
 }
 
+/* -- Form tip -- */
 .form-tip {
   font-size: 12px;
-  color: var(--color-text-muted);
+  color: #647468;
   margin-top: 4px;
 }
 
+/* -- Code cell -- */
 .code-cell {
-  background: var(--sf-admin-sidebar-active);
-  padding: 2px 8px;
-  border-radius: 4px;
+  background: rgba(111, 163, 134, 0.12);
+  padding: 3px 10px;
+  border-radius: 6px;
   font-size: 13px;
-  font-family: 'Consolas', monospace;
-  color: var(--sf-admin-accent);
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  color: #6FA386;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(111, 163, 134, 0.15);
 }
 
+/* -- Usage info -- */
 .usage-info {
   display: flex;
   align-items: center;
@@ -253,63 +271,98 @@ onMounted(() => {
 
 .usage-text {
   font-size: 13px;
-  color: var(--color-text-secondary);
+  color: #94A398;
+  font-variant-numeric: tabular-nums;
 }
 
+/* -- Expire text -- */
 .expire-text {
   font-size: 13px;
-  color: var(--color-text-secondary);
+  color: #94A398;
 }
 
 .expire-text.permanent {
-  color: var(--color-success);
-  font-weight: 500;
+  color: #6FA386;
+  font-weight: 600;
 }
 
+/* -- Result dialog codes -- */
 .result-codes {
   display: flex;
   flex-direction: column;
   gap: 8px;
   max-height: 300px;
   overflow-y: auto;
+  padding-right: 4px;
+}
+
+.result-codes::-webkit-scrollbar {
+  width: 4px;
+}
+
+.result-codes::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.result-codes::-webkit-scrollbar-thumb {
+  background: rgba(111, 163, 134, 0.25);
+  border-radius: 2px;
 }
 
 .code-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
-  background: var(--sf-admin-sidebar-active);
-  border-radius: var(--radius-md, 8px);
+  padding: 10px 14px;
+  background: #111F17;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.code-item:hover {
+  background: rgba(111, 163, 134, 0.08);
+  border-color: rgba(111, 163, 134, 0.2);
 }
 
 .code-text {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  font-family: 'Consolas', monospace;
-  color: var(--sf-admin-accent);
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  color: #6FA386;
   letter-spacing: 1px;
 }
 
+/* -- Pagination -- */
 .pagination-wrap {
-  margin-top: 20px;
+  margin-top: 24px;
   display: flex;
   justify-content: flex-end;
+  padding: 0 16px 12px;
 }
 
+/* ====== Mobile ====== */
 @media (max-width: 768px) {
   .page-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
   }
 
-  .page-header h1 {
+  .page-header h2 {
     font-size: 20px;
+  }
+
+  .list-card {
+    border-radius: 12px;
+    padding: 2px;
   }
 
   .pagination-wrap {
     justify-content: center;
+    padding: 0 8px 8px;
   }
 }
 </style>
