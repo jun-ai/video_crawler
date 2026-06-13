@@ -234,7 +234,7 @@
           </div>
         </div>
 
-        <!-- 继续学习快捷入口 -->
+        <!-- 继续学习快捷入口 — SpeakVlog 免费试看风格（Phase 0+） -->
         <div v-if="continueLearnItems.length > 0" class="continue-learn-section">
           <div class="section-header">
             <h3 class="section-title">
@@ -253,14 +253,18 @@
               <div class="cl-card-cover">
                 <img v-if="item.cover_path" :src="item.cover_path" :alt="item.title" />
                 <div v-else class="cl-cover-placeholder">
-                  <Play :size="24" />
+                  <Play :size="32" />
                 </div>
-                <div class="cl-progress-overlay">
-                  <SfProgress :percentage="item.progress" :stroke-width="3" :show-text="false" />
+                <!-- 暗色遮罩 + 标题 -->
+                <div class="cl-cover-overlay">
+                  <div class="cl-cover-title">{{ item.title || '未命名' }}</div>
+                </div>
+                <!-- 进度条 -->
+                <div class="cl-progress-bar">
+                  <div class="cl-progress-fill" :style="{ width: item.progress + '%' }"></div>
                 </div>
               </div>
               <div class="cl-card-info">
-                <div class="cl-card-title">{{ item.title || '未命名' }}</div>
                 <div class="cl-card-meta">
                   <span class="cl-progress-text">{{ item.progress }}%</span>
                   <span class="cl-continue-btn">继续学习 →</span>
@@ -1392,7 +1396,7 @@ onMounted(async () => {
   background: var(--color-brand-subtle);
 }
 
-/* ====== 继续学习快捷入口 ====== */
+/* ====== 继续学习快捷入口 — SpeakVlog 免费试看风格（Phase 0+） ====== */
 .continue-learn-section {
   margin-bottom: 24px;
 }
@@ -1400,7 +1404,7 @@ onMounted(async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 .continue-learn-section .section-title {
   display: flex;
@@ -1413,7 +1417,7 @@ onMounted(async () => {
 }
 .continue-learn-scroll {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   overflow-x: auto;
   padding-bottom: 8px;
   scroll-snap-type: x mandatory;
@@ -1428,23 +1432,24 @@ onMounted(async () => {
 }
 .continue-learn-card {
   flex-shrink: 0;
-  width: 200px;
-  background: var(--color-bg-base);
-  border-radius: var(--radius-lg);
+  width: 320px; /* Phase 0+ 放大 */
+  background: var(--color-bg-card);
+  border-radius: 24px; /* Phase 0+ 大圆角 */
   overflow: hidden;
   cursor: pointer;
   border: 1px solid var(--color-border);
-  transition: box-shadow var(--transition-normal), border-color var(--transition-normal);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
   scroll-snap-align: start;
 }
 .continue-learn-card:hover {
-  box-shadow: var(--shadow-hover);
-  border-color: var(--color-brand);
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 16px 40px rgba(15, 76, 58, 0.15);
+  border-color: var(--color-brand-bright);
 }
 .cl-card-cover {
   position: relative;
   width: 100%;
-  height: 110px;
+  aspect-ratio: 16 / 9; /* Phase 0+ 强制 16:9 */
   background: var(--color-bg-elevated);
   overflow: hidden;
 }
@@ -1452,6 +1457,10 @@ onMounted(async () => {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.4s ease;
+}
+.continue-learn-card:hover .cl-card-cover img {
+  transform: scale(1.05);
 }
 .cl-cover-placeholder {
   width: 100%;
@@ -1460,27 +1469,46 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   color: var(--color-text-muted);
-  background: var(--color-bg-elevated);
+  background: linear-gradient(135deg, var(--color-bg-pale) 0%, var(--color-bg-mint) 100%);
 }
-.cl-progress-overlay {
+.cl-cover-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  padding: 14px 16px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);
+  pointer-events: none;
+}
+.cl-cover-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.cl-progress-bar {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 0 4px 4px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.2);
+  z-index: 2;
+}
+.cl-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4DA06C 0%, #6FE89A 100%);
+  transition: width 0.3s ease;
+  border-radius: 0 2px 2px 0;
 }
 .cl-card-info {
-  padding: 8px 10px 10px;
-}
-.cl-card-title {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--color-text-primary);
-  line-height: 1.3;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  margin-bottom: 6px;
+  padding: 10px 14px 12px;
 }
 .cl-card-meta {
   display: flex;
@@ -1489,16 +1517,18 @@ onMounted(async () => {
 }
 .cl-progress-text {
   font-size: 12px;
-  font-weight: 600;
-  color: var(--color-brand);
+  font-weight: 700;
+  color: var(--color-brand-bright);
 }
 .cl-continue-btn {
   font-size: 12px;
+  font-weight: 500;
   color: var(--color-text-muted);
-  transition: color var(--transition-fast);
+  transition: color 0.2s ease, transform 0.2s ease;
 }
 .continue-learn-card:hover .cl-continue-btn {
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
+  transform: translateX(2px);
 }
 
 /* ====== 响应式 ====== */
