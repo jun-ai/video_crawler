@@ -144,7 +144,7 @@ const goHome = () => {
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  background: linear-gradient(135deg, #0F4C3A, #1A6B4F);
   color: #fff;
   font-weight: 700;
   font-size: 16px;
@@ -188,9 +188,9 @@ const goHome = () => {
 }
 
 .sidebar-menu-item.active {
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  background: linear-gradient(135deg, #0F4C3A, #1A6B4F);
   color: #fff;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 2px 8px rgba(15, 76, 58, 0.4);
 }
 
 .sidebar-divider {
@@ -263,7 +263,7 @@ const goHome = () => {
     width: 30px;
     height: 30px;
     border-radius: 8px;
-    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    background: linear-gradient(135deg, #0F4C3A, #1A6B4F);
     color: #fff;
     font-weight: 700;
     font-size: 14px;
@@ -314,7 +314,7 @@ const goHome = () => {
   }
 
   .mobile-nav-item.active {
-    color: #2563eb;
+    color: #0F4C3A;
   }
 
   .admin-main {

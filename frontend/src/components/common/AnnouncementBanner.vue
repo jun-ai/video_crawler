@@ -91,9 +91,9 @@ onMounted(() => {
 }
 
 .banner-info {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(99, 102, 241, 0.06));
-  border: 1px solid rgba(59, 130, 246, 0.15);
-  color: #2563eb;
+  background: linear-gradient(135deg, rgba(15, 76, 58, 0.08), rgba(45, 134, 89, 0.06));
+  border: 1px solid rgba(15, 76, 58, 0.15);
+  color: #0F4C3A;
 }
 
 .banner-warning {
