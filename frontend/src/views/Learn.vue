@@ -35,45 +35,18 @@
 
     <!-- 主内容（加载完成后） -->
     <template v-else>
-      <!-- 页面头部 -->
-      <div class="sf-page-header">
-        <div class="sf-header-top">
-          <div class="sf-header-left">
-            <button class="sf-icon-btn" @click="$router.back()">
-              <ArrowLeft :size="20" />
-            </button>
-            <h1 class="sf-title">{{ material?.title }}</h1>
-          </div>
-          <div class="sf-header-right">
-<SfTooltip :content="isFavorited ? '取消收藏' : '收藏'" placement="bottom">
-              <button
-                :class="['sf-btn', isFavorited ? 'sf-btn--active' : 'sf-btn--ghost', 'sf-btn--sm']"
-                @click="toggleFavorite"
-                :disabled="favoriteLoading"
-              >
-                <BookmarkCheck v-if="isFavorited" :size="16" /><Bookmark v-else :size="16" />
-                {{ isFavorited ? '已收藏' : '收藏' }}
-              </button>
-            </SfTooltip>
-          </div>
-        </div>
-        <!-- 学习进度条 + 统计 -->
-        <div class="sf-header-meta">
-          <div class="sf-progress-bar">
-            <div class="sf-progress-bar__fill" :style="{ width: learningProgress + '%' }"></div>
-          </div>
-          <div class="sf-header-stats">
-            <span class="sf-stat-badge">
-              <FileText />
-              已学习 {{ currentIndex >= 0 ? currentIndex + 1 : 0 }} / {{ subtitles.length }} 句
-            </span>
-            <span class="sf-stat-badge" v-if="bookmarkedSubtitleIds.size > 0">
-              <Star />
-              {{ bookmarkedSubtitleIds.size }} 个重点
-            </span>
-          </div>
-        </div>
-      </div>
+      <!-- 页面头部 — Phase 1B Task 4: 提取到独立组件 -->
+            <LearnHeader
+              :title="material?.title"
+              :is-favorited="isFavorited"
+              :favorite-loading="favoriteLoading"
+              :learning-progress="learningProgress"
+              :current-index="currentIndex"
+              :total-subtitles="subtitles.length"
+              :bookmarked-count="bookmarkedSubtitleIds.size"
+              @back="$router.back()"
+              @toggle-favorite="toggleFavorite"
+            />
 
       <!-- 学习模式切换 — Phase 1B Task 3: 提取到独立组件 -->
       <LearnModeSwitcher v-model="learningMode" />
@@ -374,6 +347,7 @@ import LearnVideoPlayer from '@/components/learn/LearnVideoPlayer.vue'
 import LearnShadowingCard from '@/components/learn/LearnShadowingCard.vue'
 import LearnSubtitleList from '@/components/learn/LearnSubtitleList.vue'
 import LearnModeSwitcher from '@/components/learn/LearnModeSwitcher.vue'
+import LearnHeader from '@/components/learn/LearnHeader.vue'
 
 const route = useRoute()
 const router = useRouter()
