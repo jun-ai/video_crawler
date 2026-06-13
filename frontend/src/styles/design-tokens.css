@@ -1,0 +1,208 @@
+/**
+ * SpeakFlow Design Tokens — 兼容层
+ * 将旧 --sf-* / --yt-* 变量映射到 Tailwind @theme 变量
+ * Phase 0-5 期间保持兼容，Phase 6 删除此文件
+ */
+
+:root {
+  /* ========== 品牌色映射 ========== */
+  --sf-brand: var(--color-brand);
+  --sf-brand-hover: var(--color-brand-hover);
+  --sf-brand-light: var(--color-brand-light);
+  --sf-brand-subtle: var(--color-brand-subtle);
+  --sf-accent: var(--color-accent);
+  --sf-accent-hover: var(--color-accent-hover);
+
+  /* ========== 文字色映射 ========== */
+  --sf-text-primary: var(--color-text-primary);
+  --sf-text-secondary: var(--color-text-secondary);
+  --sf-text-muted: var(--color-text-muted);
+
+  /* ========== 背景色映射 ========== */
+  --sf-bg: var(--color-bg-base);
+  --sf-bg-card: var(--color-bg-card);
+  --sf-bg-elevated: var(--color-bg-elevated);
+
+  /* ========== 边框映射 ========== */
+  --sf-border: var(--color-border);
+  --sf-border-strong: var(--color-border-strong);
+
+  /* ========== 状态色映射 ========== */
+  --sf-success: var(--color-success);
+  --sf-warning: var(--color-warning);
+  --sf-danger: var(--color-danger);
+  --sf-info: var(--color-info);
+
+  /* ========== 标注色映射 ========== */
+  --sf-annotation-vocabulary: var(--color-annotation-vocabulary);
+  --sf-annotation-phrase: var(--color-annotation-phrase);
+  --sf-annotation-important: var(--color-annotation-important);
+
+  /* ========== 难度色映射 ========== */
+  --sf-difficulty-1-bg: var(--color-diff-easy-bg);
+  --sf-difficulty-1-text: var(--color-diff-easy-text);
+  --sf-difficulty-2-bg: var(--color-diff-medium-bg);
+  --sf-difficulty-2-text: #4338ca;
+  --sf-difficulty-3-bg: var(--color-diff-medium-bg);
+  --sf-difficulty-3-text: var(--color-diff-medium-text);
+  --sf-difficulty-4-bg: var(--color-diff-hard-bg);
+  --sf-difficulty-4-text: var(--color-diff-hard-text);
+  --sf-difficulty-5-bg: rgba(109, 40, 217, 0.15);
+  --sf-difficulty-5-text: #6d28d9;
+
+  /* ========== 标签色映射 ========== */
+  --sf-tag-blue: var(--color-brand);
+  --sf-tag-green: var(--color-success);
+  --sf-tag-violet: #8b5cf6;
+  --sf-tag-cyan: var(--color-accent);
+  --sf-tag-amber: var(--color-warning);
+  --sf-tag-red: var(--color-danger);
+  --sf-tag-pink: #ec4899;
+  --sf-tag-orange: #f97316;
+  --sf-tag-teal: #14b8a6;
+
+  /* ========== 字体映射 ========== */
+  --sf-font-family: var(--font-sans);
+  --sf-font-mono: var(--font-mono);
+
+  /* 字号 — 保留旧 scale 但映射到新值 */
+  --sf-text-xs: 11px;
+  --sf-text-sm: var(--text-xs);
+  --sf-text-base: var(--text-sm);
+  --sf-text-md: var(--text-base);
+  --sf-text-lg: var(--text-lg);
+  --sf-text-xl: var(--text-xl);
+  --sf-text-2xl: var(--text-2xl);
+  --sf-text-3xl: var(--text-2xl);
+  --sf-text-4xl: var(--text-3xl);
+  --sf-text-5xl: var(--text-4xl);
+
+  /* 字重 */
+  --sf-weight-normal: 400;
+  --sf-weight-medium: 500;
+  --sf-weight-semibold: 600;
+  --sf-weight-bold: 700;
+
+  /* 行高 */
+  --sf-leading-tight: 1.25;
+  --sf-leading-normal: 1.5;
+  --sf-leading-relaxed: 1.6;
+  --sf-leading-loose: 2;
+
+  /* ========== 间距映射 ========== */
+  --sf-space-0: 0;
+  --sf-space-1: 4px;
+  --sf-space-2: 8px;
+  --sf-space-3: 12px;
+  --sf-space-4: 16px;
+  --sf-space-5: 20px;
+  --sf-space-6: 24px;
+  --sf-space-8: 32px;
+  --sf-space-10: 40px;
+  --sf-space-12: 48px;
+  --sf-space-16: 64px;
+
+  /* ========== 圆角映射 ========== */
+  --sf-radius-sm: var(--radius-sm);
+  --sf-radius-md: var(--radius-md);
+  --sf-radius-lg: var(--radius-lg);
+  --sf-radius-xl: var(--radius-xl);
+  --sf-radius-full: var(--radius-full);
+
+  /* ========== 阴影映射 ========== */
+  --sf-shadow-xs: var(--shadow-sm);
+  --sf-shadow-sm: var(--shadow-sm);
+  --sf-shadow-md: var(--shadow-md);
+  --sf-shadow-lg: var(--shadow-lg);
+  --sf-shadow-xl: var(--shadow-lg);
+
+  /* ========== 动画映射 ========== */
+  --sf-ease-standard: var(--ease-standard);
+  --sf-ease-bounce: var(--ease-bounce);
+  --sf-duration-fast: var(--duration-fast);
+  --sf-duration-normal: var(--duration-normal);
+  --sf-duration-slow: var(--duration-slow);
+
+  /* ========== z-index 映射 ========== */
+  --sf-z-dropdown: var(--z-dropdown);
+  --sf-z-sticky: var(--z-sticky);
+  --sf-z-fixed: var(--z-fixed);
+  --sf-z-modal-backdrop: var(--z-modal-backdrop);
+  --sf-z-modal: var(--z-modal);
+  --sf-z-popover: var(--z-popover);
+  --sf-z-tooltip: var(--z-tooltip);
+
+  /* ========== 断点映射 ========== */
+  --sf-breakpoint-xs: 480px;
+  --sf-breakpoint-sm: 576px;
+  --sf-breakpoint-md: 768px;
+  --sf-breakpoint-lg: 1024px;
+  --sf-breakpoint-xl: 1280px;
+  --sf-breakpoint-2xl: 1536px;
+
+  /* ========== 旧 yt-* token 兼容 ========== */
+  --yt-brand: var(--sf-brand);
+  --yt-brand-hover: var(--sf-brand-hover);
+  --yt-brand-light: var(--sf-brand-light);
+  --yt-brand-softer: var(--sf-brand-subtle);
+  --yt-primary: var(--sf-brand);
+  --yt-text-primary: var(--sf-text-primary);
+  --yt-text-secondary: var(--sf-text-secondary);
+  --yt-text-tertiary: var(--sf-text-muted);
+  --yt-bg: var(--sf-bg);
+  --yt-bg-secondary: var(--sf-bg-card);
+  --yt-bg-tertiary: var(--sf-bg-elevated);
+  --yt-border: var(--sf-border);
+  --yt-highlight-bg: var(--sf-brand-subtle);
+  --yt-highlight-border: rgba(99, 102, 241, 0.4);
+  --yt-study-divider: var(--sf-border);
+  --color-success: var(--sf-success);
+  --color-warning: var(--sf-warning);
+  --color-danger: var(--sf-danger);
+  --color-info: var(--sf-info);
+  --annotation-vocabulary: var(--sf-annotation-vocabulary);
+  --annotation-phrase: var(--sf-annotation-phrase);
+  --annotation-important: var(--sf-annotation-important);
+  --shadow-card: var(--sf-shadow-sm);
+  --shadow-hover: var(--sf-shadow-md);
+  --shadow-modal: var(--sf-shadow-lg);
+  --shadow-sm: var(--sf-shadow-xs);
+  --shadow-lg: var(--sf-shadow-lg);
+  --shadow-xl: var(--sf-shadow-lg);
+  --transition-fast: var(--sf-duration-fast);
+  --transition-normal: var(--sf-duration-normal);
+  --transition-slow: var(--sf-duration-slow);
+  --yt-brand-gradient: linear-gradient(135deg, #6366f1 0%, #818cf8 50%, #06b6d4 100%);
+  --yt-bg-gradient: linear-gradient(180deg, #f8faff 0%, #f9fafb 25%, #f9fafb 100%);
+  --glass-bg: rgba(255, 255, 255, 0.9);
+  --glass-blur: blur(12px);
+  --glass-border: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+/* ========== 暗色主题兼容 ========== */
+.dark {
+  --yt-text-primary: var(--color-text-primary);
+  --yt-text-secondary: var(--color-text-secondary);
+  --yt-text-tertiary: var(--color-text-muted);
+  --yt-bg: var(--color-bg-base);
+  --yt-bg-secondary: var(--color-bg-card);
+  --yt-bg-tertiary: var(--color-bg-elevated);
+  --yt-border: var(--color-border);
+  --yt-highlight-bg: rgba(99, 102, 241, 0.15);
+  --yt-highlight-border: rgba(99, 102, 241, 0.4);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-tertiary: var(--color-text-muted);
+  --color-text-placeholder: #475569;
+  --color-border: var(--color-border);
+  --color-border-light: var(--color-border-strong);
+  --color-bg: var(--color-bg-base);
+  --color-bg-secondary: var(--color-bg-card);
+  --color-bg-tertiary: var(--color-bg-elevated);
+  --color-bg-hover: var(--color-bg-elevated);
+  --color-bg-mask: rgba(0, 0, 0, 0.7);
+  --yt-brand-gradient: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
+  --yt-bg-gradient: linear-gradient(180deg, #0d1117 0%, #0f172a 15%, #0f172a 100%);
+  --glass-bg: rgba(30, 41, 59, 0.9);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+}

@@ -1,0 +1,206 @@
+/* 响应式断点变量 */
+:root {
+  /* 断点 */
+  --breakpoint-xs: 480px;   /* 小屏手机 */
+  --breakpoint-sm: 576px;   /* 普通手机 */
+  --breakpoint-md: 768px;   /* 平板/大屏手机 */
+  --breakpoint-lg: 1024px;  /* 小屏笔记本 */
+  --breakpoint-xl: 1200px;  /* 桌面 */
+
+  /* 移动端通用间距 */
+  --mobile-padding: 12px;
+  --mobile-gap: 12px;
+
+  /* 移动端字体大小 */
+  --mobile-font-xs: 12px;
+  --mobile-font-sm: 14px;
+  --mobile-font-base: 16px;
+  --mobile-font-lg: 18px;
+  --mobile-font-xl: 20px;
+
+  /* 触摸目标最小尺寸 */
+  --touch-target-min: 44px;
+}
+
+/* 移动端通用样式 */
+@media (max-width: 768px) {
+  /* 隐藏PC端专用元素 */
+  .pc-only {
+    display: none !important;
+  }
+
+  /* 移动端专用元素显示 */
+  .mobile-only {
+    display: block !important;
+  }
+
+  /* 移动端flex布局 */
+  .mobile-flex {
+    display: flex !important;
+  }
+
+  /* 移动端容器 */
+  .mobile-container {
+    padding: 0 var(--mobile-padding);
+  }
+
+  /* 移动端卡片 */
+  .mobile-card {
+    border-radius: 8px;
+    padding: var(--mobile-padding);
+    margin-bottom: var(--mobile-gap);
+  }
+
+  /* 移动端按钮 */
+  .mobile-btn {
+    min-height: var(--touch-target-min);
+    min-width: var(--touch-target-min);
+  }
+
+  /* 移动端输入框 */
+  .mobile-input {
+    font-size: var(--mobile-font-base);
+  }
+
+  /* 移动端列表项 */
+  .mobile-list-item {
+    padding: var(--mobile-padding);
+    border-bottom: 1px solid #eee;
+  }
+
+  /* 移动端网格 - 单列 */
+  .mobile-grid-1 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--mobile-gap);
+  }
+
+  /* 移动端网格 - 双列 */
+  .mobile-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--mobile-gap);
+  }
+
+  /* 移动端全宽 */
+  .mobile-full-width {
+    width: 100%;
+  }
+
+  /* 移动端垂直堆叠 */
+  .mobile-stack {
+    flex-direction: column;
+  }
+
+  /* 移动端文字居中 */
+  .mobile-text-center {
+    text-align: center;
+  }
+
+  /* 移动端无内外边距 */
+  .mobile-no-spacing {
+    padding: 0;
+    margin: 0;
+  }
+}
+
+/* PC端样式 */
+@media (min-width: 769px) {
+  /* 隐藏移动端专用元素 */
+  .mobile-only {
+    display: none !important;
+  }
+
+  /* PC端显示 */
+  .pc-only {
+    display: block !important;
+  }
+}
+
+/* 平板端适配 (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .tablet-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tablet-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* 小屏手机 (< 480px) */
+@media (max-width: 480px) {
+  :root {
+    --mobile-padding: 8px;
+    --mobile-gap: 8px;
+  }
+
+  .xs-stack {
+    flex-direction: column;
+  }
+
+  .xs-full-width {
+    width: 100%;
+  }
+
+  .xs-text-sm {
+    font-size: var(--mobile-font-sm);
+  }
+}
+
+/* 触摸优化 */
+@media (hover: none) and (pointer: coarse) {
+  /* 增大触摸目标 */
+  button,
+  a,
+  .clickable {
+    min-height: var(--touch-target-min);
+    min-width: var(--touch-target-min);
+  }
+
+  /* 移除hover效果 */
+  .no-hover:hover {
+    background: inherit;
+    transform: none;
+  }
+}
+
+/* 安全区域适配 (刘海屏等) */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* 禁止文本选择 (移动端交互元素) */
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* 禁止触摸高亮 */
+.no-tap-highlight {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 滚动优化 */
+.smooth-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* 隐藏滚动条但保持滚动功能 */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}

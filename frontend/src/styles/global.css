@@ -1,0 +1,242 @@
+/**
+ * SpeakFlow 全局样式
+ * 基础重置、通用组件类、动画、骨架屏、loading 指令
+ */
+
+/* ============================================
+   1. 基础重置
+   ============================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+/* ============================================
+   2. 通用组件样式类
+   ============================================ */
+
+/* 页面标题 */
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0 0 24px;
+  letter-spacing: -0.3px;
+}
+
+/* 区块标题 */
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title svg {
+  color: var(--color-brand);
+}
+
+/* 通用卡片容器 */
+.card-container {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s;
+}
+.card-container:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* 品牌文字 */
+.brand-text {
+  color: var(--color-brand);
+}
+
+/* 分页容器 */
+.pagination-center {
+  display: flex;
+  justify-content: center;
+  padding: 28px 0;
+}
+
+/* ============================================
+   3. SpeakFlow 按钮（CSS 类版本，用于 Learn.vue 等页面）
+   ============================================ */
+.sf-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+.sf-btn:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+.sf-btn--primary {
+  background: var(--color-brand);
+  color: #fff;
+  border-color: var(--color-brand);
+}
+.sf-btn--primary:hover {
+  background: var(--color-brand-hover);
+  border-color: var(--color-brand-hover);
+}
+.sf-btn--ghost {
+  background: transparent;
+  border-color: var(--color-border);
+  color: var(--color-text-secondary);
+}
+.sf-btn--ghost:hover {
+  background: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-strong);
+}
+.sf-btn--sm {
+  padding: 5px 12px;
+  font-size: 12px;
+}
+.sf-btn--icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: var(--radius-md);
+}
+.sf-btn--active {
+  background: var(--color-warning);
+  border-color: var(--color-warning);
+  color: #fff;
+}
+.sf-btn--danger {
+  background: var(--color-danger);
+  color: #fff;
+  border-color: var(--color-danger);
+}
+.sf-btn--danger:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+.sf-btn--outline {
+  background: transparent;
+  border-color: var(--color-border);
+  color: var(--color-text-primary);
+}
+.sf-btn--outline:hover {
+  background: var(--color-bg-elevated);
+  border-color: var(--color-border-strong);
+}
+
+/* 图标按钮 */
+.sf-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+.sf-icon-btn:hover {
+  background: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+}
+
+/* ============================================
+   4. SpeakFlow 过渡动画
+   ============================================ */
+.sf-fade-enter-active,
+.sf-fade-leave-active {
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.sf-fade-enter-from,
+.sf-fade-leave-to {
+  opacity: 0;
+}
+
+.sf-slide-enter-active {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.sf-slide-leave-active {
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.sf-slide-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.sf-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+/* ============================================
+   5. 骨架屏
+   ============================================ */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg,
+    var(--color-bg-card) 25%,
+    var(--color-bg-elevated) 37%,
+    var(--color-bg-card) 63%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: var(--radius-md);
+}
+
+/* ============================================
+   6. SfLoading 自定义指令样式
+   ============================================ */
+.sf-loading-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: inherit;
+  z-index: 10;
+}
+.dark .sf-loading-overlay {
+  background: rgba(15, 23, 42, 0.7);
+}
+.sf-loading-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--color-border);
+  border-right-color: var(--color-brand);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

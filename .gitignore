@@ -1,0 +1,85 @@
+# ============ Environment files (contain secrets) ============
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+deploy/prod.env
+deploy/*.env
+!deploy/*.env.example
+
+# ============ Python ============
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# ============ Frontend ============
+node_modules/
+frontend/dist/
+frontend/.vite/
+.vite/
+
+# ============ Docker images / build artifacts (LARGE) ============
+*.tar
+*.tar.gz
+*.tgz
+
+# ============ Media / binary assets (LARGE) ============
+*.mp4
+*.mkv
+*.mov
+*.avi
+*.flv
+*.webm
+*.mp3
+*.wav
+*.m4a
+*.flac
+
+# ============ User-uploaded materials ============
+data/materials/
+data/uploads/
+
+# ============ Misc project scratch dirs ============
+pptx_slides/
+system_image/
+error_images/
+image/
+
+# ============ Loose root-level scratch files ============
+PKOw-FbVXrc-SD.jpg
+*.srt
+nul
+日志.log
+
+# ============ IDE ============
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+
+# ============ Logs ============
+*.log
+logs/
+
+# ============ OS ============
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ============ Docker compose override ============
+docker-compose.override.yml
+
+# ============ Claude Code workspace ============
+.claude/
