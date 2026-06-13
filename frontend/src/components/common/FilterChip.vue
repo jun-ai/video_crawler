@@ -56,7 +56,7 @@ const handleClick = () => {
   padding: 8px 18px;
   background: var(--color-bg-card);
   border: 1.5px solid var(--color-border);
-  border-radius: 16px;
+  border-radius: 999px; /* Phase 0+ SpeakVlog 药丸 */
   font-size: 13px;
   font-weight: 500;
   color: var(--color-text-secondary);
@@ -75,9 +75,10 @@ const handleClick = () => {
 }
 
 .sf-filter-chip:hover {
-  border-color: var(--color-brand);
+  border-color: var(--color-brand-bright);
   color: var(--color-text-primary);
   transform: translateY(-1px);
+  background: var(--color-bg-pale);
 }
 
 .sf-filter-chip:hover .chip-icon {
@@ -85,15 +86,15 @@ const handleClick = () => {
 }
 
 .sf-filter-chip:focus-visible {
-  outline: 2px solid var(--color-brand);
+  outline: 2px solid var(--color-brand-bright);
   outline-offset: 2px;
 }
 
 .sf-filter-chip.active {
-  background: var(--color-brand);
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
   color: #fff;
-  border-color: var(--color-brand);
-  box-shadow: 0 2px 8px rgba(15, 76, 58, 0.25);
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(63, 138, 91, 0.35);
 }
 
 .sf-filter-chip.active .chip-icon {

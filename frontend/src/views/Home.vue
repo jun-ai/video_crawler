@@ -1334,10 +1334,10 @@ onMounted(async () => {
 
 .tag-chip {
   padding: 8px 16px;
-  border-radius: 16px;
+  border-radius: 999px; /* Phase 0+ 药丸 */
   font-size: 13px;
   font-weight: 500;
-  background: var(--color-bg-elevated);
+  background: var(--color-bg-card);
   color: var(--color-text-secondary);
   border: 1.5px solid var(--color-border);
   cursor: pointer;
@@ -1348,16 +1348,17 @@ onMounted(async () => {
 }
 
 .tag-chip:hover {
-  border-color: var(--color-brand);
-  color: var(--color-brand);
+  border-color: var(--color-brand-bright);
+  color: var(--color-brand-bright);
+  background: var(--color-bg-pale);
   transform: translateY(-1px);
 }
 
 .tag-chip.active {
-  background: var(--color-brand);
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
   color: #fff;
-  border-color: var(--color-brand);
-  box-shadow: 0 2px 8px rgba(15, 76, 58, 0.25);
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(63, 138, 91, 0.3);
 }
 
 /* 视频网格 — Bento 化 */
