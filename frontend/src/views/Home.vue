@@ -274,6 +274,28 @@
           </div>
         </div>
 
+        <!-- 学习功能清单 — SpeakVlog 风格（Phase 0+） -->
+        <section class="features-section">
+          <div class="features-grid">
+            <div class="features-intro">
+              <div class="features-eyebrow">为什么选 Fluenty</div>
+              <h2 class="features-title">不只是看视频，<br/>是真正用英语</h2>
+              <p class="features-desc">真实语料 · AI 解读 · 间隔重复，<br/>把被动刷剧变成主动输出。</p>
+            </div>
+            <div class="features-list">
+              <div v-for="feat in features" :key="feat.title" class="feature-item">
+                <div class="feature-check">
+                  <Check :size="18" />
+                </div>
+                <div class="feature-text">
+                  <div class="feature-title">{{ feat.title }}</div>
+                  <div class="feature-desc-sm">{{ feat.desc }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <!-- 视频网格 -->
         <div class="video-grid" v-loading="loading">
           <VideoCard
@@ -327,7 +349,7 @@ import FilterChip from '@/components/common/FilterChip.vue'
 import VideoCard from '@/components/common/VideoCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import AnnouncementBanner from '@/components/common/AnnouncementBanner.vue'
-import { BarChart3, Calendar, Clock, Play, Flame, Sprout, Dumbbell, Star, Trophy, Crown, Target, Sparkles, BookOpen, Headphones } from 'lucide-vue-next'
+import { BarChart3, Calendar, Clock, Play, Flame, Sprout, Dumbbell, Star, Trophy, Crown, Target, Sparkles, BookOpen, Headphones, Check } from 'lucide-vue-next'
 import SfTooltip from '@/components/ui/SfTooltip.vue'
 import SfProgress from '@/components/ui/SfProgress.vue'
 import SfButton from '@/components/ui/SfButton.vue'
@@ -338,6 +360,21 @@ const userStore = useUserStore()
 const loading = ref(true)
 const loadingMore = ref(false)
 const categories = ref([])
+// Phase 0+ SpeakVlog 风格 — 学习功能清单（首页介绍用）
+const features = [
+  { title: '真实视频语料', desc: '海外 YouTube / TED 精选' },
+  { title: 'AI 智能解读', desc: '逐句翻译 + 重点标注' },
+  { title: '字幕跟读练习', desc: '影子跟读 + 语速调节' },
+  { title: '生词一键收藏', desc: '自动收录到词汇本' },
+  { title: '间隔重复复习', desc: '艾宾浩斯曲线不遗忘' },
+  { title: '连续打卡激励', desc: '每天 10 分钟养成习惯' },
+  { title: '学习数据统计', desc: '日 / 周 / 月多维图表' },
+  { title: '移动端友好', desc: '通勤路上也能学' },
+  { title: '收藏夹整理', desc: '喜欢的视频分类存' },
+  { title: '跟读 AI 打分', desc: '发音准确度反馈' },
+  { title: '永久云端保存', desc: '进度 / 笔记不丢失' },
+  { title: '免费体验', desc: '注册即送 7 天会员' }
+]
 const materials = ref([])
 const selectedCategory = ref(null)
 const creatorTags = ref([])
@@ -1365,6 +1402,111 @@ onMounted(async () => {
   box-shadow: 0 4px 14px rgba(63, 138, 91, 0.3);
 }
 
+/* ====== 学习功能清单 — SpeakVlog 风格 ====== */
+.features-section {
+  padding: 80px 32px;
+  background: var(--color-bg-pale);
+  margin: 32px 0;
+  border-radius: 24px;
+}
+
+.features-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 64px;
+  align-items: start;
+}
+
+.features-intro {
+  position: sticky;
+  top: 88px;
+}
+
+.features-eyebrow {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-brand-bright);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  padding-top: 6px;
+  border-top: 2px solid var(--color-brand-bright);
+}
+
+.features-title {
+  font-size: var(--text-section, clamp(30px, 3.5vw, 44px));
+  font-weight: 800;
+  color: var(--color-text-primary);
+  margin: 0 0 16px;
+  line-height: 1.15;
+  letter-spacing: -1px;
+}
+
+.features-desc {
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.features-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px 24px;
+}
+
+.feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--color-bg-card);
+  border-radius: 14px;
+  border: 1px solid var(--color-border);
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.feature-item:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-brand-bright);
+  box-shadow: 0 8px 20px rgba(15, 76, 58, 0.08);
+}
+
+.feature-check {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-mint);
+  color: var(--color-brand-bright);
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.feature-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.feature-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.3;
+  margin-bottom: 2px;
+}
+
+.feature-desc-sm {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
 /* 视频网格 — Bento 化 */
 .video-grid {
   display: grid;
@@ -1564,6 +1706,15 @@ onMounted(async () => {
   .calendar-card {
     display: none;
   }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .features-intro {
+    position: static;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1654,6 +1805,21 @@ onMounted(async () => {
   .video-grid {
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 12px;
+  }
+
+  /* Features mobile */
+  .features-section {
+    padding: 48px 20px;
+    border-radius: 18px;
+  }
+
+  .features-list {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .features-title {
+    font-size: 26px;
   }
 }
 
