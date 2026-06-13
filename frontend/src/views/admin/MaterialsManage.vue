@@ -228,10 +228,15 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* ========================================
+   MaterialsManage — Phase 3 CSS-only dark admin
+   ======================================== */
+
 .materials-manage {
   max-width: 1400px;
 }
 
+/* ── Page Header ── */
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -241,12 +246,17 @@ onMounted(() => {
 
 .page-header h1 {
   margin: 0;
-  font-size: 24px;
-  font-weight: 500;
+  font-size: 22px;
+  font-weight: 600;
+  color: #E2E8E2;
+  letter-spacing: -0.3px;
 }
 
+/* ── Filter Card ── */
 .filter-card {
   margin-bottom: 24px;
+  background: #0F1A14;
+  border-color: rgba(255, 255, 255, 0.06);
 }
 
 .filter-row {
@@ -261,12 +271,43 @@ onMounted(() => {
   gap: 8px;
 }
 
-.pagination-wrap {
-  margin-top: 20px;
-  display: flex;
-  justify-content: flex-end;
+/* ── Table Card ── */
+.card-container {
+  background: #0F1A14;
+  border-color: rgba(255, 255, 255, 0.06);
 }
 
+/* ── Table Overrides (dark admin) ── */
+.card-container :deep(.sf-table-wrap) {
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.card-container :deep(.sf-table th) {
+  color: #94A398;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.card-container :deep(.sf-table td) {
+  color: #C8D6CC;
+  border-bottom-color: rgba(255, 255, 255, 0.04);
+  padding: 14px 16px;
+}
+
+/* Zebra stripe rows */
+.card-container :deep(.sf-table tbody tr:nth-child(even) td) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.card-container :deep(.sf-table tbody tr:hover td) {
+  background: rgba(111, 163, 134, 0.08);
+}
+
+/* ── Status & Action Cells ── */
 .status-cell {
   display: flex;
   align-items: center;
@@ -277,7 +318,20 @@ onMounted(() => {
   gap: 8px;
 }
 
-/* 响应式 */
+.action-cell :deep(.sf-btn--danger):hover {
+  background: #C73E3A;
+}
+
+/* ── Pagination ── */
+.pagination-wrap {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* ── Responsive ── */
 @media (max-width: 768px) {
   .page-header {
     flex-direction: column;
@@ -286,7 +340,7 @@ onMounted(() => {
   }
 
   .page-header h1 {
-    font-size: 20px;
+    font-size: 19px;
   }
 
   .filter-card :deep(.sf-form-item) {
@@ -306,6 +360,81 @@ onMounted(() => {
 
   .pagination-wrap {
     justify-content: center;
+  }
+
+  /* ── Mobile: table → card list ── */
+  .card-container :deep(.sf-table-wrap) {
+    border: none;
+    background: transparent;
+  }
+
+  .card-container :deep(.sf-table) {
+    display: block;
+  }
+
+  .card-container :deep(.sf-table thead) {
+    display: none;
+  }
+
+  .card-container :deep(.sf-table tbody) {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .card-container :deep(.sf-table tbody tr) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 16px;
+    background: #0F1A14;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    align-items: center;
+  }
+
+  .card-container :deep(.sf-table tbody tr:hover td) {
+    background: transparent;
+  }
+
+  .card-container :deep(.sf-table tbody tr td) {
+    border-bottom: none;
+    padding: 4px 8px;
+    font-size: 13px;
+  }
+
+  .card-container :deep(.sf-table tbody tr td:first-child) {
+    font-weight: 600;
+    color: #6FA386;
+    font-size: 12px;
+    opacity: 0.7;
+  }
+
+  .card-container :deep(.sf-table tbody tr td:nth-child(2)) {
+    flex: 1 1 100%;
+    font-weight: 600;
+    color: #E2E8E2;
+    font-size: 15px;
+    padding-top: 0;
+    padding-left: 8px;
+    margin-top: -4px;
+  }
+
+  .card-container :deep(.sf-table tbody tr td:last-child) {
+    flex: 1 1 100%;
+    padding-top: 8px;
+    margin-top: 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-card {
+    padding: 16px;
+  }
+
+  .card-container {
+    padding: 12px;
   }
 }
 </style>
