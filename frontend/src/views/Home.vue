@@ -1,19 +1,53 @@
 <template>
   <div class="yt-home">
-    <!-- Hero Section -->
+    <!-- Hero Section — SpeakVlog 风格：全宽大标题 + 4 组统计 -->
     <section class="home-hero">
-      <div class="hero-content">
-        <h1 class="hero-title">看视频学英语</h1>
-        <h2 class="hero-subtitle">沉浸式练口语 · 真实语料 · AI 解读</h2>
+      <div class="hero-inner">
+        <div class="hero-eyebrow">— speak · every day —</div>
+        <h1 class="hero-title">
+          <span class="hero-title-a">看视频</span>
+          <span class="hero-title-b">学英语</span>
+        </h1>
+        <p class="hero-subtitle">沉浸式练口语 · 真实语料 · AI 解读</p>
         <div class="hero-actions">
-          <SfButton type="primary" @click="$router.push('/learning-center')">开始学习</SfButton>
-          <SfButton type="ghost" @click="scrollToVideos">查看视频库</SfButton>
+          <button class="hero-cta-primary" @click="$router.push('/learning-center')">
+            开始学习
+            <span class="hero-cta-arrow">→</span>
+          </button>
+          <button class="hero-cta-secondary" @click="scrollToVideos">查看视频库</button>
+        </div>
+
+        <!-- 4 组统计 (SpeakVlog 风格) -->
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <div class="hero-stat-value">{{ stats.total }}</div>
+            <div class="hero-stat-label">总期数</div>
+          </div>
+          <div class="hero-stat-divider"></div>
+          <div class="hero-stat">
+            <div class="hero-stat-value hero-stat-learned">{{ stats.learned }}</div>
+            <div class="hero-stat-label">已学习</div>
+          </div>
+          <div class="hero-stat-divider"></div>
+          <div class="hero-stat">
+            <div class="hero-stat-value hero-stat-unlearned">{{ stats.unlearned }}</div>
+            <div class="hero-stat-label">未学习</div>
+          </div>
+          <div class="hero-stat-divider"></div>
+          <div class="hero-stat">
+            <div class="hero-stat-value hero-stat-streak">
+              {{ calendarData.streak }}
+              <span class="hero-stat-unit">天</span>
+            </div>
+            <div class="hero-stat-label">连续打卡</div>
+          </div>
         </div>
       </div>
-      <div class="hero-decor">
-        <BookOpen :size="48" class="decor-icon decor-icon-1" />
-        <Sparkles :size="32" class="decor-icon decor-icon-2" />
-        <Headphones :size="40" class="decor-icon decor-icon-3" />
+
+      <div class="hero-decor" aria-hidden="true">
+        <BookOpen :size="56" class="decor-icon decor-icon-1" />
+        <Sparkles :size="36" class="decor-icon decor-icon-2" />
+        <Headphones :size="44" class="decor-icon decor-icon-3" />
       </div>
     </section>
 
@@ -632,88 +666,226 @@ onMounted(async () => {
   margin: 0 auto;
 }
 
-/* ====== Hero Section ====== */
+/* ====== Hero Section — SpeakVlog 风格（Phase 0+） ====== */
 .home-hero {
   position: relative;
   background: var(--yt-brand-gradient, linear-gradient(135deg, #0F4C3A 0%, #1A6B4F 50%, #E2725B 100%));
-  border-radius: var(--radius-2xl, 32px);
-  padding: 64px 48px 56px;
-  margin-bottom: 32px;
+  border-radius: 0; /* 全宽：去掉圆角包裹 */
+  padding: 88px 48px 64px;
+  margin-bottom: 0;
   overflow: hidden;
-  min-height: 220px;
+  min-height: 420px;
   display: flex;
   align-items: center;
 }
 
-.hero-content {
-  position: relative;
-  z-index: 2;
-  max-width: 560px;
+.home-hero::before {
+  /* 顶部薄荷绿光晕，呼应 SpeakVlog section 过渡 */
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: -10%;
+  width: 60%;
+  height: 180%;
+  background: radial-gradient(circle, rgba(63, 138, 91, 0.18) 0%, transparent 60%);
+  pointer-events: none;
 }
 
+.hero-inner {
+  position: relative;
+  z-index: 2;
+  max-width: 720px;
+  width: 100%;
+}
+
+/* Eyebrow 小标签 */
+.hero-eyebrow {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 2px;
+  text-transform: lowercase;
+  margin-bottom: 20px;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* 大标题 — 分色 */
 .hero-title {
-  font-size: 42px;
+  font-size: var(--text-hero, clamp(48px, 6vw, 84px));
   font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -2px;
+  margin: 0 0 18px;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.15);
+}
+
+.hero-title-a {
+  color: #4DA06C; /* 品牌亮绿 */
+  display: inline-block;
+}
+
+.hero-title-b {
   color: #fff;
-  margin: 0 0 12px;
-  line-height: 1.15;
-  letter-spacing: -0.5px;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  display: inline-block;
+  margin-left: 0.15em;
 }
 
 .hero-subtitle {
   font-size: 18px;
   font-weight: 400;
   color: rgba(255, 255, 255, 0.85);
-  margin: 0 0 28px;
+  margin: 0 0 32px;
   line-height: 1.5;
   letter-spacing: 0.3px;
+  max-width: 480px;
 }
 
+/* CTA 按钮组 */
 .hero-actions {
   display: flex;
   gap: 14px;
   flex-wrap: wrap;
+  margin-bottom: 56px;
 }
 
-.hero-actions :deep(.sf-btn[type="primary"]) {
-  background: #fff;
-  color: var(--color-brand, #0F4C3A);
+.hero-cta-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  font-size: 15px;
   font-weight: 700;
-  padding: 12px 28px;
-  border-radius: var(--radius-full, 9999px);
-  border: none;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.hero-actions :deep(.sf-btn[type="primary"]:hover) {
-  transform: translateY(-2px) scale(1.03);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
-}
-
-.hero-actions :deep(.sf-btn[type="ghost"]) {
-  background: rgba(255, 255, 255, 0.15);
   color: #fff;
-  font-weight: 600;
-  padding: 12px 28px;
-  border-radius: var(--radius-full, 9999px);
-  border: 1.5px solid rgba(255, 255, 255, 0.35);
-  backdrop-filter: blur(8px);
-  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(63, 138, 91, 0.4);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+  min-height: 48px;
 }
 
-.hero-actions :deep(.sf-btn[type="ghost"]:hover) {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.5);
+.hero-cta-primary:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 10px 28px rgba(63, 138, 91, 0.5);
+}
+
+.hero-cta-primary:active {
+  transform: translateY(0) scale(1);
+}
+
+.hero-cta-arrow {
+  display: inline-block;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.hero-cta-primary:hover .hero-cta-arrow {
+  transform: translateX(4px);
+}
+
+.hero-cta-secondary {
+  display: inline-flex;
+  align-items: center;
+  padding: 14px 28px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.25s ease;
+  min-height: 48px;
+}
+
+.hero-cta-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.55);
   transform: translateY(-2px);
+}
+
+/* 4 组统计 — SpeakVlog 大数字风格 */
+.hero-stats {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding: 24px 28px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  max-width: 640px;
+}
+
+.hero-stat {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hero-stat-value {
+  font-size: 36px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+  letter-spacing: -1px;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.hero-stat-unit {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0;
+}
+
+.hero-stat-learned {
+  color: #6FE89A; /* 已学 — 浅亮绿 */
+}
+
+.hero-stat-unlearned {
+  color: #FFB89C; /* 未学 — 暖橙 */
+}
+
+.hero-stat-streak {
+  color: #FFD27A; /* 连续打卡 — 暖黄 */
+}
+
+.hero-stat-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.65);
+  letter-spacing: 0.5px;
+}
+
+.hero-stat-divider {
+  width: 1px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.15);
+  flex-shrink: 0;
 }
 
 /* Hero 装饰图标 */
 .hero-decor {
   position: absolute;
-  right: 40px;
-  bottom: 24px;
+  right: 60px;
+  top: 50%;
+  transform: translateY(-50%);
   z-index: 1;
   pointer-events: none;
 }
@@ -725,18 +897,18 @@ onMounted(async () => {
 
 .decor-icon-1 {
   right: 0;
-  bottom: 0;
+  top: -40px;
 }
 
 .decor-icon-2 {
-  right: 100px;
-  bottom: 60px;
+  right: 130px;
+  top: 30px;
   animation: float-slow 6s ease-in-out infinite;
 }
 
 .decor-icon-3 {
-  right: 20px;
-  bottom: 80px;
+  right: 30px;
+  top: 80px;
   animation: float-slow 5s ease-in-out infinite reverse;
 }
 
@@ -1364,35 +1536,67 @@ onMounted(async () => {
 }
 
 @media (max-width: 768px) {
-  /* Hero 缩小 */
+  /* Hero — 全宽 SpeakVlog 风格（mobile） */
   .home-hero {
-    padding: 36px 24px 32px;
-    border-radius: var(--radius-lg, 16px);
-    margin-bottom: 20px;
-    min-height: auto;
+    padding: 56px 20px 40px;
+    min-height: 360px;
   }
 
-  /* Phase 4: Hero CTA mobile 加大触摸目标 (>= 44px) */
-  .hero-actions :deep(.sf-btn) {
-    padding: 14px 28px;
-    min-height: 48px;
+  .hero-eyebrow {
+    font-size: 11px;
+    padding: 5px 12px;
+    margin-bottom: 14px;
   }
 
   .hero-title {
-    font-size: 26px;
+    font-size: clamp(36px, 9vw, 48px);
+    letter-spacing: -1px;
+    margin-bottom: 14px;
   }
+
   .hero-subtitle {
+    font-size: 15px;
+    margin-bottom: 24px;
+  }
+
+  .hero-actions {
+    margin-bottom: 36px;
+    gap: 10px;
+  }
+
+  .hero-cta-primary,
+  .hero-cta-secondary {
+    padding: 13px 24px;
     font-size: 14px;
-    margin-bottom: 20px;
+    min-height: 48px;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .hero-stats {
+    padding: 18px 16px;
+    gap: 12px;
+    border-radius: 16px;
+  }
+
+  .hero-stat-value {
+    font-size: 24px;
+  }
+
+  .hero-stat-unit {
+    font-size: 12px;
+  }
+
+  .hero-stat-label {
+    font-size: 11px;
+  }
+
+  .hero-stat-divider {
+    height: 28px;
   }
 
   .hero-decor {
     display: none;
-  }
-
-  .hero-actions :deep(.sf-btn) {
-    padding: 10px 22px;
-    font-size: 13px;
   }
 
   /* Mobile stats bar 可见 */
@@ -1424,17 +1628,51 @@ onMounted(async () => {
 
 @media (max-width: 480px) {
   .home-hero {
-    padding: 28px 18px 24px;
-    border-radius: var(--radius-md, 12px);
+    padding: 44px 16px 32px;
+    min-height: 320px;
+  }
+
+  .hero-eyebrow {
+    font-size: 10px;
+    padding: 4px 10px;
+    letter-spacing: 1.5px;
   }
 
   .hero-title {
-    font-size: 22px;
+    font-size: 32px;
+    letter-spacing: -0.5px;
   }
 
   .hero-subtitle {
     font-size: 13px;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    margin-bottom: 28px;
+  }
+
+  .hero-cta-primary,
+  .hero-cta-secondary {
+    width: 100%;
+  }
+
+  .hero-stats {
+    padding: 14px 12px;
+    gap: 8px;
+  }
+
+  .hero-stat-value {
+    font-size: 20px;
+  }
+
+  .hero-stat-label {
+    font-size: 10px;
+  }
+
+  .hero-stat-divider {
+    height: 24px;
   }
 
   .video-grid {
