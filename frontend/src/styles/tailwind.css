@@ -197,96 +197,98 @@
   50% { opacity: 0.7; }
 }
 
-/* ========== 暗色模式覆盖（参考 PPT 深灰风格） ========== */
+/* ========== 暗色模式覆盖 (Phase 0 — 墨绿/暖橙 暗色版本) ========== */
 .dark {
-  --color-text-primary: #e2e8f0;
-  --color-text-secondary: #94a3b8;
-  --color-text-muted: #64748b;
-  --color-text-quaternary: #475569;
-  --color-bg-base: #1a1a2e;
-  --color-bg-card: #252540;
-  --color-bg-elevated: #2d2d4a;
-  --color-bg-hover: #2d2d4a;
+  --color-text-primary: #E2E8E2;      /* 浅色文字 */
+  --color-text-secondary: #94A398;
+  --color-text-muted: #647468;
+  --color-text-quaternary: #475449;
+  --color-bg-base: #0F1A14;           /* 深绿黑 */
+  --color-bg-card: #1A2820;           /* 卡绿黑 */
+  --color-bg-elevated: #243A2D;
+  --color-bg-hover: #2A4334;
   --color-border: rgba(255, 255, 255, 0.08);
   --color-border-strong: rgba(255, 255, 255, 0.12);
-  --color-border-brand: rgba(99, 102, 241, 0.3);
+  --color-border-brand: rgba(111, 163, 134, 0.3);
 
-  --color-brand: #818cf8;
-  --color-brand-hover: #6366f1;
-  --color-brand-light: rgba(99, 102, 241, 0.2);
-  --color-brand-subtle: rgba(99, 102, 241, 0.1);
-  --color-accent: #22d3ee;
-  --color-accent-hover: #06b6d4;
+  --color-brand: #6FA386;            /* 暗背景下用浅墨绿 */
+  --color-brand-hover: #8FB89F;
+  --color-brand-light: rgba(111, 163, 134, 0.2);
+  --color-brand-subtle: rgba(111, 163, 134, 0.1);
+  --color-accent: #F08A72;           /* 暗背景下用浅暖橙 */
+  --color-accent-hover: #F5A48F;
+  --color-accent-light: rgba(240, 138, 114, 0.2);
+  --color-accent-subtle: rgba(240, 138, 114, 0.1);
 
-  --color-annotation-vocabulary: #818cf8;
-  --color-annotation-phrase: #22d3ee;
-  --color-annotation-important: #fbbf24;
+  --color-annotation-vocabulary: #6FA386;
+  --color-annotation-phrase: #F08A72;
+  --color-annotation-important: #F5C264;
 
-  --color-diff-easy-bg: rgba(29, 78, 216, 0.3);
-  --color-diff-easy-text: #93c5fd;
-  --color-diff-medium-bg: rgba(124, 58, 237, 0.3);
-  --color-diff-medium-text: #c4b5fd;
-  --color-diff-hard-bg: rgba(190, 24, 93, 0.3);
-  --color-diff-hard-text: #f9a8d4;
+  --color-diff-easy-bg: rgba(45, 134, 89, 0.3);
+  --color-diff-easy-text: #93D8B0;
+  --color-diff-medium-bg: rgba(111, 163, 134, 0.3);
+  --color-diff-medium-text: #B8D4C5;
+  --color-diff-hard-bg: rgba(199, 62, 58, 0.3);
+  --color-diff-hard-text: #F5A8A5;
 
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.4);
 
-  --color-success-light: rgba(16, 185, 129, 0.2);
-  --color-warning-light: rgba(245, 158, 11, 0.2);
-  --color-danger-light: rgba(239, 68, 68, 0.2);
-  --color-info-light: rgba(99, 102, 241, 0.2);
+  --color-success-light: rgba(45, 134, 89, 0.2);
+  --color-warning-light: rgba(226, 114, 91, 0.2);
+  --color-danger-light: rgba(199, 62, 58, 0.2);
+  --color-info-light: rgba(111, 163, 134, 0.2);
 
   /* shadcn 暗色变量 */
-  --primary: #818cf8;
-  --primary-foreground: #1a1a2e;
-  --secondary: #2d2d4a;
-  --secondary-foreground: #e2e8f0;
-  --muted: #2d2d4a;
-  --muted-foreground: #94a3b8;
-  --accent: #22d3ee;
-  --accent-foreground: #1a1a2e;
-  --destructive: #f87171;
-  --destructive-foreground: #ffffff;
-  --background: #1a1a2e;
-  --foreground: #e2e8f0;
-  --card: #252540;
-  --card-foreground: #e2e8f0;
-  --popover: #252540;
-  --popover-foreground: #e2e8f0;
+  --primary: #6FA386;
+  --primary-foreground: #0F1A14;
+  --secondary: #243A2D;
+  --secondary-foreground: #E2E8E2;
+  --muted: #243A2D;
+  --muted-foreground: #94A398;
+  --accent: #F08A72;
+  --accent-foreground: #0F1A14;
+  --destructive: #E07870;
+  --destructive-foreground: #FFFFFF;
+  --background: #0F1A14;
+  --foreground: #E2E8E2;
+  --card: #1A2820;
+  --card-foreground: #E2E8E2;
+  --popover: #1A2820;
+  --popover-foreground: #E2E8E2;
   --border: rgba(255, 255, 255, 0.08);
   --input: rgba(255, 255, 255, 0.12);
-  --ring: #818cf8;
+  --ring: #6FA386;
   --radius: var(--radius-md);
 
   /* Admin 独立暗色主题变量 */
-  --sf-admin-sidebar-bg: #0f172a;
-  --sf-admin-sidebar-active: #1e293b;
-  --sf-admin-sidebar-text: #94a3b8;
-  --sf-admin-sidebar-text-active: #e2e8f0;
+  --sf-admin-sidebar-bg: #0A130E;
+  --sf-admin-sidebar-active: #1A2820;
+  --sf-admin-sidebar-text: #94A398;
+  --sf-admin-sidebar-text-active: #E2E8E2;
   --sf-admin-sidebar-border: rgba(255, 255, 255, 0.08);
   --sf-admin-sidebar-hover: rgba(255, 255, 255, 0.05);
-  --sf-admin-accent: #2563eb;
-  --sf-admin-accent-light: rgba(37, 99, 235, 0.15);
+  --sf-admin-accent: #6FA386;
+  --sf-admin-accent-light: rgba(111, 163, 134, 0.15);
 
   /* Hover 背景色 */
-  --color-hover-fill: rgba(99, 102, 241, 0.08);
+  --color-hover-fill: rgba(111, 163, 134, 0.08);
 
   /* 兼容旧 --yt-* 变量（暗色） */
-  --yt-text-primary: #e2e8f0;
-  --yt-text-secondary: #94a3b8;
-  --yt-text-tertiary: #64748b;
-  --yt-text-quaternary: #475569;
-  --yt-bg: #1a1a2e;
-  --yt-bg-card: #252540;
-  --yt-bg-secondary: #2d2d4a;
-  --yt-bg-tertiary: #252540;
+  --yt-text-primary: #E2E8E2;
+  --yt-text-secondary: #94A398;
+  --yt-text-tertiary: #647468;
+  --yt-text-quaternary: #475449;
+  --yt-bg: #0F1A14;
+  --yt-bg-card: #1A2820;
+  --yt-bg-secondary: #243A2D;
+  --yt-bg-tertiary: #1A2820;
   --yt-border: rgba(255, 255, 255, 0.08);
-  --yt-brand: #818cf8;
-  --yt-brand-light: rgba(129, 140, 248, 0.2);
-  --yt-brand-softer: rgba(129, 140, 248, 0.15);
-  --glass-bg: rgba(37, 37, 64, 0.9);
+  --yt-brand: #6FA386;
+  --yt-brand-light: rgba(111, 163, 134, 0.2);
+  --yt-brand-softer: rgba(111, 163, 134, 0.15);
+  --glass-bg: rgba(26, 40, 32, 0.9);
   --glass-blur: blur(12px);
 }
 
