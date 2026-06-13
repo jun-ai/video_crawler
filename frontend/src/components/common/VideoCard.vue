@@ -1,6 +1,6 @@
 <template>
   <div :class="['video-card', { 'list-mode': layout === 'list' }]" @click="handleClick">
-    <!-- 缩略图 -->
+    <!-- 缩略图 16:9 -->
     <div class="thumbnail">
       <img :src="cover" :alt="title" @error="handleImageError" />
 
@@ -30,9 +30,14 @@
         <span>已完成</span>
       </div>
 
-      <!-- 进度条 -->
+      <!-- 进度条 overlay on cover -->
       <div class="progress-bar" v-if="progress > 0 && !completed">
         <div class="progress-fill" :style="{ width: progress + '%' }"></div>
+      </div>
+
+      <!-- 难度色块 -->
+      <div class="difficulty-badge" v-if="difficulty">
+        {{ difficultyLabel }}
       </div>
 
       <!-- 播放图标 -->
@@ -43,26 +48,22 @@
 
     <!-- 视频信息 -->
     <div class="video-info">
-      <div class="video-details">
-        <h3 class="video-title">{{ title }}</h3>
-        <p class="video-description" v-if="description">{{ description }}</p>
-        <!-- 标签 Chips -->
-        <div class="tag-chips-row" v-if="tags.length > 0">
-          <span
-            v-for="tag in tags.slice(0, 3)"
-            :key="tag.id"
-            class="tag-chip-small"
-            :style="{ '--chip-color': tag.color || 'var(--color-brand)' }"
-          >{{ tag.name }}</span>
-        </div>
-        <!-- 进度文字 / meta -->
-        <div class="video-meta" v-if="showMeta">
-          <span class="difficulty-tag" v-if="difficulty">{{ difficultyLabel }}</span>
-          <span class="meta-dot" v-if="difficulty && viewCount">·</span>
-          <span class="meta-item" v-if="viewCount">{{ formatViewCount(viewCount) }} 次观看</span>
-        </div>
-        <div class="progress-text" v-if="progressText">{{ progressText }}</div>
+      <h3 class="video-title">{{ title }}</h3>
+      <p class="video-description" v-if="description">{{ description }}</p>
+      <!-- 标签 Chips -->
+      <div class="tag-chips-row" v-if="tags.length > 0">
+        <span
+          v-for="tag in tags.slice(0, 3)"
+          :key="tag.id"
+          class="tag-chip-small"
+          :style="{ '--chip-color': tag.color || 'var(--color-brand)' }"
+        >{{ tag.name }}</span>
       </div>
+      <!-- meta -->
+      <div class="video-meta" v-if="showMeta">
+        <span class="meta-item" v-if="viewCount">{{ formatViewCount(viewCount) }} 次观看</span>
+      </div>
+      <div class="progress-text" v-if="progressText">{{ progressText }}</div>
     </div>
   </div>
 </template>
@@ -92,6 +93,15 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['click', 'toggle-favorite'])
+
+// 墨绿系难度色
+const difficultyColors = {
+  1: '#B8D4C5', // 入门 - brand-light
+  2: '#8BBFA5', // 基础
+  3: '#5DA882', // 中级
+  4: '#2D8659', // 进阶
+  5: '#0F4C3A'  // 高级 - brand
+}
 
 const difficultyLabel = computed(() => {
   const labels = ['', '入门', '基础', '中级', '进阶', '高级']
@@ -125,10 +135,10 @@ const handleClick = () => {
 .video-card {
   cursor: pointer;
   background: var(--color-bg-card);
-  border-radius: 14px;
+  border-radius: 16px;
   overflow: hidden;
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
-  border: 1px solid var(--color-border);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+  border: 1.5px solid var(--color-border);
   box-shadow: var(--shadow-sm);
   position: relative;
 }
@@ -142,13 +152,14 @@ const handleClick = () => {
   width: 3px;
   background: linear-gradient(180deg, var(--color-brand) 0%, var(--color-accent) 100%);
   opacity: 0;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.3s ease;
   border-radius: 3px 0 0 3px;
+  z-index: 4;
 }
 
 .video-card:hover {
   transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 16px 40px rgba(15, 76, 58, 0.15), 0 4px 12px rgba(0, 0, 0, 0.06);
   border-color: var(--color-brand);
 }
 
@@ -170,13 +181,13 @@ const handleClick = () => {
   position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0);
-  transition: background 0.25s ease;
+  transition: background 0.3s ease;
   pointer-events: none;
   z-index: 1;
 }
 
 .video-card:hover .thumbnail::after {
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.08);
 }
 
 .thumbnail img {
@@ -186,11 +197,11 @@ const handleClick = () => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.35s ease;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .video-card:hover .thumbnail img {
-  transform: scale(1.06);
+  transform: scale(1.05);
 }
 
 /* 播放图标遮罩 */
@@ -216,10 +227,10 @@ const handleClick = () => {
   position: absolute;
   bottom: 8px;
   right: 8px;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.78);
   color: #fff;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 3px 7px;
+  border-radius: 6px;
   font-size: 11px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -234,22 +245,22 @@ const handleClick = () => {
   top: 8px;
   right: 8px;
   z-index: 3;
-  width: 28px;
-  height: 28px;
-  background: rgba(0, 0, 0, 0.45);
+  width: 30px;
+  height: 30px;
+  background: rgba(0, 0, 0, 0.4);
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background 0.15s, transform 0.15s;
+  transition: background 0.15s, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   color: white;
 }
 
 .fav-heart:hover {
   background: rgba(0, 0, 0, 0.6);
-  transform: scale(1.1);
+  transform: scale(1.15);
 }
 
 /* 已完成徽章 */
@@ -260,7 +271,7 @@ const handleClick = () => {
   background: var(--color-success);
   color: #fff;
   padding: 3px 8px;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 11px;
   font-weight: 600;
   display: flex;
@@ -270,6 +281,23 @@ const handleClick = () => {
   z-index: 3;
 }
 
+/* 难度色块 */
+.difficulty-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  z-index: 3;
+  letter-spacing: 0.3px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--color-brand);
+  backdrop-filter: blur(4px);
+}
+
 /* 进度条 */
 .progress-bar {
   position: absolute;
@@ -277,7 +305,7 @@ const handleClick = () => {
   left: 0;
   right: 0;
   height: 3px;
-  background: rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.12);
   z-index: 3;
 }
 
@@ -289,19 +317,14 @@ const handleClick = () => {
 
 /* ====== 视频信息 ====== */
 .video-info {
-  padding: 12px;
-}
-
-.video-details {
-  flex: 1;
-  min-width: 0;
+  padding: 14px 14px 16px;
 }
 
 .video-title {
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 600;
   color: var(--color-text-primary);
-  line-height: 1.4;
+  line-height: 1.35;
   margin: 0 0 6px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -326,22 +349,6 @@ const handleClick = () => {
   margin-top: 6px;
 }
 
-.difficulty-tag {
-  display: inline-block;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--color-brand);
-  background: var(--color-brand-subtle);
-  padding: 2px 6px;
-  border-radius: 4px;
-  line-height: 1;
-}
-
-.meta-dot {
-  color: var(--color-text-muted);
-  font-size: 12px;
-}
-
 .meta-item {
   font-size: 12px;
   color: var(--color-text-muted);
@@ -358,13 +365,13 @@ const handleClick = () => {
   display: flex;
   gap: 4px;
   flex-wrap: wrap;
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 .tag-chip-small {
   display: inline-block;
   padding: 2px 7px;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 10px;
   font-weight: 500;
   background: color-mix(in srgb, var(--chip-color) 8%, transparent);
@@ -376,7 +383,7 @@ const handleClick = () => {
 /* ====== 列表模式 ====== */
 .video-card.list-mode {
   display: flex;
-  border-radius: 10px;
+  border-radius: 12px;
 }
 
 .video-card.list-mode .thumbnail {
@@ -384,16 +391,16 @@ const handleClick = () => {
   min-width: 160px;
   padding-bottom: 0;
   height: 90px;
-  border-radius: 10px 0 0 10px;
+  border-radius: 12px 0 0 12px;
 }
 
 .video-card.list-mode .video-info {
   flex: 1;
-  padding: 10px 12px;
+  padding: 10px 14px;
 }
 
 .video-card.list-mode .video-title {
-  font-size: 13px;
+  font-size: 15px;
   -webkit-line-clamp: 1;
 }
 
@@ -401,6 +408,14 @@ const handleClick = () => {
 @media (max-width: 768px) {
   .video-card:hover {
     transform: translateY(-1px);
+  }
+
+  .video-title {
+    font-size: 15px;
+  }
+
+  .video-info {
+    padding: 10px 12px 12px;
   }
 
   .video-card.list-mode .thumbnail {
@@ -411,12 +426,12 @@ const handleClick = () => {
 }
 
 @media (max-width: 480px) {
-  .video-info {
-    padding: 10px;
+  .video-title {
+    font-size: 14px;
   }
 
-  .video-title {
-    font-size: 13px;
+  .video-info {
+    padding: 8px 10px 10px;
   }
 
   .video-card.list-mode .thumbnail {

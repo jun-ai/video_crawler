@@ -1,5 +1,39 @@
 <template>
   <div class="yt-home">
+    <!-- Hero Section -->
+    <section class="home-hero">
+      <div class="hero-content">
+        <h1 class="hero-title">看视频学英语</h1>
+        <h2 class="hero-subtitle">沉浸式练口语 · 真实语料 · AI 解读</h2>
+        <div class="hero-actions">
+          <SfButton type="primary" @click="$router.push('/learning-center')">开始学习</SfButton>
+          <SfButton type="ghost" @click="scrollToVideos">查看视频库</SfButton>
+        </div>
+      </div>
+      <div class="hero-decor">
+        <BookOpen :size="48" class="decor-icon decor-icon-1" />
+        <Sparkles :size="32" class="decor-icon decor-icon-2" />
+        <Headphones :size="40" class="decor-icon decor-icon-3" />
+      </div>
+    </section>
+
+    <!-- Mobile Top Stats (visible < 768px) -->
+    <div class="mobile-stats-bar" v-if="userStore.isLoggedIn">
+      <div class="mobile-stats-scroll">
+        <div class="mobile-stat-chip">
+          <BarChart3 :size="14" />
+          <span>{{ stats.learned }}/{{ stats.total }}</span>
+        </div>
+        <div class="mobile-stat-chip mobile-stat-streak">
+          <Flame :size="14" />
+          <span>{{ calendarData.streak }}天连续</span>
+        </div>
+        <div class="mobile-stat-chip mobile-stat-month">
+          <span>{{ formatMinutes(calendarData.monthly_minutes) }}本月</span>
+        </div>
+      </div>
+    </div>
+
     <div class="home-layout">
       <!-- 左侧统计面板 -->
       <aside class="home-sidebar" v-if="userStore.isLoggedIn">
@@ -255,7 +289,7 @@ import FilterChip from '@/components/common/FilterChip.vue'
 import VideoCard from '@/components/common/VideoCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import AnnouncementBanner from '@/components/common/AnnouncementBanner.vue'
-import { BarChart3, Calendar, Clock, Play, Flame, Sprout, Dumbbell, Star, Trophy, Crown, Target, Sparkles } from 'lucide-vue-next'
+import { BarChart3, Calendar, Clock, Play, Flame, Sprout, Dumbbell, Star, Trophy, Crown, Target, Sparkles, BookOpen, Headphones } from 'lucide-vue-next'
 import SfTooltip from '@/components/ui/SfTooltip.vue'
 import SfProgress from '@/components/ui/SfProgress.vue'
 import SfButton from '@/components/ui/SfButton.vue'
@@ -448,6 +482,11 @@ const goLearn = (id) => {
   router.push(`/learn/${id}`)
 }
 
+const scrollToVideos = () => {
+  const grid = document.querySelector('.video-grid')
+  if (grid) grid.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
 // 继续学习 - 从学习记录中提取未完成的项目
 const continueLearnItems = computed(() => {
   if (!recentItems.value?.length) return []
@@ -583,9 +622,178 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* ============================================================
+   Home.vue — Phase 1A CSS-only Redesign
+   Hero + Mobile sidebar + Chip + Video card Bento
+   ============================================================ */
+
 .yt-home {
   max-width: 1600px;
   margin: 0 auto;
+}
+
+/* ====== Hero Section ====== */
+.home-hero {
+  position: relative;
+  background: var(--yt-brand-gradient, linear-gradient(135deg, #0F4C3A 0%, #1A6B4F 50%, #E2725B 100%));
+  border-radius: var(--radius-2xl, 32px);
+  padding: 64px 48px 56px;
+  margin-bottom: 32px;
+  overflow: hidden;
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 560px;
+}
+
+.hero-title {
+  font-size: 42px;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 12px;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+.hero-subtitle {
+  font-size: 18px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0 0 28px;
+  line-height: 1.5;
+  letter-spacing: 0.3px;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.hero-actions :deep(.sf-btn[type="primary"]) {
+  background: #fff;
+  color: var(--color-brand, #0F4C3A);
+  font-weight: 700;
+  padding: 12px 28px;
+  border-radius: var(--radius-full, 9999px);
+  border: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.hero-actions :deep(.sf-btn[type="primary"]:hover) {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+}
+
+.hero-actions :deep(.sf-btn[type="ghost"]) {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-weight: 600;
+  padding: 12px 28px;
+  border-radius: var(--radius-full, 9999px);
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(8px);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.hero-actions :deep(.sf-btn[type="ghost"]:hover) {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+/* Hero 装饰图标 */
+.hero-decor {
+  position: absolute;
+  right: 40px;
+  bottom: 24px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.decor-icon {
+  position: absolute;
+  color: rgba(255, 255, 255, 0.12);
+}
+
+.decor-icon-1 {
+  right: 0;
+  bottom: 0;
+}
+
+.decor-icon-2 {
+  right: 100px;
+  bottom: 60px;
+  animation: float-slow 6s ease-in-out infinite;
+}
+
+.decor-icon-3 {
+  right: 20px;
+  bottom: 80px;
+  animation: float-slow 5s ease-in-out infinite reverse;
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+/* ====== Mobile Stats Bar ====== */
+.mobile-stats-bar {
+  display: none;
+  margin-bottom: 16px;
+  background: var(--color-brand-subtle, #E8F0EB);
+  border-radius: var(--radius-lg, 16px);
+  padding: 10px 14px;
+  border: 1px solid var(--color-border, #E5E5DE);
+}
+
+.mobile-stats-scroll {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.mobile-stats-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-stat-chip {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 14px;
+  background: var(--color-bg-card, #FFFFFF);
+  border: 1px solid var(--color-border, #E5E5DE);
+  border-radius: var(--radius-md, 12px);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary, #1A2B22);
+  white-space: nowrap;
+  scroll-snap-align: start;
+}
+
+.mobile-stat-chip svg {
+  color: var(--color-brand, #0F4C3A);
+}
+
+.mobile-stat-streak svg {
+  color: var(--color-accent, #E2725B);
+}
+
+.mobile-stat-month {
+  color: var(--color-text-secondary, #5A6B62);
 }
 
 /* ====== 两栏布局 ====== */
@@ -611,11 +819,12 @@ onMounted(async () => {
   padding: 22px;
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-card);
-  transition: box-shadow var(--transition-normal);
+  transition: box-shadow var(--transition-normal), border-color var(--transition-normal);
 }
 
 .sidebar-card:hover {
   box-shadow: var(--shadow-hover);
+  border-color: color-mix(in srgb, var(--color-brand) 25%, var(--color-border));
 }
 
 .sidebar-card-title {
@@ -766,7 +975,7 @@ onMounted(async () => {
   padding: 10px 14px;
   background: var(--color-brand-subtle);
   border-radius: var(--radius-md);
-  border: 1px solid rgba(16, 185, 129, 0.12);
+  border: 1px solid color-mix(in srgb, var(--color-brand) 12%, transparent);
 }
 
 .milestone-icon {
@@ -860,11 +1069,13 @@ onMounted(async () => {
   background: var(--color-bg-elevated);
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background var(--transition-normal);
+  transition: background var(--transition-normal), border-color var(--transition-normal);
+  border: 1px solid transparent;
 }
 
 .recent-item:hover {
-  background: var(--color-bg-elevated);
+  background: var(--color-brand-subtle);
+  border-color: var(--color-border);
 }
 
 .recent-title {
@@ -939,7 +1150,7 @@ onMounted(async () => {
 
 .tag-chips {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   overflow-x: auto;
   padding: 2px 0;
   scrollbar-width: none;
@@ -950,34 +1161,37 @@ onMounted(async () => {
 }
 
 .tag-chip {
-  padding: 4px 12px;
-  border-radius: var(--radius-full);
-  font-size: 12px;
+  padding: 8px 16px;
+  border-radius: 16px;
+  font-size: 13px;
   font-weight: 500;
   background: var(--color-bg-elevated);
   color: var(--color-text-secondary);
-  border: 1px solid var(--color-border);
+  border: 1.5px solid var(--color-border);
   cursor: pointer;
-  transition: all var(--transition-normal);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   white-space: nowrap;
   flex-shrink: 0;
+  user-select: none;
 }
 
 .tag-chip:hover {
   border-color: var(--color-brand);
   color: var(--color-brand);
+  transform: translateY(-1px);
 }
 
 .tag-chip.active {
   background: var(--color-brand);
   color: #fff;
   border-color: var(--color-brand);
+  box-shadow: 0 2px 8px rgba(15, 76, 58, 0.25);
 }
 
-/* 视频网格 */
+/* 视频网格 — Bento 化 */
 .video-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
   padding-top: 4px;
 }
@@ -1121,7 +1335,7 @@ onMounted(async () => {
   }
 
   .video-grid {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   }
 }
 
@@ -1150,6 +1364,38 @@ onMounted(async () => {
 }
 
 @media (max-width: 768px) {
+  /* Hero 缩小 */
+  .home-hero {
+    padding: 36px 24px 32px;
+    border-radius: var(--radius-lg, 16px);
+    margin-bottom: 20px;
+    min-height: auto;
+  }
+
+  .hero-title {
+    font-size: 26px;
+  }
+
+  .hero-subtitle {
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+
+  .hero-decor {
+    display: none;
+  }
+
+  .hero-actions :deep(.sf-btn) {
+    padding: 10px 22px;
+    font-size: 13px;
+  }
+
+  /* Mobile stats bar 可见 */
+  .mobile-stats-bar {
+    display: block;
+  }
+
+  /* 隐藏桌面 sidebar */
   .home-sidebar {
     display: none;
   }
@@ -1159,6 +1405,12 @@ onMounted(async () => {
     padding: 12px 16px;
   }
 
+  .tag-chip {
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 12px;
+  }
+
   .video-grid {
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 12px;
@@ -1166,6 +1418,20 @@ onMounted(async () => {
 }
 
 @media (max-width: 480px) {
+  .home-hero {
+    padding: 28px 18px 24px;
+    border-radius: var(--radius-md, 12px);
+  }
+
+  .hero-title {
+    font-size: 22px;
+  }
+
+  .hero-subtitle {
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+
   .video-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
