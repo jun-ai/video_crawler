@@ -283,8 +283,9 @@ defineExpose({ listRef })
 }
 
 .sf-subtitle-item.active {
-  background: linear-gradient(135deg, var(--sf-brand-subtle) 0%, rgba(15, 76, 58, 0.04) 100%);
-  border-color: rgba(15, 76, 58, 0.2);
+  background: var(--color-bg-mint); /* Phase 0+ SpeakVlog 薄荷绿选中 */
+  border-color: var(--color-brand-bright);
+  box-shadow: inset 3px 0 0 0 var(--color-brand-bright);
 }
 
 /* 左侧状态指示条 */
@@ -298,7 +299,7 @@ defineExpose({ listRef })
   transition: background var(--sf-duration-fast);
 }
 .sf-subtitle-item__indicator.active {
-  background: linear-gradient(180deg, var(--color-brand) 0%, var(--color-accent) 100%);
+  background: linear-gradient(180deg, var(--color-brand-bright) 0%, var(--color-accent) 100%);
 }
 
 /* 时间戳 */
@@ -315,8 +316,8 @@ defineExpose({ listRef })
   margin-top: 1px;
 }
 .sf-subtitle-item.active .sf-subtitle-item__time {
-  background: rgba(15, 76, 58, 0.12);
-  color: var(--color-brand);
+  background: rgba(63, 138, 91, 0.18);
+  color: var(--color-brand-bright);
   border-color: rgba(15, 76, 58, 0.2);
 }
 
@@ -458,9 +459,10 @@ defineExpose({ listRef })
   background: var(--sf-bg-card);
 }
 .sf-subtitle-play-mode__btn.active {
-  background: var(--color-brand);
+  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
   color: #fff;
-  box-shadow: var(--sf-shadow-xs);
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(63, 138, 91, 0.35);
 }
 
 /* 收藏按钮旋转动画 */
