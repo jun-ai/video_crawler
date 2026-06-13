@@ -254,8 +254,33 @@
       </button>
     </nav>
 
-    <!-- 解读面板 Sheet -->
-    <Sheet v-model:open="interpretationSheetOpen">
+    <!-- 解读面板 Sheet — Phase 1B Task 5: mobile bottom / desktop right -->
+    <Sheet v-if="isMobileView" v-model:open="interpretationSheetOpen">
+      <SheetContent side="bottom" class="sf-interpretation-sheet sf-interpretation-sheet--mobile">
+        <SheetHeader>
+          <SheetTitle>词汇解读</SheetTitle>
+        </SheetHeader>
+        <InterpretationDrawer
+          :data="interpretation"
+          :tab="interpretationTab"
+          :filter="interpretationFilter"
+          :hide-cn="hideInterpretationCn"
+          :learning-status="learningStatus"
+          :loading="interpretationLoading"
+          :is-generating="isGenerating"
+          :generating-status="interpretationGeneratingStatus"
+          @generate="generateInterpretation"
+          @update:tab="interpretationTab = $event"
+          @update:filter="interpretationFilter = $event"
+          @update:hide-cn="hideInterpretationCn = $event"
+          @set-status="setLearningStatus"
+          @interpretation-click="handleInterpretationClick"
+          @seek-subtitle="seekToSubtitle"
+          @add-vocabulary="addToVocabulary"
+        />
+      </SheetContent>
+    </Sheet>
+    <Sheet v-else v-model:open="interpretationSheetOpen">
       <SheetContent side="right" class="sf-interpretation-sheet">
         <SheetHeader>
           <SheetTitle>词汇解读</SheetTitle>
@@ -414,6 +439,25 @@ const setMobileTab = (key) => {
   }
   mobileActiveTab.value = key
 }
+
+// Phase 1B Task 5: 移动端宽度检测（用于解读面板 Sheet side 切换）
+const isMobileView = ref(false)
+const updateIsMobile = () => {
+  isMobileView.value = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
+}
+onMounted(() => {
+  updateIsMobile()
+  const mql = window.matchMedia('(max-width: 768px)')
+  if (mql.addEventListener) {
+    mql.addEventListener('change', updateIsMobile)
+  }
+})
+onUnmounted(() => {
+  const mql = window.matchMedia('(max-width: 768px)')
+  if (mql.removeEventListener) {
+    mql.removeEventListener('change', updateIsMobile)
+  }
+})
 
 // 字幕分页相关
 const subtitlePageSize = 10 // 每页显示10条字幕
