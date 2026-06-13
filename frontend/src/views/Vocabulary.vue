@@ -69,96 +69,152 @@
         <div
           v-for="item in vocabularies"
           :key="item.id"
-          :class="['vocab-card', { 'vocab-mastered': item.mastered }]"
+          :class="['vocab-card', {
+            'vocab-mastered': item.mastered,
+            'vocab-learning': !item.mastered && item.review_count > 0,
+            'vocab-new': !item.mastered && item.review_count === 0
+          }]"
         >
-          <!-- 单词头部 -->
-          <div class="vocab-card-top">
-            <div class="vocab-word-area">
-              <div class="vocab-word-row" @click="speakText(item.word)">
-                <span class="vocab-word">{{ item.word }}</span>
-                <Headphones :size="18" class="speak-icon-trigger" />
+          <!-- 状态色条 -->
+          <div class="vocab-status-bar" :class="item.mastered ? 'status-mastered' : (item.review_count > 0 ? 'status-review' : 'status-new')"></div>
+
+          <div class="vocab-card-inner">
+            <!-- 单词头部 -->
+            <div class="vocab-card-top">
+              <div class="vocab-word-area">
+                <div class="vocab-word-row" @click="speakText(item.word)">
+                  <span class="vocab-word">{{ item.word }}</span>
+                </div>
+                <!-- 查询到的音标和释义 -->
+                <div class="vocab-phonetic" v-if="getWordInfo(item.word)?.phonetic">
+                  /{{ getWordInfo(item.word).phonetic }}/
+                </div>
               </div>
-              <!-- 查询到的音标和释义 -->
-              <div class="vocab-phonetic" v-if="getWordInfo(item.word)?.phonetic">
-                /{{ getWordInfo(item.word).phonetic }}/
+
+              <!-- TTS 发音按钮 — 圆形 44px touch target -->
+              <button class="tts-btn" @click="speakText(item.word)" title="朗读发音">
+                <Headphones :size="20" />
+              </button>
+
+              <!-- 状态标签 + 复习进度 -->
+              <div class="vocab-status-group">
+                <SfTag :type="item.mastered ? 'success' : 'warning'" size="sm">
+                  {{ item.mastered ? '已掌握' : '学习中' }}
+                </SfTag>
+                <SfTag
+                  v-if="item.review_count > 0"
+                  size="sm"
+                  type="default"
+                >
+                  复习 {{ item.review_count }} 次
+                </SfTag>
               </div>
             </div>
-            <div class="vocab-badges">
-              <SfTag :type="item.mastered ? 'success' : 'warning'" size="sm">
-                {{ item.mastered ? '已掌握' : '学习中' }}
-              </SfTag>
-              <SfTag
-                v-if="item.review_count > 0"
+
+            <!-- 查询到的翻译 -->
+            <div class="vocab-translation" v-if="showChinese && getWordInfo(item.word)?.translation">
+              {{ getWordInfo(item.word).translation }}
+            </div>
+
+            <!-- 复习进度可视化 -->
+            <div class="vocab-progress-row" v-if="item.review_count > 0">
+              <!-- 掌握度进度环 -->
+              <div class="mastery-ring">
+                <svg viewBox="0 0 36 36" class="mastery-ring-svg">
+                  <path
+                    class="mastery-ring-bg"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                  <path
+                    class="mastery-ring-fill"
+                    :style="{ strokeDasharray: `${Math.min(item.review_count * 15, 100)} ${100 - Math.min(item.review_count * 15, 100)}` }"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                </svg>
+                <span class="mastery-ring-text">{{ Math.min(item.review_count * 15, 100) }}%</span>
+              </div>
+
+              <!-- 复习强度 bar -->
+              <div class="review-strength">
+                <div class="review-strength-label">复习强度</div>
+                <div class="review-strength-bar">
+                  <div
+                    class="review-strength-fill"
+                    :class="{
+                      'strength-low': item.review_count <= 2,
+                      'strength-mid': item.review_count > 2 && item.review_count <= 5,
+                      'strength-high': item.review_count > 5
+                    }"
+                    :style="{ width: Math.min(item.review_count * 15, 100) + '%' }"
+                  ></div>
+                </div>
+                <div class="review-strength-count">{{ item.review_count }} 次</div>
+              </div>
+
+              <!-- 添加时间 -->
+              <div class="vocab-next-review">
+                {{ formatRelativeTime(item.created_at) }}添加
+              </div>
+            </div>
+
+            <!-- 语境 -->
+            <div class="vocab-context-area" v-if="item.context">
+              <div class="vocab-context" @click="speakText(item.context)">
+                <span class="context-label">语境</span>
+                <span class="context-text">{{ item.context }}</span>
+                <Headphones :size="14" class="speak-icon-small" />
+              </div>
+              <div class="vocab-context-cn" v-if="showChinese && item.context_cn">
+                {{ item.context_cn }}
+              </div>
+            </div>
+
+            <!-- 语料来源 -->
+            <div class="vocab-card-footer">
+              <div class="vocab-source" v-if="item.material_title" @click="goToMaterial(item.material_id)">
+                <Play :size="13" />
+                <span>{{ item.material_title }}</span>
+              </div>
+              <div class="vocab-time" v-if="!(item.review_count > 0)">
+                {{ formatRelativeTime(item.created_at) }}
+              </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="vocab-actions">
+              <SfButton
+                type="primary"
                 size="sm"
-                type="default"
+                @click="lookupAndSpeak(item.word)"
+                :loading="lookupLoading[item.word]"
               >
-                复习 {{ item.review_count }} 次
-              </SfTag>
+                <Headphones :size="14" /> 查询发音
+              </SfButton>
+              <SfButton
+                v-if="!item.mastered"
+                type="brand"
+                size="sm"
+                @click="markMastered(item.id)"
+              >
+                标记掌握
+              </SfButton>
+              <SfButton
+                v-if="item.mastered"
+                type="ghost"
+                size="sm"
+                @click="removeFromBook(item.id)"
+              >
+                移出
+              </SfButton>
+              <SfButton
+                v-if="!item.mastered"
+                type="danger"
+                size="sm"
+                @click="deleteVocab(item.id)"
+              >
+                删除
+              </SfButton>
             </div>
-          </div>
-
-          <!-- 查询到的翻译 -->
-          <div class="vocab-translation" v-if="showChinese && getWordInfo(item.word)?.translation">
-            {{ getWordInfo(item.word).translation }}
-          </div>
-
-          <!-- 语境 -->
-          <div class="vocab-context-area" v-if="item.context">
-            <div class="vocab-context" @click="speakText(item.context)">
-              <span class="context-label">语境</span>
-              <span class="context-text">{{ item.context }}</span>
-              <Headphones :size="14" class="speak-icon-small" />
-            </div>
-            <div class="vocab-context-cn" v-if="showChinese && item.context_cn">
-              {{ item.context_cn }}
-            </div>
-          </div>
-
-          <!-- 语料来源 -->
-          <div class="vocab-card-footer">
-            <div class="vocab-source" v-if="item.material_title" @click="goToMaterial(item.material_id)">
-              <Play :size="13" />
-              <span>{{ item.material_title }}</span>
-            </div>
-            <div class="vocab-time">
-              {{ formatRelativeTime(item.created_at) }}
-            </div>
-          </div>
-
-          <!-- 操作按钮 -->
-          <div class="vocab-actions">
-            <SfButton
-              type="primary"
-              size="sm"
-              @click="lookupAndSpeak(item.word)"
-              :loading="lookupLoading[item.word]"
-            >
-              <Headphones :size="14" /> 查询发音
-            </SfButton>
-            <SfButton
-              v-if="!item.mastered"
-              type="brand"
-              size="sm"
-              @click="markMastered(item.id)"
-            >
-              标记掌握
-            </SfButton>
-            <SfButton
-              v-if="item.mastered"
-              type="ghost"
-              size="sm"
-              @click="removeFromBook(item.id)"
-            >
-              移出
-            </SfButton>
-            <SfButton
-              v-if="!item.mastered"
-              type="danger"
-              size="sm"
-              @click="deleteVocab(item.id)"
-            >
-              删除
-            </SfButton>
           </div>
         </div>
 
@@ -397,17 +453,27 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* ============================================
+   Phase 1D — Vocabulary Redesign
+   墨绿 #0F4C3A + 暖橙 #E2725B + Noto Sans SC
+   ============================================ */
+
 .yt-vocabulary {
-  max-width: 1000px;
+  max-width: 960px;
   margin: 0 auto;
 }
 
-/* 筛选条 */
+/* ---- 筛选条 ---- */
 .filter-bar {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
+  padding: 16px 20px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg, 16px);
+  box-shadow: var(--shadow-sm);
 }
 
 .filter-row {
@@ -440,88 +506,162 @@ onMounted(() => {
 .filter-chips {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
-/* 生词列表 */
+/* ---- 生词列表 ---- */
 .vocab-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 20px;
 }
 
+/* ---- 生词卡片 ---- */
 .vocab-card {
-  background: var(--color-bg-base);
-  border-radius: 14px;
-  padding: 20px;
+  position: relative;
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg, 16px);
   border: 1px solid var(--color-border);
-  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition:
+    transform 0.25s var(--ease-bounce),
+    box-shadow 0.25s var(--ease-standard),
+    border-color 0.25s var(--ease-standard);
 }
 
 .vocab-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.08);
-  border-color: rgba(16, 185, 129, 0.15);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-border-brand, #B8D4C5);
 }
 
+/* 状态色条 — 左侧竖线 */
+.vocab-status-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 4px 0 0 4px;
+}
+
+.status-new {
+  background: var(--color-accent, #E2725B);
+}
+
+.status-review {
+  background: var(--color-brand, #0F4C3A);
+}
+
+.status-mastered {
+  background: var(--color-success, #2D8659);
+}
+
+.vocab-card-inner {
+  padding: 24px;
+}
+
+/* 已掌握卡片 */
 .vocab-card.vocab-mastered {
-  border-left: 3px solid var(--color-success);
+  background: linear-gradient(
+    135deg,
+    var(--color-bg-card) 0%,
+    var(--color-brand-subtle) 100%
+  );
 }
 
-/* 单词头部 */
+.vocab-card.vocab-mastered:hover {
+  border-color: var(--color-success);
+}
+
+/* 学习中卡片 */
+.vocab-card.vocab-learning {
+  border-left: none; /* 由 status-bar 代替 */
+}
+
+/* 新词卡片 */
+.vocab-card.vocab-new {
+  border-left: none; /* 由 status-bar 代替 */
+}
+
+/* ---- 单词头部 ---- */
 .vocab-card-top {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 12px;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
 }
 
 .vocab-word-area {
   flex: 1;
+  min-width: 0;
 }
 
 .vocab-word-row {
   display: inline-flex;
-  align-items: center;
+  align-items: baseline;
   gap: 8px;
   cursor: pointer;
-  padding: 4px 10px;
-  border-radius: 10px;
-  transition: background 0.2s;
+  padding: 4px 0;
+  transition: opacity 0.2s;
 }
 
 .vocab-word-row:hover {
-  background: rgba(16, 185, 129, 0.06);
-}
-
-.vocab-word-row:hover .speak-icon-trigger {
-  opacity: 1;
-  color: var(--color-brand);
+  opacity: 0.75;
 }
 
 .vocab-word {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 28px;
+  font-weight: 600;
   color: var(--color-text-primary);
-  letter-spacing: 0.5px;
-}
-
-.speak-icon-trigger {
-  font-size: 18px;
-  color: var(--color-text-muted);
-  opacity: 0;
-  transition: all 0.2s;
+  letter-spacing: -0.3px;
+  line-height: 1.2;
 }
 
 .vocab-phonetic {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--color-text-secondary);
   font-style: italic;
-  margin-top: 2px;
-  padding-left: 10px;
+  margin-top: 4px;
+  letter-spacing: 0.3px;
 }
 
-.vocab-badges {
+/* ---- TTS 发音按钮 — 圆形 44px touch target ---- */
+.tts-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-bg-elevated);
+  color: var(--color-brand);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background 0.2s var(--ease-standard),
+    border-color 0.2s var(--ease-standard),
+    color 0.2s var(--ease-standard),
+    transform 0.2s var(--ease-bounce);
+}
+
+.tts-btn:hover {
+  background: var(--color-brand-subtle);
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+  transform: scale(1.08);
+}
+
+.tts-btn:active {
+  transform: scale(0.95);
+}
+
+/* ---- 状态标签组 ---- */
+.vocab-status-group {
   display: flex;
   gap: 6px;
   flex-shrink: 0;
@@ -529,33 +669,147 @@ onMounted(() => {
   flex-wrap: wrap;
 }
 
-/* 翻译 */
+/* ---- 翻译 ---- */
 .vocab-translation {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--color-text-secondary);
-  line-height: 1.5;
-  margin-bottom: 12px;
-  padding: 8px 12px;
+  line-height: 1.6;
+  margin-bottom: 14px;
+  padding: 12px 16px;
   background: var(--color-bg-elevated);
-  border-radius: 8px;
+  border-radius: var(--radius-sm, 8px);
+  border-left: 3px solid var(--color-brand);
 }
 
-/* 语境 */
+/* ---- 复习进度可视化 ---- */
+.vocab-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 14px;
+  padding: 12px 16px;
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-sm, 8px);
+  flex-wrap: wrap;
+}
+
+/* 掌握度进度环 */
+.mastery-ring {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.mastery-ring-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.mastery-ring-bg {
+  fill: none;
+  stroke: var(--color-border);
+  stroke-width: 3;
+}
+
+.mastery-ring-fill {
+  fill: none;
+  stroke: var(--color-brand);
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.4s var(--ease-standard);
+}
+
+.vocab-mastered .mastery-ring-fill {
+  stroke: var(--color-success);
+}
+
+.mastery-ring-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+/* 复习强度 bar */
+.review-strength {
+  flex: 1;
+  min-width: 100px;
+}
+
+.review-strength-label {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.review-strength-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--color-border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.review-strength-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s var(--ease-standard);
+}
+
+.strength-low {
+  background: var(--color-accent, #E2725B);
+}
+
+.strength-mid {
+  background: var(--color-brand, #0F4C3A);
+}
+
+.strength-high {
+  background: var(--color-success, #2D8659);
+}
+
+.review-strength-count {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-top: 3px;
+}
+
+/* 下次复习时间提示 */
+.vocab-next-review {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ---- 语境 ---- */
 .vocab-context-area {
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .vocab-context {
   font-size: 14px;
   color: var(--color-text-secondary);
-  line-height: 1.5;
+  line-height: 1.6;
   cursor: pointer;
-  padding: 8px 12px;
+  padding: 10px 14px;
   background: var(--color-bg-elevated);
-  border-radius: 8px;
+  border-radius: var(--radius-sm, 8px);
   display: flex;
   align-items: flex-start;
-  gap: 6px;
+  gap: 8px;
+  transition: background 0.2s;
+}
+
+.vocab-context:hover {
+  background: var(--color-brand-subtle);
 }
 
 .vocab-context:hover .speak-icon-small {
@@ -565,9 +819,13 @@ onMounted(() => {
 
 .context-label {
   color: var(--color-brand);
-  font-weight: 500;
+  font-weight: 600;
   white-space: nowrap;
   flex-shrink: 0;
+  font-size: 12px;
+  padding: 2px 6px;
+  background: var(--color-brand-subtle);
+  border-radius: 4px;
 }
 
 .context-text {
@@ -586,65 +844,73 @@ onMounted(() => {
 .vocab-context-cn {
   font-size: 13px;
   color: var(--color-text-muted);
-  line-height: 1.5;
-  padding: 6px 12px;
+  line-height: 1.6;
+  padding: 8px 14px;
   background: var(--color-bg-elevated);
-  border-radius: 8px;
+  border-radius: var(--radius-sm, 8px);
   margin-top: 6px;
 }
 
-/* 卡片底部 */
+/* ---- 卡片底部 ---- */
 .vocab-card-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .vocab-source {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   font-size: 12px;
   color: var(--color-text-secondary);
   cursor: pointer;
-  padding: 3px 10px;
+  padding: 5px 12px;
   background: var(--color-bg-elevated);
-  border-radius: 12px;
-  transition: all 0.2s;
+  border-radius: var(--radius-full, 9999px);
+  transition: all 0.2s var(--ease-standard);
+  border: 1px solid transparent;
 }
 
 .vocab-source:hover {
-  background: rgba(16, 185, 129, 0.08);
+  background: var(--color-brand-subtle);
   color: var(--color-brand);
+  border-color: var(--color-border-brand, #B8D4C5);
 }
 
-.vocab-source .el-icon {
-  font-size: 13px;
+.vocab-source svg {
+  flex-shrink: 0;
 }
 
 .vocab-time {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--color-text-muted);
 }
 
-/* 操作按钮 */
+/* ---- 操作按钮 ---- */
 .vocab-actions {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  padding-top: 12px;
+  padding-top: 14px;
   border-top: 1px solid var(--color-border);
+  flex-wrap: wrap;
 }
 
-/* 分页 */
+/* 确保 touch target */
+.vocab-actions :deep(.sf-btn) {
+  min-height: 36px;
+}
+
+/* ---- 分页 ---- */
 .pagination {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 24px;
-  padding: 24px 0;
+  padding: 32px 0;
   flex-wrap: wrap;
 }
 
@@ -674,58 +940,162 @@ onMounted(() => {
   white-space: nowrap;
 }
 
-/* 响应式 */
+/* ---- Loading skeleton ---- */
+.vocab-list :deep(.el-loading-mask) {
+  background: rgba(250, 250, 247, 0.85);
+  border-radius: var(--radius-lg, 16px);
+}
+
+.vocab-list :deep(.el-loading-spinner .path) {
+  stroke: var(--color-brand, #0F4C3A);
+}
+
+.vocab-list :deep(.el-loading-spinner .el-loading-text) {
+  color: var(--color-brand, #0F4C3A);
+}
+
+/* ---- 空状态 ---- */
+.vocab-list :deep(.empty-state) {
+  padding: 64px 16px;
+}
+
+.vocab-list :deep(.empty-state .empty-title) {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.vocab-list :deep(.empty-state .empty-description) {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.vocab-list :deep(.empty-state .empty-actions .sf-btn) {
+  min-height: 44px;
+  padding: 0 24px;
+  font-size: 15px;
+}
+
+/* ============================================
+   响应式 — 移动端优化
+   ============================================ */
 @media (max-width: 768px) {
+  .filter-bar {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
   .filter-row {
     flex-direction: column;
     align-items: flex-start;
     width: 100%;
+    gap: 10px;
   }
 
   .filter-section {
     width: 100%;
   }
 
-  .filter-section .el-select {
-    width: 100% !important;
+  .filter-section :deep(.el-select),
+  .filter-section :deep(.sf-select) {
+    flex: 1;
   }
 
   .filter-total {
     margin-left: 0;
   }
 
-  .vocab-card {
+  .filter-chips {
+    width: 100%;
+  }
+
+  /* 单列布局 */
+  .vocab-list {
+    gap: 14px;
+  }
+
+  .vocab-card-inner {
     padding: 16px;
   }
 
-  .vocab-word {
-    font-size: 20px;
-  }
-
   .vocab-card-top {
-    flex-direction: column;
-    gap: 8px;
+    gap: 12px;
   }
 
-  .vocab-badges {
-    align-self: flex-start;
+  .vocab-word {
+    font-size: 22px;
   }
 
+  .vocab-phonetic {
+    font-size: 13px;
+  }
+
+  /* mobile TTS 按钮保持 44px */
+  .tts-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* 翻译区 */
+  .vocab-translation {
+    font-size: 14px;
+    padding: 10px 12px;
+  }
+
+  /* 进度行 mobile */
+  .vocab-progress-row {
+    gap: 12px;
+    padding: 10px 12px;
+  }
+
+  .review-strength {
+    min-width: 80px;
+  }
+
+  /* 操作按钮 44px touch target */
   .vocab-actions {
-    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .vocab-actions :deep(.sf-btn) {
+    min-height: 44px;
+    flex: 1;
+    justify-content: center;
   }
 }
 
 @media (max-width: 480px) {
   .vocab-word {
-    font-size: 18px;
+    font-size: 20px;
   }
 
+  .vocab-card-top {
+    flex-wrap: wrap;
+  }
+
+  .vocab-status-group {
+    width: 100%;
+    order: 3;
+  }
+
+  /* mobile 操作按钮竖排 */
   .vocab-actions {
     flex-direction: column;
+    gap: 6px;
   }
 
-  .vocab-actions .sf-btn {
+  .vocab-actions :deep(.sf-btn) {
+    width: 100%;
+  }
+
+  .vocab-progress-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .review-strength {
     width: 100%;
   }
 }
