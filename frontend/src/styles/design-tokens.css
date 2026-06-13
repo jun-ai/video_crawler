@@ -173,6 +173,7 @@
   --transition-normal: var(--sf-duration-normal);
   --transition-slow: var(--sf-duration-slow);
   --yt-brand-gradient: linear-gradient(135deg, #0F4C3A 0%, #1A6B4F 50%, #E2725B 100%);
+  --yt-cta-gradient: linear-gradient(#4DA06C 0%, #3F8A5B 100%);  /* SpeakVlog 借鉴 CTA 按钮 */
   --yt-bg-gradient: linear-gradient(180deg, #FAFAF7 0%, #F5F5F0 25%, #FAFAF7 100%);
   --glass-bg: rgba(255, 255, 255, 0.9);
   --glass-blur: blur(12px);

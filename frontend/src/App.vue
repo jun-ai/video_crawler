@@ -1,9 +1,9 @@
 <template>
   <SfProvider>
     <div :class="themeStore.theme === 'dark' ? 'dark' : ''" style="min-height: 100vh; background: var(--color-bg-base)">
-      <!-- 顶部导航栏 -->
-      <header class="fixed top-0 left-0 right-0 h-16 flex items-center justify-between px-6 z-[1000] border-b"
-              style="background: var(--color-bg-card); border-color: var(--color-border); backdrop-filter: blur(12px)">
+      <!-- 顶部导航栏 — SpeakVlog 毛玻璃 -->
+      <header class="fixed top-0 left-0 right-0 h-16 flex items-center justify-between px-6 z-[1000]"
+              style="background: var(--color-bg-frosted); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0,0,0,0.04)">
         <div class="flex items-center gap-8">
           <!-- Logo -->
           <div class="flex items-center gap-2 cursor-pointer flex-shrink-0" @click="$router.push('/')">
@@ -87,10 +87,10 @@
                     @mouseleave="$event.target.style.background = 'transparent'">
                 登录
               </span>
-              <button class="px-4 py-2 rounded-xl text-sm font-semibold text-white transition-colors duration-150"
-                      style="background: var(--color-brand)"
-                      @mouseenter="$event.target.style.background = 'var(--color-brand-hover)'"
-                      @mouseleave="$event.target.style.background = 'var(--color-brand)'"
+              <button class="px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all duration-200"
+                      style="background: linear-gradient(#4DA06C 0%, #3F8A5B 100%)"
+                      @mouseenter="$event.target.style.opacity = '0.9'"
+                      @mouseleave="$event.target.style.opacity = '1'"
                       @click="$router.push('/login')">
                 开始学习
               </button>

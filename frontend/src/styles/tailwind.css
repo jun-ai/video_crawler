@@ -47,6 +47,14 @@
   --color-brand-light: #B8D4C5;      /* 浅 — 文字背景 */
   --color-brand-subtle: #E8F0EB;     /* 极浅 — 高亮背景 */
 
+  /* ========== 品牌色 (SpeakVlog 借鉴 — Phase 0+) ========== */
+  --color-brand-bright: #3F8A5B;       /* 品牌亮绿 — CTA 渐变用 */
+  --color-brand-bright-hover: #4DA06C; /* 亮绿 hover / 渐变亮端 */
+  --color-bg-frosted: rgba(246, 250, 245, 0.85); /* 导航毛玻璃底 */
+  --color-bg-pale: #F6FAF5;           /* 极浅绿背景 */
+  --color-bg-mint: #E8F3EA;           /* 薄荷绿背景 */
+  --color-footer: #F1F6EE;            /* footer 底色 */
+
   /* ========== 强调色 (暖橙系 — Phase 0) ========== */
   --color-accent: #E2725B;           /* 强调 — 暖橙 */
   --color-accent-hover: #C95E47;
@@ -111,6 +119,8 @@
   --text-3xl: 30px;
   --text-4xl: 36px;
   --text-5xl: 48px;
+  --text-hero: clamp(48px, 6vw, 84px); /* 首页 Hero 标题 (SpeakVlog 借鉴) */
+  --text-section: clamp(30px, 3.5vw, 44px); /* 区块 H2 (SpeakVlog 借鉴) */
 
   /* ========== 行高 ========== */
   --leading-xs: 1.33;
