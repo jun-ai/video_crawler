@@ -1,27 +1,25 @@
 <template>
-  <div class="yt-profile">
+  <div class="profile-page">
     <!-- 用户信息卡片 -->
-    <div class="channel-header">
-      <div class="channel-banner">
-        <div class="channel-info">
-          <div class="channel-avatar">
-            <SfAvatar :name="userStore.user?.username?.charAt(0) || 'U'" size="lg" />
-          </div>
-          <div class="channel-details">
-            <h1 class="channel-name">{{ userStore.user?.username || '未登录' }}</h1>
-            <p class="channel-meta">
-              <span v-if="userStore.user?.created_at">加入于 {{ formatDate(userStore.user.created_at) }}</span>
-            </p>
-          </div>
-          <SfButton type="primary" class="edit-btn" @click="showEditDialog = true">
-            编辑资料
-          </SfButton>
+    <div class="profile-hero">
+      <div class="profile-hero-inner">
+        <div class="profile-avatar">
+          <SfAvatar :name="userStore.user?.username?.charAt(0) || 'U'" size="lg" />
         </div>
+        <div class="profile-user-info">
+          <h1 class="profile-name">{{ userStore.user?.username || '未登录' }}</h1>
+          <p class="profile-meta">
+            <span v-if="userStore.user?.created_at">加入于 {{ formatDate(userStore.user.created_at) }}</span>
+          </p>
+        </div>
+        <SfButton type="primary" class="profile-edit-btn" @click="showEditDialog = true">
+          编辑资料
+        </SfButton>
       </div>
     </div>
 
     <!-- 学习统计 -->
-    <div class="stats-section">
+    <div class="profile-section">
       <PageHeader title="学习统计" />
       <div class="stats-grid">
         <div class="stat-card">
@@ -33,7 +31,7 @@
           <div class="stat-label">学习天数</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value highlight">{{ stats.streak_days }}</div>
+          <div class="stat-value stat-value--accent">{{ stats.streak_days }}</div>
           <div class="stat-label">连续学习</div>
         </div>
         <div class="stat-card">
@@ -44,7 +42,7 @@
     </div>
 
     <!-- 最近学习 -->
-    <div class="recent-section" v-if="recentLearning.length > 0">
+    <div class="profile-section" v-if="recentLearning.length > 0">
       <PageHeader title="最近学习">
         <template #actions>
           <SfButton type="ghost" size="sm" @click="$router.push('/learning-center')">
@@ -67,7 +65,7 @@
     </div>
 
     <!-- 功能菜单 -->
-    <div class="menu-section">
+    <div class="profile-menu">
       <div class="menu-item" @click="$router.push('/favorites')">
         <Star :size="22" />
         <span>我的收藏</span>
@@ -236,130 +234,134 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.yt-profile {
-  max-width: 1000px;
+.profile-page {
+  max-width: 800px;
   margin: 0 auto;
+  padding: 0 0 32px 0;
+  font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* 频道头部 */
-.channel-header {
-  margin-bottom: var(--spacing-xl, 24px);
-}
-
-.channel-banner {
+/* ── Hero 用户信息 ── */
+.profile-hero {
+  margin-bottom: 24px;
   background: var(--color-brand);
   border-radius: var(--radius-lg);
-  padding: 28px;
+  padding: 28px 32px;
   color: #fff;
 }
 
-.channel-info {
+.profile-hero-inner {
   display: flex;
   align-items: center;
-  gap: var(--spacing-lg, 20px);
+  gap: 20px;
 }
 
-.channel-avatar .el-avatar {
-  background: rgba(255, 255, 255, 0.3);
+.profile-avatar :deep(.el-avatar),
+.profile-avatar :deep(.sf-avatar) {
+  background: rgba(255, 255, 255, 0.2);
   color: #fff;
-  font-size: 32px;
-  font-weight: bold;
-  border: 3px solid rgba(255, 255, 255, 0.5);
+  font-size: 28px;
+  font-weight: 700;
+  border: 3px solid rgba(255, 255, 255, 0.4);
 }
 
-.channel-details {
+.profile-user-info {
   flex: 1;
+  min-width: 0;
 }
 
-.channel-name {
-  font-size: var(--font-size-2xl, 24px);
-  font-weight: var(--font-weight-semibold, 600);
+.profile-name {
+  font-size: 22px;
+  font-weight: 700;
   margin: 0 0 4px 0;
+  color: #fff;
 }
 
-.channel-meta {
-  font-size: var(--font-size-base, 14px);
-  opacity: 0.9;
+.profile-meta {
+  font-size: 13px;
+  opacity: 0.85;
   margin: 0;
 }
 
-.edit-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.5);
-  color: #fff;
+.profile-edit-btn {
+  background: rgba(255, 255, 255, 0.18) !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  color: #fff !important;
+  border-radius: var(--radius-md);
+  transition: background 0.2s, border-color 0.2s;
+  white-space: nowrap;
 }
 
-.edit-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.7);
+.profile-edit-btn:hover {
+  background: rgba(255, 255, 255, 0.28) !important;
+  border-color: rgba(255, 255, 255, 0.6) !important;
 }
 
-/* 统计区域 */
-.stats-section {
-  background: var(--color-bg-base);
-  border-radius: 16px;
-  padding: 24px;
-  margin-bottom: 24px;
+/* ── 统计区域 ── */
+.profile-section {
+  background: var(--color-bg-card);
   border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
 }
 
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
+  gap: 12px;
   margin-top: 16px;
 }
 
 .stat-card {
   text-align: center;
-  padding: 20px;
+  padding: 20px 12px;
   background: var(--color-bg-elevated);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   border: 1px solid transparent;
-  transition: border-color 0.2s, transform 0.2s;
+  transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .stat-card:hover {
   border-color: var(--color-border);
+  transform: translateY(-1px);
 }
 
 .stat-value {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 800;
   color: var(--color-brand);
   margin-bottom: 4px;
+  letter-spacing: -0.01em;
 }
 
-.stat-value.highlight {
-  color: var(--color-warning);
+.stat-value--accent {
+  color: var(--color-accent);
 }
 
 .stat-label {
-  font-size: var(--font-size-sm, 13px);
+  font-size: 13px;
   color: var(--color-text-secondary);
 }
 
-/* 最近学习 */
-.recent-section {
-  margin-bottom: var(--spacing-xl, 24px);
-}
-
+/* ── 视频网格 ── */
 .video-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
   margin-top: 16px;
 }
 
-/* 菜单 */
-.menu-section {
-  background: var(--color-bg-base);
-  border-radius: 16px;
-  overflow: hidden;
-  margin-bottom: 24px;
+/* ── 菜单 ── */
+.profile-menu {
+  background: var(--color-bg-card);
   border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
 }
 
 .menu-item {
@@ -367,8 +369,10 @@ onMounted(() => {
   align-items: center;
   padding: 16px 20px;
   cursor: pointer;
-  transition: background 0.2s, padding-left 0.2s;
+  transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              padding-left 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   border-bottom: 1px solid var(--color-border);
+  gap: 16px;
 }
 
 .menu-item:last-child {
@@ -380,88 +384,87 @@ onMounted(() => {
   padding-left: 24px;
 }
 
-.menu-item .el-icon:first-child {
-  margin-right: var(--spacing-md, 16px);
-  font-size: 22px;
+.menu-item svg:first-child {
   color: var(--color-text-secondary);
+  flex-shrink: 0;
 }
 
 .menu-item span {
   flex: 1;
-  font-size: var(--font-size-base, 15px);
+  font-size: 15px;
   color: var(--color-text-primary);
 }
 
 .menu-arrow {
   color: var(--color-text-muted);
+  flex-shrink: 0;
 }
 
-/* 退出登录 */
+/* ── 退出登录 ── */
 .logout-section {
   text-align: center;
-  padding: var(--spacing-2xl, 24px) 0;
+  padding: 16px 0;
 }
 
 .logout-btn {
   width: 100%;
-  max-width: 300px;
+  max-width: 320px;
+  height: 48px !important;
+  font-size: 15px;
+  font-weight: 600;
+  background: var(--color-accent) !important;
+  border: none;
+  border-radius: var(--radius-md);
+  transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 响应式 */
+.logout-btn:hover {
+  background: var(--color-accent-hover) !important;
+}
+
+/* ── 响应式 ── */
 @media (max-width: 768px) {
-  .channel-banner {
-    padding: var(--spacing-lg, 20px);
-    border-radius: var(--radius-md, 8px);
+  .profile-hero {
+    padding: 20px;
+    border-radius: var(--radius-md);
   }
 
-  .channel-info {
+  .profile-hero-inner {
     flex-direction: column;
     text-align: center;
-    gap: var(--spacing-sm, 12px);
+    gap: 12px;
   }
 
-  .channel-name {
-    font-size: var(--font-size-xl, 20px);
+  .profile-name {
+    font-size: 20px;
   }
 
-  .channel-meta {
-    font-size: var(--font-size-sm, 13px);
-  }
-
-  .stats-section {
-    padding: var(--spacing-md, 16px);
-    border-radius: var(--radius-md, 8px);
-    margin-bottom: var(--spacing-md, 16px);
+  .profile-section {
+    padding: 20px 16px;
+    border-radius: var(--radius-md);
+    margin-bottom: 16px;
   }
 
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: var(--spacing-sm, 12px);
+    gap: 10px;
   }
 
   .stat-card {
-    padding: var(--spacing-md, 16px);
+    padding: 16px 8px;
   }
 
   .stat-value {
-    font-size: var(--font-size-2xl, 24px);
+    font-size: 22px;
   }
 
   .video-grid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: var(--spacing-sm, 12px);
+    gap: 12px;
   }
 
-  .menu-section {
-    border-radius: var(--radius-md, 8px);
-  }
-
-  .menu-item {
-    padding: var(--spacing-sm, 14px) var(--spacing-md, 16px);
-  }
-
-  .menu-item span {
-    font-size: var(--font-size-sm, 14px);
+  .profile-menu {
+    border-radius: var(--radius-md);
   }
 
   .logout-btn {
@@ -470,28 +473,36 @@ onMounted(() => {
 }
 
 @media (max-width: 480px) {
-  .channel-banner {
-    padding: var(--spacing-md, 16px);
+  .profile-hero {
+    padding: 16px;
   }
 
-  .channel-name {
-    font-size: var(--font-size-lg, 18px);
+  .profile-name {
+    font-size: 18px;
   }
 
   .stat-card {
-    padding: var(--spacing-sm, 12px);
+    padding: 12px 6px;
   }
 
   .stat-value {
-    font-size: var(--font-size-xl, 20px);
+    font-size: 20px;
   }
 
   .stat-label {
-    font-size: var(--font-size-xs, 12px);
+    font-size: 12px;
   }
 
   .video-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .menu-item {
+    padding: 14px 16px;
+  }
+
+  .menu-item span {
+    font-size: 14px;
   }
 }
 </style>
