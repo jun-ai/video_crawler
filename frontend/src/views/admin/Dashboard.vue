@@ -176,48 +176,53 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* ========================================
+   Dashboard — Phase 3 CSS-only dark admin
+   ======================================== */
+
 .dashboard {
   max-width: 1200px;
 }
 
 .page-title {
-  margin: 0 0 24px;
+  margin: 0 0 28px;
   font-size: 22px;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: #E2E8E2;
+  letter-spacing: -0.3px;
 }
 
-/* 统计卡片网格 */
+/* ── KPI Stats Grid ── */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 
 .stat-card {
   position: relative;
   overflow: hidden;
-  background: var(--sf-admin-sidebar-bg);
-  border-radius: 16px;
-  padding: 22px;
+  background: #0F1A14;
+  border-radius: 14px;
+  padding: 22px 20px;
   display: flex;
   align-items: center;
   gap: 16px;
-  box-shadow: var(--shadow-card);
-  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.28s ease;
-  border: 1px solid var(--sf-admin-sidebar-border);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+              border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .stat-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .stat-icon-wrap {
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
   background: color-mix(in srgb, var(--accent) 12%, transparent);
   display: flex;
   align-items: center;
@@ -232,27 +237,30 @@ onMounted(() => {
 }
 
 .stat-value {
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 800;
-  color: var(--color-text-primary);
-  line-height: 1.2;
+  color: #E2E8E2;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
 }
 
 .stat-label {
   font-size: 13px;
-  color: var(--color-text-muted);
-  margin-top: 2px;
+  color: #647468;
+  margin-top: 4px;
+  font-weight: 400;
 }
 
 .stat-bg-icon {
   position: absolute;
-  right: -8px;
-  bottom: -12px;
-  color: color-mix(in srgb, var(--accent) 6%, transparent);
+  right: -6px;
+  bottom: -10px;
+  color: color-mix(in srgb, var(--accent) 5%, transparent);
   z-index: 0;
 }
 
-/* 信息区域网格 */
+/* ── Info Grid ── */
 .info-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -260,36 +268,35 @@ onMounted(() => {
 }
 
 .info-card {
-  background: var(--sf-admin-sidebar-bg);
-  border-radius: 16px;
+  background: #0F1A14;
+  border-radius: 14px;
   padding: 22px;
-  border: 1px solid var(--sf-admin-sidebar-border);
-  box-shadow: var(--shadow-card);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .card-title {
   margin: 0;
   font-size: 15px;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: #E2E8E2;
 }
 
 .test-btn {
   border-radius: 10px;
 }
 
-/* 存储信息 */
+/* ── Storage Info ── */
 .storage-grid {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .storage-item {
@@ -297,22 +304,22 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 10px 14px;
-  background: var(--sf-admin-sidebar-active);
+  background: rgba(255, 255, 255, 0.04);
   border-radius: 10px;
 }
 
 .storage-label {
   font-size: 13px;
-  color: var(--color-text-secondary);
+  color: #94A398;
 }
 
 .storage-value {
   font-size: 14px;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: #E2E8E2;
 }
 
-/* 分类统计 */
+/* ── Category Bar Chart ── */
 .category-list {
   display: flex;
   flex-direction: column;
@@ -327,7 +334,7 @@ onMounted(() => {
 
 .cat-name {
   font-size: 13px;
-  color: var(--color-text-secondary);
+  color: #94A398;
   width: 60px;
   flex-shrink: 0;
 }
@@ -335,34 +342,35 @@ onMounted(() => {
 .cat-bar-wrap {
   flex: 1;
   height: 8px;
-  background: var(--sf-admin-sidebar-active);
+  background: rgba(255, 255, 255, 0.06);
   border-radius: 4px;
   overflow: hidden;
 }
 
 .cat-bar {
   height: 100%;
-  background: linear-gradient(90deg, var(--color-brand), #60a5fa);
+  background: linear-gradient(90deg, #0F4C3A, #6FA386);
   border-radius: 4px;
-  transition: width 0.3s ease;
+  transition: width 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .cat-count {
   font-size: 13px;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: #E2E8E2;
   width: 30px;
   text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .empty-text {
   font-size: 13px;
-  color: var(--color-text-muted);
+  color: #5A6B62;
   text-align: center;
-  padding: 16px;
+  padding: 20px;
 }
 
-/* 存储分布 */
+/* ── Storage Distribution ── */
 .storage-dist {
   display: flex;
   flex-direction: column;
@@ -373,23 +381,23 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
-  background: var(--sf-admin-sidebar-active);
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.04);
   border-radius: 8px;
 }
 
 .dist-type {
   font-size: 13px;
-  color: var(--color-text-secondary);
+  color: #94A398;
 }
 
 .dist-count {
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-text-primary);
+  color: #E2E8E2;
 }
 
-/* 响应式 */
+/* ── Responsive ── */
 @media (max-width: 1024px) {
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -402,6 +410,16 @@ onMounted(() => {
 @media (max-width: 600px) {
   .stats-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .stat-value {
+    font-size: 26px;
+  }
+
+  .page-title {
+    font-size: 19px;
+    margin-bottom: 20px;
   }
 }
 </style>
