@@ -2029,126 +2029,38 @@ onUnmounted(() => {
   animation: fadeSlideIn 0.3s var(--sf-easing-standard);
 }
 
-/* ==================== 页面头部 ==================== */
-.sf-page-header {
-  margin-bottom: 16px;
-  border-bottom: 1px solid var(--color-border);
-  padding-bottom: 14px;
-}
-
-.sf-header-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 0 10px;
-}
-
-.sf-header-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-}
-
-.sf-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin: 0;
-  line-height: 1.3;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  letter-spacing: -0.3px;
-}
-
-.sf-header-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-/* 进度条 */
-.sf-header-meta {
-  padding-top: 2px;
-}
-
-.sf-progress-bar {
-  height: 3px;
-  border-radius: 2px;
-  background: var(--sf-bg-elevated);
-  overflow: hidden;
-  margin-bottom: 8px;
-}
-
-.sf-progress-bar__fill {
-  height: 100%;
-  background: var(--sf-brand-gradient);
-  border-radius: 2px;
-  transition: width 0.5s var(--sf-ease-standard);
-}
-
-.sf-header-stats {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.sf-stat-badge {
+/* ==================== Annotation Popup 按钮 ==================== */
+.sf-btn {
   display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 10px;
-  background: var(--sf-bg-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: var(--sf-radius-full);
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--color-text-secondary);
-}
-
-.sf-stat-badge .el-icon {
-  font-size: 12px;
-  color: var(--color-brand);
-}
-
-/* ==================== 模式切换 - 分段控制器 ==================== */
-.sf-segment {
-  display: inline-flex;
-  gap: 0;
-  margin-bottom: 16px;
-  background: var(--sf-bg-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: var(--sf-radius-full);
-  padding: 3px;
-}
-
-.sf-segment__item {
-  display: flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 18px;
-  font-size: 13px;
+  padding: 8px 14px;
+  border-radius: var(--sf-radius-md);
+  font-size: 14px;
   font-weight: 500;
-  color: var(--color-text-secondary);
-  background: transparent;
-  border: none;
-  border-radius: var(--sf-radius-full);
   cursor: pointer;
-  transition: all var(--sf-duration-fast) var(--sf-ease-standard);
-  font-family: inherit;
-  white-space: nowrap;
+  transition: all var(--sf-duration-fast);
+  border: 1px solid transparent;
 }
-.sf-segment__item:hover {
-  color: var(--color-text-primary);
+.sf-btn--sm { padding: 6px 12px; font-size: 13px; }
+.sf-btn--ghost {
+  background: var(--color-bg-elevated);
+  color: var(--color-text-secondary);
+  border-color: var(--color-border);
 }
-.sf-segment__item.active {
-  background: var(--sf-bg-card);
-  color: var(--color-text-primary);
-  font-weight: 600;
-  box-shadow: var(--sf-shadow-xs);
+.sf-btn--ghost:hover {
+  color: var(--color-brand);
+  border-color: var(--color-border-brand);
 }
+.sf-btn--primary {
+  background: var(--color-brand);
+  color: #fff;
+  border-color: var(--color-brand);
+}
+.sf-btn--primary:hover {
+  background: var(--color-brand-hover);
+}
+.sf-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ==================== 主内容区 ==================== */
 .sf-main-content {
