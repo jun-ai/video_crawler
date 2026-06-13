@@ -23,6 +23,16 @@
   --ring: var(--color-brand);
   --radius: var(--radius-md);
 
+  /* Admin 浅色主题变量 (Phase 0+) */
+  --sf-admin-sidebar-bg: #FFFFFF;
+  --sf-admin-sidebar-active: #E8F5EE;
+  --sf-admin-sidebar-text: #5A6B62;
+  --sf-admin-sidebar-text-active: #0F4C3A;
+  --sf-admin-sidebar-border: #E5E9E5;
+  --sf-admin-sidebar-hover: #F0F4F1;
+  --sf-admin-accent: #0F4C3A;
+  --sf-admin-accent-light: rgba(15, 76, 58, 0.08);
+
   /* 兼容旧 --yt-* 变量 */
   --yt-text-primary: var(--color-text-primary);
   --yt-text-secondary: var(--color-text-secondary);

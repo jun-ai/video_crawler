@@ -328,7 +328,7 @@ const goBack = () => {
   background: none;
   border: none;
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.2);
+  color: rgba(0, 0, 0, 0.15);
   padding: 2px;
   transition: color 0.15s, transform 0.15s;
 }
@@ -355,7 +355,7 @@ const goBack = () => {
 
 .drop-zone {
   position: relative;
-  border: 2px dashed rgba(255, 255, 255, 0.12);
+  border: 2px dashed #DDE2DD;
   border-radius: var(--radius-lg, 12px);
   padding: 32px 20px;
   cursor: pointer;

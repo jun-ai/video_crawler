@@ -112,13 +112,12 @@ const goHome = () => {
 
 <style scoped>
 /* ========================================
-   AdminLayout — Phase 3 CSS-only dark sidebar
-   Reference: Linear / Vercel Dashboard
+   AdminLayout — Phase 0+ 浅色主题
    ======================================== */
 
 .admin-layout {
   min-height: 100vh;
-  background: #1A2820;
+  background: #F5F7F5;
 }
 
 .admin-container {
@@ -130,10 +129,10 @@ const goHome = () => {
 .admin-sidebar {
   width: 240px;
   min-width: 240px;
-  background: #0A130E;
+  background: #FFFFFF;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  border-right: 1px solid #E5E9E5;
   position: fixed;
   top: 0;
   left: 0;
@@ -144,7 +143,7 @@ const goHome = () => {
 
 .sidebar-header {
   padding: 24px 20px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid #E5E9E5;
 }
 
 .sidebar-logo {
@@ -164,11 +163,11 @@ const goHome = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(15, 76, 58, 0.5);
+  box-shadow: 0 2px 8px rgba(15, 76, 58, 0.3);
 }
 
 .logo-text {
-  color: #EDF2EE;
+  color: #1A2820;
   font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.3px;
@@ -191,7 +190,7 @@ const goHome = () => {
   border-radius: 8px;
   height: 40px;
   padding: 0 16px;
-  color: var(--sf-admin-sidebar-text);
+  color: #5A6B62;
   cursor: pointer;
   transition: background 0.18s cubic-bezier(0.4, 0, 0.2, 1),
               color 0.18s cubic-bezier(0.4, 0, 0.2, 1);
@@ -214,14 +213,14 @@ const goHome = () => {
 }
 
 .sidebar-menu-item:hover {
-  background: var(--sf-admin-sidebar-hover);
-  color: #C8D6CC;
+  background: #F0F4F1;
+  color: #1A2820;
 }
 
 .sidebar-menu-item.active {
-  background: #243A2D;
-  color: var(--sf-admin-sidebar-text-active);
-  font-weight: 500;
+  background: #E8F5EE;
+  color: #0F4C3A;
+  font-weight: 600;
 }
 
 .sidebar-menu-item.active::before {
@@ -232,17 +231,17 @@ const goHome = () => {
 .sidebar-divider {
   margin: 8px 16px;
   border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid #E5E9E5;
 }
 
 /* ── Sidebar Footer ── */
 .sidebar-footer {
   padding: 12px 16px 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid #E5E9E5;
 }
 
 .back-btn {
-  color: rgba(255, 255, 255, 0.35);
+  color: #8A9A90;
   width: 100%;
   justify-content: flex-start;
   height: 36px;
@@ -251,8 +250,8 @@ const goHome = () => {
 }
 
 .back-btn:hover {
-  color: rgba(255, 255, 255, 0.75) !important;
-  background: rgba(255, 255, 255, 0.06) !important;
+  color: #1A2820 !important;
+  background: #F0F4F1 !important;
 }
 
 /* ── Main Content ── */
@@ -260,7 +259,7 @@ const goHome = () => {
   flex: 1;
   margin-left: 240px;
   padding: 32px;
-  background: #1A2820;
+  background: #F5F7F5;
   min-height: 100vh;
 }
 
@@ -296,8 +295,8 @@ const goHome = () => {
     align-items: center;
     justify-content: space-between;
     padding: 12px 16px;
-    background: #0A130E;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: #FFFFFF;
+    border-bottom: 1px solid #E5E9E5;
     position: sticky;
     top: 0;
     z-index: 100;
@@ -323,26 +322,26 @@ const goHome = () => {
   }
 
   .mobile-title {
-    color: #EDF2EE;
+    color: #1A2820;
     font-size: 15px;
     font-weight: 600;
   }
 
   .mobile-back-btn {
-    color: rgba(255, 255, 255, 0.5);
+    color: #5A6B62;
     font-size: 13px;
   }
 
-  /* ── Mobile Bottom Nav (dark) ── */
+  /* ── Mobile Bottom Nav ── */
   .mobile-nav {
     display: flex;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    background: #0E1A13;
+    background: #FFFFFF;
     backdrop-filter: blur(12px);
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-top: 1px solid #E5E9E5;
     z-index: 100;
     padding: 4px 0;
     padding-bottom: env(safe-area-inset-bottom, 4px);
@@ -355,7 +354,7 @@ const goHome = () => {
     align-items: center;
     gap: 2px;
     padding: 8px 2px;
-    color: #75857A;        /* Phase 0+ 提亮 (原 #75857A) */
+    color: #8A9A90;
     cursor: pointer;
     font-size: 10px;
     font-weight: 500;
@@ -364,7 +363,7 @@ const goHome = () => {
   }
 
   .mobile-nav-item.active {
-    color: #6FE89A;        /* Phase 0+ 提亮 (原 #6FE89A) */
+    color: #0F4C3A;
   }
 }
 

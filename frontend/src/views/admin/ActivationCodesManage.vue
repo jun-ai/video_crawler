@@ -223,21 +223,21 @@ onMounted(() => {
   align-items: center;
   margin-bottom: 24px;
   padding-bottom: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid #E5E9E5;
 }
 
 .page-header h2 {
   margin: 0;
   font-size: 22px;
   font-weight: 700;
-  color: #EDF2EE;
+  color: #1A2820;
   letter-spacing: -0.3px;
 }
 
 /* -- Table Card -- */
 .list-card {
-  background: #0D1A13;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: #F8FAF8;
+  border: 1px solid #E5E9E5;
   border-radius: 16px;
   padding: 4px;
   overflow: hidden;
@@ -246,7 +246,7 @@ onMounted(() => {
 /* -- Form tip -- */
 .form-tip {
   font-size: 12px;
-  color: #75857A;
+  color: #8A9A90;
   margin-top: 4px;
 }
 
@@ -257,7 +257,7 @@ onMounted(() => {
   border-radius: 6px;
   font-size: 13px;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  color: #6FE89A;
+  color: #0F4C3A;
   letter-spacing: 0.5px;
   border: 1px solid rgba(111, 163, 134, 0.15);
 }
@@ -271,18 +271,18 @@ onMounted(() => {
 
 .usage-text {
   font-size: 13px;
-  color: #A8B8AE;
+  color: #5A6B62;
   font-variant-numeric: tabular-nums;
 }
 
 /* -- Expire text -- */
 .expire-text {
   font-size: 13px;
-  color: #A8B8AE;
+  color: #5A6B62;
 }
 
 .expire-text.permanent {
-  color: #6FE89A;
+  color: #0F4C3A;
   font-weight: 600;
 }
 
@@ -314,9 +314,9 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 10px 14px;
-  background: #111F17;
+  background: #F0F4F1;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid #EDF0ED;
   transition: background 0.15s, border-color 0.15s;
 }
 
@@ -329,7 +329,7 @@ onMounted(() => {
   font-size: 15px;
   font-weight: 600;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  color: #6FE89A;
+  color: #0F4C3A;
   letter-spacing: 1px;
 }
 

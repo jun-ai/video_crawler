@@ -274,7 +274,7 @@ onMounted(() => {
   height: 14px;
   border-radius: 4px;
   flex-shrink: 0;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 2px #E5E9E5;
 }
 
 .tag-card-name {

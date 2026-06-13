@@ -188,7 +188,7 @@ onMounted(() => {
   margin: 0 0 28px;
   font-size: 22px;
   font-weight: 600;
-  color: #EDF2EE;
+  color: #1A2820;
   letter-spacing: -0.3px;
 }
 
@@ -203,20 +203,20 @@ onMounted(() => {
 .stat-card {
   position: relative;
   overflow: hidden;
-  background: #0F1A14;
+  background: #FFFFFF;
   border-radius: 14px;
   padding: 22px 20px;
   display: flex;
   align-items: center;
   gap: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid #E5E9E5;
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
               border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .stat-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: #DDE2DD;
 }
 
 .stat-icon-wrap {
@@ -239,7 +239,7 @@ onMounted(() => {
 .stat-value {
   font-size: 30px;
   font-weight: 800;
-  color: #EDF2EE;
+  color: #1A2820;
   line-height: 1.1;
   letter-spacing: -0.5px;
   font-variant-numeric: tabular-nums;
@@ -247,7 +247,7 @@ onMounted(() => {
 
 .stat-label {
   font-size: 13px;
-  color: #75857A;
+  color: #8A9A90;
   margin-top: 4px;
   font-weight: 400;
 }
@@ -268,10 +268,10 @@ onMounted(() => {
 }
 
 .info-card {
-  background: #0F1A14;
+  background: #FFFFFF;
   border-radius: 14px;
   padding: 22px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid #E5E9E5;
 }
 
 .card-header {
@@ -285,7 +285,7 @@ onMounted(() => {
   margin: 0;
   font-size: 15px;
   font-weight: 600;
-  color: #EDF2EE;
+  color: #1A2820;
 }
 
 .test-btn {
@@ -310,13 +310,13 @@ onMounted(() => {
 
 .storage-label {
   font-size: 13px;
-  color: #A8B8AE;
+  color: #5A6B62;
 }
 
 .storage-value {
   font-size: 14px;
   font-weight: 600;
-  color: #EDF2EE;
+  color: #1A2820;
 }
 
 /* ── Category Bar Chart ── */
@@ -334,7 +334,7 @@ onMounted(() => {
 
 .cat-name {
   font-size: 13px;
-  color: #A8B8AE;
+  color: #5A6B62;
   width: 60px;
   flex-shrink: 0;
 }
@@ -342,14 +342,14 @@ onMounted(() => {
 .cat-bar-wrap {
   flex: 1;
   height: 8px;
-  background: rgba(255, 255, 255, 0.06);
+  background: #E5E9E5;
   border-radius: 4px;
   overflow: hidden;
 }
 
 .cat-bar {
   height: 100%;
-  background: linear-gradient(90deg, #0F4C3A, #6FE89A);
+  background: linear-gradient(90deg, #0F4C3A, #0F4C3A);
   border-radius: 4px;
   transition: width 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -357,7 +357,7 @@ onMounted(() => {
 .cat-count {
   font-size: 13px;
   font-weight: 600;
-  color: #EDF2EE;
+  color: #1A2820;
   width: 30px;
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -365,7 +365,7 @@ onMounted(() => {
 
 .empty-text {
   font-size: 13px;
-  color: #75857A;
+  color: #8A9A90;
   text-align: center;
   padding: 20px;
 }
@@ -388,13 +388,13 @@ onMounted(() => {
 
 .dist-type {
   font-size: 13px;
-  color: #A8B8AE;
+  color: #5A6B62;
 }
 
 .dist-count {
   font-size: 13px;
   font-weight: 500;
-  color: #EDF2EE;
+  color: #1A2820;
 }
 
 /* ── Responsive ── */

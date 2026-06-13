@@ -279,14 +279,14 @@ onMounted(() => {
   align-items: center;
   margin-bottom: 24px;
   padding-bottom: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid #E5E9E5;
 }
 
 .page-header h2 {
   margin: 0;
   font-size: 22px;
   font-weight: 700;
-  color: #EDF2EE;
+  color: #1A2820;
   letter-spacing: -0.3px;
 }
 
@@ -299,15 +299,15 @@ onMounted(() => {
 
 /* -- Card -- */
 .announcement-card {
-  background: #0D1A13;
+  background: #F8FAF8;
   border-radius: 14px;
   padding: 18px 22px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid #E5E9E5;
   transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
 }
 
 .announcement-card:hover {
-  background: #112118;
+  background: #F0F4F1;
   border-color: rgba(111, 163, 134, 0.2);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
@@ -330,7 +330,7 @@ onMounted(() => {
 .announcement-title {
   font-weight: 600;
   font-size: 15px;
-  color: #EDF2EE;
+  color: #1A2820;
 }
 
 /* -- Priority Badge -- */
@@ -365,7 +365,7 @@ onMounted(() => {
 /* -- Content -- */
 .announcement-content {
   font-size: 14px;
-  color: #A8B8AE;
+  color: #5A6B62;
   line-height: 1.65;
   margin-bottom: 12px;
   white-space: pre-wrap;
@@ -379,7 +379,7 @@ onMounted(() => {
 
 .announcement-time {
   font-size: 12px;
-  color: #75857A;
+  color: #8A9A90;
   font-variant-numeric: tabular-nums;
 }
 
@@ -397,7 +397,7 @@ onMounted(() => {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   overflow: hidden;
-  background: #0D1A13;
+  background: #F8FAF8;
 }
 
 .radio-btn {
@@ -406,9 +406,9 @@ onMounted(() => {
   background: transparent;
   cursor: pointer;
   font-size: 13px;
-  color: #A8B8AE;
+  color: #5A6B62;
   transition: all 0.15s;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  border-right: 1px solid #E5E9E5;
   font-weight: 500;
 }
 
@@ -435,7 +435,7 @@ onMounted(() => {
   width: 100%;
   appearance: none;
   height: 6px;
-  background: #1A2820;
+  background: #F5F7F5;
   border-radius: 3px;
   outline: none;
   cursor: pointer;
@@ -448,7 +448,7 @@ onMounted(() => {
   border-radius: 50%;
   background: #0F4C3A;
   cursor: pointer;
-  border: 2px solid #6FE89A;
+  border: 2px solid #0F4C3A;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
 }
 
@@ -458,7 +458,7 @@ onMounted(() => {
   border-radius: 50%;
   background: #0F4C3A;
   cursor: pointer;
-  border: 2px solid #6FE89A;
+  border: 2px solid #0F4C3A;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
 }
 
@@ -467,11 +467,11 @@ onMounted(() => {
   justify-content: space-between;
   margin-top: 6px;
   font-size: 12px;
-  color: #75857A;
+  color: #8A9A90;
 }
 
 .priority-labels span.active {
-  color: #6FE89A;
+  color: #0F4C3A;
   font-weight: 600;
 }
 

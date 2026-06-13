@@ -248,15 +248,15 @@ onMounted(() => {
   margin: 0;
   font-size: 22px;
   font-weight: 600;
-  color: #EDF2EE;
+  color: #1A2820;
   letter-spacing: -0.3px;
 }
 
 /* ── Filter Card ── */
 .filter-card {
   margin-bottom: 24px;
-  background: #0F1A14;
-  border-color: rgba(255, 255, 255, 0.06);
+  background: #FFFFFF;
+  border-color: #E5E9E5;
 }
 
 .filter-row {
@@ -273,19 +273,19 @@ onMounted(() => {
 
 /* ── Table Card ── */
 .card-container {
-  background: #0F1A14;
-  border-color: rgba(255, 255, 255, 0.06);
+  background: #FFFFFF;
+  border-color: #E5E9E5;
 }
 
 /* ── Table Overrides (dark admin) ── */
 .card-container :deep(.sf-table-wrap) {
-  border-color: rgba(255, 255, 255, 0.06);
+  border-color: #E5E9E5;
 }
 
 .card-container :deep(.sf-table th) {
-  color: #A8B8AE;
+  color: #5A6B62;
   background: rgba(255, 255, 255, 0.03);
-  border-bottom-color: rgba(255, 255, 255, 0.06);
+  border-bottom-color: #E5E9E5;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -293,7 +293,7 @@ onMounted(() => {
 }
 
 .card-container :deep(.sf-table td) {
-  color: #C8D6CC;
+  color: #3A4A40;
   border-bottom-color: rgba(255, 255, 255, 0.04);
   padding: 14px 16px;
 }
@@ -387,9 +387,9 @@ onMounted(() => {
     flex-wrap: wrap;
     gap: 8px;
     padding: 16px;
-    background: #0F1A14;
+    background: #FFFFFF;
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid #E5E9E5;
     align-items: center;
   }
 
@@ -405,7 +405,7 @@ onMounted(() => {
 
   .card-container :deep(.sf-table tbody tr td:first-child) {
     font-weight: 600;
-    color: #6FE89A;
+    color: #0F4C3A;
     font-size: 12px;
     opacity: 0.7;
   }
@@ -413,7 +413,7 @@ onMounted(() => {
   .card-container :deep(.sf-table tbody tr td:nth-child(2)) {
     flex: 1 1 100%;
     font-weight: 600;
-    color: #EDF2EE;
+    color: #1A2820;
     font-size: 15px;
     padding-top: 0;
     padding-left: 8px;
