@@ -265,93 +265,113 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* ====== Phase 3 Admin — AnnouncementsManage (CSS-only dark) ====== */
+
 .announcements-manage {
   padding: 0;
+  max-width: 1200px;
 }
 
+/* -- Page Header -- */
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .page-header h2 {
   margin: 0;
-  font-size: 18px;
-  color: var(--color-text-primary);
+  font-size: 22px;
+  font-weight: 700;
+  color: #E2E8E2;
+  letter-spacing: -0.3px;
 }
 
+/* -- Announcement List -- */
 .announcement-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
+/* -- Card -- */
 .announcement-card {
-  background: var(--sf-admin-sidebar-bg);
-  border-radius: var(--radius-lg, 12px);
-  padding: 16px 20px;
-  border: 1px solid var(--sf-admin-sidebar-border);
-  transition: box-shadow 0.2s;
+  background: #0D1A13;
+  border-radius: 14px;
+  padding: 18px 22px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
 }
 
 .announcement-card:hover {
-  box-shadow: var(--shadow-card-hover, 0 4px 12px rgba(0, 0, 0, 0.08));
+  background: #112118;
+  border-color: rgba(111, 163, 134, 0.2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
+/* -- Card Header -- */
 .announcement-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .announcement-meta {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .announcement-title {
   font-weight: 600;
   font-size: 15px;
-  color: var(--color-text-primary);
+  color: #E2E8E2;
 }
 
+/* -- Priority Badge -- */
 .priority-badge {
   font-size: 11px;
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
 }
 
 .priority-badge.urgent {
-  background: #fef2f2;
-  color: #dc2626;
-  border: 1px solid #fecaca;
+  background: rgba(199, 62, 58, 0.15);
+  color: #E8827A;
+  border: 1px solid rgba(199, 62, 58, 0.25);
 }
 
 .priority-badge.important {
-  background: #fffbeb;
-  color: #d97706;
-  border: 1px solid #fde68a;
+  background: rgba(226, 114, 91, 0.15);
+  color: #F08A72;
+  border: 1px solid rgba(226, 114, 91, 0.25);
 }
 
+/* -- Actions -- */
 .announcement-actions {
   display: flex;
   align-items: center;
   gap: 4px;
+  flex-shrink: 0;
 }
 
+/* -- Content -- */
 .announcement-content {
   font-size: 14px;
-  color: var(--color-text-secondary);
-  line-height: 1.6;
-  margin-bottom: 10px;
+  color: #94A398;
+  line-height: 1.65;
+  margin-bottom: 12px;
   white-space: pre-wrap;
 }
 
+/* -- Footer -- */
 .announcement-footer {
   display: flex;
   justify-content: flex-end;
@@ -359,32 +379,37 @@ onMounted(() => {
 
 .announcement-time {
   font-size: 12px;
-  color: var(--color-text-muted);
+  color: #647468;
+  font-variant-numeric: tabular-nums;
 }
 
+/* -- Pagination -- */
 .pagination-wrap {
-  margin-top: 20px;
+  margin-top: 24px;
   display: flex;
   justify-content: flex-end;
 }
 
+/* -- Radio Group (type selector in dialog) -- */
 .radio-group {
   display: flex;
   gap: 0;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
   overflow: hidden;
+  background: #0D1A13;
 }
 
 .radio-btn {
-  padding: 6px 16px;
+  padding: 8px 18px;
   border: none;
   background: transparent;
   cursor: pointer;
   font-size: 13px;
-  color: var(--color-text-secondary);
+  color: #94A398;
   transition: all 0.15s;
-  border-right: 1px solid var(--color-border);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  font-weight: 500;
 }
 
 .radio-btn:last-child {
@@ -392,14 +417,16 @@ onMounted(() => {
 }
 
 .radio-btn:hover {
-  background: var(--sf-admin-sidebar-active);
+  background: rgba(111, 163, 134, 0.08);
+  color: #C5D9CC;
 }
 
 .radio-btn.active {
-  background: var(--color-brand);
+  background: #0F4C3A;
   color: #fff;
 }
 
+/* -- Priority Slider -- */
 .priority-selector {
   max-width: 300px;
 }
@@ -408,7 +435,7 @@ onMounted(() => {
   width: 100%;
   appearance: none;
   height: 6px;
-  background: var(--sf-admin-sidebar-active);
+  background: #1A2820;
   border-radius: 3px;
   outline: none;
   cursor: pointer;
@@ -419,10 +446,20 @@ onMounted(() => {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: var(--color-brand);
+  background: #0F4C3A;
   cursor: pointer;
-  border: 2px solid #fff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  border: 2px solid #6FA386;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
+}
+
+.slider-input::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #0F4C3A;
+  cursor: pointer;
+  border: 2px solid #6FA386;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
 }
 
 .priority-labels {
@@ -430,22 +467,25 @@ onMounted(() => {
   justify-content: space-between;
   margin-top: 6px;
   font-size: 12px;
-  color: var(--color-text-muted);
+  color: #647468;
 }
 
 .priority-labels span.active {
-  color: var(--color-brand);
-  font-weight: 500;
+  color: #6FA386;
+  font-weight: 600;
 }
 
+/* ====== Mobile ====== */
 @media (max-width: 768px) {
   .page-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
   }
 
-  .page-header h1 {
+  .page-header h2 {
     font-size: 20px;
   }
 
@@ -453,12 +493,36 @@ onMounted(() => {
     justify-content: center;
   }
 
+  .announcement-list {
+    gap: 10px;
+  }
+
   .announcement-card {
-    padding: 14px;
+    padding: 14px 16px;
+    border-radius: 12px;
+  }
+
+  .announcement-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
   }
 
   .announcement-title {
     font-size: 15px;
+  }
+
+  .announcement-content {
+    font-size: 13px;
+  }
+
+  .radio-group {
+    flex-wrap: wrap;
+  }
+
+  .radio-btn {
+    padding: 7px 14px;
+    font-size: 12px;
   }
 }
 </style>
