@@ -215,7 +215,7 @@ const getScoreClass = (score) => {
   background: var(--sf-brand-subtle);
   padding: 2px 10px;
   border-radius: var(--sf-radius-full);
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  border: 1px solid rgba(15, 76, 58, 0.2);
 }
 
 /* 主体分区 */
@@ -321,11 +321,11 @@ const getScoreClass = (score) => {
   background: var(--color-brand);
   color: #fff;
   font-family: inherit;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgba(15, 76, 58, 0.3);
 }
 .sf-record-btn:hover {
   background: var(--sf-brand-hover);
-  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 6px 16px rgba(15, 76, 58, 0.4);
   transform: translateY(-1px);
 }
 .sf-record-btn.recording {
@@ -417,12 +417,12 @@ const getScoreClass = (score) => {
   gap: 10px;
   margin-top: 12px;
   padding: 10px 16px;
-  background: rgba(99, 102, 241, 0.08);
+  background: rgba(15, 76, 58, 0.08);
   border-radius: var(--sf-radius-full);
   color: var(--color-brand);
   font-size: 13px;
   font-weight: 500;
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  border: 1px solid rgba(15, 76, 58, 0.2);
 }
 
 .sf-recording-dot {
@@ -568,5 +568,64 @@ const getScoreClass = (score) => {
   color: var(--color-text-secondary);
   line-height: 1.5;
   margin: 3px 0;
+}
+
+/* ==================== Phase 1B Task 6: Mobile 适配 ==================== */
+@media (max-width: 768px) {
+  .sf-shadowing-card {
+    padding: 12px;
+  }
+  .sf-shadowing-card__header {
+    margin-bottom: 10px;
+  }
+  .sf-shadowing-card__en {
+    font-size: 20px;
+    line-height: 1.5;
+    margin-bottom: 10px;
+  }
+  .sf-shadowing-card__cn {
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .sf-icon-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .sf-record-btn {
+    padding: 14px 32px;
+    font-size: 16px;
+    min-height: 48px;
+  }
+  .sf-tool-btn {
+    min-height: 44px;
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+  .sf-shadowing-card__nav,
+  .sf-shadowing-card__main,
+  .sf-shadowing-card__tools {
+    gap: 10px;
+  }
+  .sf-eval-result {
+    padding: 12px;
+  }
+  .sf-eval-score {
+    font-size: 20px;
+    min-width: 44px;
+    height: 44px;
+  }
+}
+@media (max-width: 480px) {
+  .sf-shadowing-card__en {
+    font-size: 18px;
+  }
+  .sf-record-btn {
+    padding: 12px 24px;
+    font-size: 15px;
+  }
+  .sf-tool-btn {
+    font-size: 12px;
+    padding: 8px 12px;
+  }
 }
 </style>
