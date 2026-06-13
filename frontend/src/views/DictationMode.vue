@@ -575,37 +575,59 @@ watch(() => props.currentIndex, () => {
 
 <style scoped>
 /* ================================================
-   SpeakFlow Dictation Mode — 新版设计系统
+   DictationMode — Phase 2 CSS-only redesign
+   Design system: ink green #0F4C3A + warm orange #E2725B
    ================================================ */
 
 .sf-dictation-mode {
   background: var(--color-bg-card);
-  border-radius: var(--sf-radius-lg);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
-  box-shadow: var(--sf-shadow-sm);
-  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  padding: 32px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
+  position: relative;
+  overflow: hidden;
 }
 
-/* 进度条 */
+/* subtle brand accent stripe at top */
+.sf-dictation-mode::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--yt-brand-gradient);
+}
+
+/* ====== Progress ====== */
+.sf-dictation-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .sf-dictation-progress__info {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
+  align-items: baseline;
 }
 
 .sf-dictation-progress__label {
-  font-size: 14px;
+  font-size: var(--text-sm, 14px);
   font-weight: 700;
   color: var(--color-text-primary);
+  letter-spacing: 0.02em;
 }
 
 .sf-dictation-progress__count {
-  font-size: 13px;
-  color: var(--color-text-muted);
+  font-size: var(--text-xs, 12px);
+  font-weight: 600;
+  color: var(--color-brand);
+  font-variant-numeric: tabular-nums;
 }
 
 .sf-dictation-progress__bar-wrapper {
@@ -618,34 +640,38 @@ watch(() => props.currentIndex, () => {
   flex: 1;
   height: 6px;
   background: var(--color-bg-elevated);
-  border-radius: 3px;
+  border-radius: var(--radius-full, 9999px);
   overflow: hidden;
 }
 
 .sf-dictation-progress__fill {
   height: 100%;
-  background: var(--sf-brand-gradient);
-  border-radius: 3px;
-  transition: width 0.3s var(--sf-easing-standard);
+  background: var(--yt-brand-gradient);
+  border-radius: inherit;
+  transition: width 0.4s var(--ease-bounce, cubic-bezier(0.34, 1.56, 0.64, 1));
 }
 
 .sf-dictation-progress__percent {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--text-xs, 12px);
+  font-weight: 700;
   color: var(--color-brand);
-  min-width: 40px;
+  min-width: 36px;
   text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
-/* 音频区 */
+/* ====== Audio playback area ====== */
 .sf-dictation-audio {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 32px 20px;
-  background: var(--color-bg-elevated);
-  border-radius: var(--sf-radius-lg);
+  padding: 40px 24px;
+  background:
+    radial-gradient(ellipse at 50% 0%, var(--color-brand-subtle) 0%, transparent 70%),
+    var(--color-bg-elevated);
+  border-radius: var(--radius-xl, 24px);
   text-align: center;
+  border: 1px solid var(--color-border);
 }
 
 .sf-dictation-audio__icon {
@@ -657,9 +683,11 @@ watch(() => props.currentIndex, () => {
   align-items: center;
   justify-content: center;
   color: #fff;
-  margin-bottom: 16px;
-  box-shadow: var(--sf-shadow-md);
-  transition: all 0.2s;
+  margin-bottom: 20px;
+  box-shadow:
+    0 4px 12px rgba(15, 76, 58, 0.25),
+    0 1px 3px rgba(15, 76, 58, 0.15);
+  transition: transform 0.25s var(--ease-bounce, cubic-bezier(0.34, 1.56, 0.64, 1));
 }
 
 .sf-dictation-audio__icon.playing {
@@ -667,60 +695,71 @@ watch(() => props.currentIndex, () => {
 }
 
 @keyframes audioPulse {
-  0%, 100% { transform: scale(1); box-shadow: var(--sf-shadow-md); }
-  50% { transform: scale(1.05); box-shadow: 0 0 0 12px rgba(99, 102, 241, 0.15); }
+  0%, 100% { transform: scale(1); box-shadow: 0 4px 12px rgba(15, 76, 58, 0.25); }
+  50% { transform: scale(1.08); box-shadow: 0 0 0 14px rgba(15, 76, 58, 0.12); }
 }
 
 .sf-dictation-audio__title {
-  font-size: 18px;
+  font-size: var(--text-lg, 18px);
   font-weight: 700;
   color: var(--color-text-primary);
-  margin: 0 0 4px;
+  margin: 0 0 6px;
 }
 
 .sf-dictation-audio__desc {
-  font-size: 13px;
+  font-size: var(--text-sm, 14px);
   color: var(--color-text-secondary);
-  margin: 0 0 20px;
+  margin: 0 0 24px;
+  max-width: 320px;
 }
 
 .sf-dictation-audio__actions {
   display: flex;
-  gap: 10px;
+  gap: 12px;
 }
 
 .sf-dictation-audio__status {
-  margin-top: 12px;
+  margin-top: 16px;
 }
 
 .sf-dictation-status-tag {
   display: inline-flex;
   align-items: center;
-  padding: 4px 12px;
-  font-size: 12px;
+  padding: 4px 14px;
+  font-size: var(--text-xs, 12px);
   font-weight: 500;
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
-  border-radius: var(--sf-radius-full);
+  border-radius: var(--radius-full, 9999px);
   color: var(--color-text-muted);
 }
 
-/* 填空区 */
+/* ====== Mode selector (fill-in / multiple-choice) ====== */
 .sf-dictation-mode-select {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   margin-bottom: 16px;
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-md, 12px);
+  padding: 4px;
 }
 
+/* ====== Sentence with blanks ====== */
 .sf-dictation-sentence {
-  font-size: 18px;
-  line-height: 2.2;
+  font-size: var(--text-lg, 18px);
+  line-height: 2.4;
   color: var(--color-text-primary);
   background: var(--color-bg-elevated);
-  padding: 20px;
-  border-radius: var(--sf-radius-lg);
+  padding: 24px;
+  border-radius: var(--radius-lg, 16px);
   margin-bottom: 20px;
   word-break: break-word;
+  border: 1px solid transparent;
+  transition: border-color 0.2s var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.sf-dictation-sentence:focus-within {
+  border-color: var(--color-brand);
 }
 
 .sf-dictation-text {
@@ -732,9 +771,13 @@ watch(() => props.currentIndex, () => {
   align-items: center;
   min-width: 80px;
   max-width: 160px;
-  border-bottom: 2px solid var(--color-brand);
+  border-bottom: 2px solid var(--color-brand-light);
   margin: 0 4px;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.sf-dictation-blank:focus-within {
+  border-bottom-color: var(--color-brand);
 }
 
 .sf-dictation-input {
@@ -742,50 +785,53 @@ watch(() => props.currentIndex, () => {
   background: transparent;
   border: none;
   outline: none;
-  font-size: 18px;
+  font-size: var(--text-lg, 18px);
   font-weight: 600;
   color: var(--color-text-primary);
   text-align: center;
   padding: 2px 4px;
-  font-family: var(--sf-font-family);
+  font-family: var(--font-sans, inherit);
 }
 
 .sf-dictation-input::placeholder {
   color: var(--color-text-muted);
-  font-size: 12px;
+  font-size: var(--text-xs, 12px);
   font-weight: 400;
 }
 
 .sf-dictation-input--correct {
-  border-bottom-color: var(--color-success);
+  border-bottom-color: var(--color-success) !important;
   color: var(--color-success);
 }
 
 .sf-dictation-input--wrong {
-  border-bottom-color: var(--color-danger);
+  border-bottom-color: var(--color-danger) !important;
   color: var(--color-danger);
-  animation: shake 0.3s ease;
+  animation: shake 0.35s var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
 }
 
-/* 选择区 */
+/* ====== Choice mode ====== */
 .sf-dictation-choices {
   background: var(--color-bg-elevated);
-  border-radius: var(--sf-radius-lg);
-  padding: 16px;
+  border-radius: var(--radius-lg, 16px);
+  padding: 20px;
   margin-bottom: 20px;
+  border: 1px solid var(--color-border);
 }
 
 .sf-dictation-choice-row {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .sf-dictation-choice-row:last-child {
@@ -793,8 +839,8 @@ watch(() => props.currentIndex, () => {
 }
 
 .sf-dictation-choice-label {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--text-xs, 12px);
+  font-weight: 600;
   color: var(--color-text-secondary);
   width: 50px;
   flex-shrink: 0;
@@ -807,23 +853,26 @@ watch(() => props.currentIndex, () => {
 }
 
 .sf-dictation-choice-btn {
-  padding: 8px 18px;
+  padding: 8px 20px;
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
-  border-radius: var(--sf-radius-full);
-  font-size: 14px;
+  border-radius: var(--radius-full, 9999px);
+  font-size: var(--text-sm, 14px);
   color: var(--color-text-primary);
   cursor: pointer;
-  transition: all 0.15s var(--sf-easing-bounce);
+  transition: all 0.18s var(--ease-bounce, cubic-bezier(0.34, 1.56, 0.64, 1));
   font-family: inherit;
   font-weight: 500;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .sf-dictation-choice-btn:hover {
   border-color: var(--color-brand);
   color: var(--color-brand);
   transform: translateY(-1px);
-  box-shadow: var(--sf-shadow-sm);
+  box-shadow: var(--shadow-sm);
 }
 
 .sf-dictation-choice-btn.selected {
@@ -832,57 +881,68 @@ watch(() => props.currentIndex, () => {
   color: #fff;
 }
 
-/* 操作按钮 */
+/* ====== Action buttons ====== */
 .sf-dictation-actions {
   display: flex;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
-/* 结果区 */
+.sf-dictation-actions .sf-btn {
+  min-height: 44px;
+}
+
+/* ====== Result section ====== */
 .sf-dictation-result {
-  padding-top: 20px;
+  padding-top: 24px;
   border-top: 1px solid var(--color-border);
+  animation: fadeUp 0.35s var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .sf-dictation-result__header {
   display: flex;
   align-items: center;
   gap: 20px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .sf-dictation-score {
   display: flex;
   align-items: baseline;
   justify-content: center;
-  min-width: 80px;
-  height: 80px;
+  min-width: 88px;
+  height: 88px;
   padding: 0 20px;
-  border-radius: var(--sf-radius-xl);
+  border-radius: var(--radius-xl, 24px);
   flex-shrink: 0;
   font-size: 40px;
   font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 .sf-dictation-score.score-high {
-  background: rgba(99, 102, 241, 0.12);
+  background: rgba(45, 134, 89, 0.12);
   color: var(--color-success);
 }
 
 .sf-dictation-score.score-medium {
-  background: rgba(245,158,11,0.12);
-  color: #d97706;
+  background: rgba(226, 114, 91, 0.12);
+  color: var(--color-accent);
 }
 
 .sf-dictation-score.score-low {
-  background: rgba(239,68,68,0.1);
+  background: rgba(199, 62, 58, 0.1);
   color: var(--color-danger);
 }
 
 .sf-dictation-score__unit {
-  font-size: 16px;
+  font-size: var(--text-base, 16px);
   font-weight: 500;
   margin-left: 2px;
 }
@@ -893,21 +953,23 @@ watch(() => props.currentIndex, () => {
 
 .sf-dictation-result__feedback p {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--text-base, 16px);
   font-weight: 600;
   color: var(--color-text-primary);
+  line-height: 1.5;
 }
 
-/* 答案对比 */
+/* ====== Answer comparison ====== */
 .sf-dictation-comparison {
   background: var(--color-bg-elevated);
-  border-radius: var(--sf-radius-lg);
-  padding: 16px;
+  border-radius: var(--radius-lg, 16px);
+  padding: 20px;
   margin-bottom: 16px;
+  border: 1px solid var(--color-border);
 }
 
 .sf-dictation-comparison__row {
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .sf-dictation-comparison__row:last-child {
@@ -915,68 +977,70 @@ watch(() => props.currentIndex, () => {
 }
 
 .sf-dictation-comparison__label {
-  font-size: 12px;
+  font-size: var(--text-xs, 12px);
   font-weight: 700;
   color: var(--color-text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 6px;
+  letter-spacing: 0.6px;
+  margin-bottom: 8px;
   display: block;
 }
 
 .sf-dictation-comparison__text {
-  font-size: 15px;
-  line-height: 1.8;
+  font-size: var(--text-sm, 14px);
+  line-height: 2;
   color: var(--color-text-primary);
   word-break: break-word;
 }
 
+/* Word tags (inline) */
 .sf-word-tag {
   display: inline-block;
   padding: 2px 10px;
-  border-radius: var(--sf-radius-sm);
+  border-radius: var(--radius-sm, 8px);
   font-weight: 600;
-  font-size: 14px;
-  margin: 0 4px;
+  font-size: var(--text-sm, 14px);
+  margin: 0 3px;
 }
 
 .sf-word-tag--correct {
-  background: rgba(99, 102, 241, 0.12);
+  background: rgba(45, 134, 89, 0.12);
   color: var(--color-success);
 }
 
 .sf-word-tag--wrong {
-  background: rgba(239,68,68,0.1);
+  background: rgba(199, 62, 58, 0.1);
   color: var(--color-danger);
 }
 
-/* 单词标签行 */
+/* ====== Word tag rows ====== */
 .sf-dictation-word-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 20px;
+  gap: 10px;
+  margin-bottom: 24px;
 }
 
 .sf-word-tag-row {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: var(--sf-radius-full);
-  font-size: 13px;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: var(--radius-full, 9999px);
+  font-size: var(--text-xs, 12px);
   border: 1px solid;
+  min-height: 44px;
 }
 
 .sf-word-tag-row--correct {
-  background: rgba(99, 102, 241, 0.08);
-  border-color: rgba(99, 102, 241, 0.3);
+  background: rgba(45, 134, 89, 0.08);
+  border-color: rgba(45, 134, 89, 0.3);
   color: var(--color-success);
 }
 
 .sf-word-tag-row--wrong {
-  background: rgba(239,68,68,0.08);
-  border-color: rgba(239,68,68,0.3);
+  background: rgba(199, 62, 58, 0.08);
+  border-color: rgba(199, 62, 58, 0.3);
   color: var(--color-danger);
 }
 
@@ -992,31 +1056,35 @@ watch(() => props.currentIndex, () => {
 .sf-word-tag-row__yours {
   color: inherit;
   opacity: 0.7;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .sf-word-tag-row__yours::before {
-  content: '←';
+  content: '\2190';
   margin-right: 4px;
 }
 
-/* 结果操作 */
+/* ====== Result actions ====== */
 .sf-dictation-result__actions {
   display: flex;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
 }
 
-/* 完成弹窗 */
+.sf-dictation-result__actions .sf-btn {
+  min-height: 44px;
+}
+
+/* ====== Complete modal ====== */
 .sf-complete-modal__body {
   text-align: center;
-  padding: 10px 0;
+  padding: 12px 0;
 }
 
 .sf-complete-modal__icon {
-  color: var(--color-warning);
-  margin-bottom: 12px;
-  animation: bounceIn 0.5s var(--sf-easing-bounce);
+  color: var(--color-accent);
+  margin-bottom: 16px;
+  animation: bounceIn 0.5s var(--ease-bounce, cubic-bezier(0.34, 1.56, 0.64, 1));
 }
 
 @keyframes bounceIn {
@@ -1026,22 +1094,22 @@ watch(() => props.currentIndex, () => {
 }
 
 .sf-complete-modal__title {
-  font-size: 20px;
+  font-size: var(--text-xl, 20px);
   font-weight: 700;
   color: var(--color-text-primary);
-  margin: 0 0 6px;
+  margin: 0 0 8px;
 }
 
 .sf-complete-modal__desc {
-  font-size: 14px;
+  font-size: var(--text-sm, 14px);
   color: var(--color-text-secondary);
-  margin: 0 0 20px;
+  margin: 0 0 24px;
 }
 
 .sf-complete-modal__stats {
   display: flex;
   justify-content: center;
-  gap: 24px;
+  gap: 32px;
 }
 
 .sf-complete-modal__stat {
@@ -1052,36 +1120,38 @@ watch(() => props.currentIndex, () => {
 }
 
 .sf-complete-modal__stat-value {
-  font-size: 24px;
+  font-size: var(--text-2xl, 24px);
   font-weight: 800;
   color: var(--color-brand);
+  font-variant-numeric: tabular-nums;
 }
 
 .sf-complete-modal__stat-label {
-  font-size: 12px;
+  font-size: var(--text-xs, 12px);
   color: var(--color-text-muted);
 }
 
 .sf-complete-modal__footer {
   display: flex;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
 }
 
-/* 响应式 */
+/* ====== Mobile responsive ====== */
 @media (max-width: 768px) {
   .sf-dictation-mode {
-    padding: 16px;
-    gap: 16px;
+    padding: 20px 16px;
+    gap: 20px;
+    border-radius: var(--radius-md, 12px);
   }
 
   .sf-dictation-audio {
-    padding: 24px 16px;
+    padding: 28px 16px;
   }
 
   .sf-dictation-audio__icon {
-    width: 60px;
-    height: 60px;
+    width: 64px;
+    height: 64px;
   }
 
   .sf-dictation-audio__actions {
@@ -1092,14 +1162,19 @@ watch(() => props.currentIndex, () => {
   .sf-dictation-audio__actions .sf-btn {
     width: 100%;
     justify-content: center;
+    min-height: 44px;
   }
 
   .sf-dictation-mode-select {
     flex-direction: column;
   }
 
+  .sf-dictation-mode-select .sf-segment__item {
+    min-height: 44px;
+  }
+
   .sf-dictation-sentence {
-    font-size: 16px;
+    font-size: var(--text-base, 16px);
     padding: 16px;
   }
 
@@ -1109,7 +1184,7 @@ watch(() => props.currentIndex, () => {
   }
 
   .sf-dictation-input {
-    font-size: 16px;
+    font-size: var(--text-base, 16px);
   }
 
   .sf-dictation-choice-row {
@@ -1124,6 +1199,7 @@ watch(() => props.currentIndex, () => {
   .sf-dictation-actions .sf-btn {
     width: 100%;
     justify-content: center;
+    min-height: 44px;
   }
 
   .sf-dictation-result__header {
@@ -1133,12 +1209,12 @@ watch(() => props.currentIndex, () => {
 
   .sf-dictation-score {
     font-size: 32px;
-    height: 64px;
-    min-width: 64px;
+    height: 72px;
+    min-width: 72px;
   }
 
   .sf-dictation-comparison__text {
-    font-size: 14px;
+    font-size: var(--text-sm, 14px);
   }
 
   .sf-dictation-word-tags {
@@ -1152,14 +1228,35 @@ watch(() => props.currentIndex, () => {
   .sf-dictation-result__actions .sf-btn {
     width: 100%;
     justify-content: center;
+    min-height: 44px;
   }
 
   .sf-complete-modal__stats {
-    gap: 16px;
+    gap: 20px;
   }
 
   .sf-complete-modal__stat-value {
-    font-size: 22px;
+    font-size: var(--text-xl, 20px);
+  }
+}
+
+@media (max-width: 480px) {
+  .sf-dictation-mode {
+    padding: 16px 12px;
+    gap: 16px;
+  }
+
+  .sf-dictation-audio {
+    padding: 20px 12px;
+  }
+
+  .sf-dictation-sentence {
+    padding: 12px;
+    line-height: 2;
+  }
+
+  .sf-dictation-blank {
+    min-width: 50px;
   }
 }
 </style>
