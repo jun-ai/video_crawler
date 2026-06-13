@@ -75,23 +75,8 @@
         </div>
       </div>
 
-      <!-- 学习模式切换 -->
-      <div class="sf-segment">
-        <button
-          :class="['sf-segment__item', { active: learningMode === 'shadowing' }]"
-          @click="learningMode = 'shadowing'"
-        >
-          <Mic />
-          跟读模式
-        </button>
-        <button
-          :class="['sf-segment__item', { active: learningMode === 'dictation' }]"
-          @click="learningMode = 'dictation'"
-        >
-          <Edit3 />
-          听写模式
-        </button>
-      </div>
+      <!-- 学习模式切换 — Phase 1B Task 3: 提取到独立组件 -->
+      <LearnModeSwitcher v-model="learningMode" />
 
       <!-- 听写模式 -->
       <div class="sf-main-content" v-if="learningMode === 'dictation'">
@@ -388,6 +373,7 @@ import LearnWordPopup from '@/components/learn/LearnWordPopup.vue'
 import LearnVideoPlayer from '@/components/learn/LearnVideoPlayer.vue'
 import LearnShadowingCard from '@/components/learn/LearnShadowingCard.vue'
 import LearnSubtitleList from '@/components/learn/LearnSubtitleList.vue'
+import LearnModeSwitcher from '@/components/learn/LearnModeSwitcher.vue'
 
 const route = useRoute()
 const router = useRouter()
