@@ -701,7 +701,7 @@ onMounted(() => {
 
 .ec-search-input:focus {
   border-color: var(--color-brand);
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  box-shadow: 0 0 0 3px rgba(15, 76, 58, 0.1);
 }
 
 .ec-sidebar-list {
@@ -740,7 +740,7 @@ onMounted(() => {
 }
 
 .ec-sidebar-item.active {
-  background: rgba(16, 185, 129, 0.1);
+  background: var(--color-brand-subtle);
   border-left-color: var(--color-brand);
 }
 
@@ -799,7 +799,7 @@ onMounted(() => {
   font-size: 11px;
   font-weight: 700;
   color: var(--color-brand);
-  background: rgba(16, 185, 129, 0.1);
+  background: var(--color-brand-subtle);
   border-radius: 10px;
 }
 
@@ -949,7 +949,7 @@ onMounted(() => {
 .ec-vocab-card.ec-card-selected {
   background: var(--color-brand-light);
   border-color: var(--color-brand);
-  box-shadow: 0 4px 16px rgba(63, 138, 91, 0.15);
+  box-shadow: 0 4px 16px rgba(15, 76, 58, 0.12);
 }
 
 /* Card Header */
@@ -1020,7 +1020,7 @@ onMounted(() => {
   font-size: 11px;
   font-weight: 600;
   color: var(--color-brand);
-  background: rgba(16, 185, 129, 0.1);
+  background: var(--color-brand-subtle);
   padding: 2px 7px;
   border-radius: 4px;
   white-space: nowrap;
@@ -1483,7 +1483,7 @@ onMounted(() => {
 }
 
 .dark .ec-sidebar-badge {
-  background: rgba(16, 185, 129, 0.15);
+  background: var(--color-brand-subtle);
 }
 
 .dark .ec-main {
@@ -1500,7 +1500,7 @@ onMounted(() => {
 }
 
 .dark .ec-vocab-card.ec-card-known {
-  background: rgba(63, 138, 91, 0.08);
+  background: rgba(15, 76, 58, 0.08);
   border-color: var(--color-brand);
 }
 
@@ -1510,7 +1510,7 @@ onMounted(() => {
 }
 
 .dark .ec-vocab-card.ec-card-selected {
-  background: rgba(63, 138, 91, 0.12);
+  background: rgba(15, 76, 58, 0.12);
   border-color: var(--color-brand);
 }
 
