@@ -324,6 +324,35 @@
           </SfButton>
         </div>
 
+        <!-- FAQ 手风琴 — SpeakVlog 风格（Phase 0+） -->
+        <section class="faq-section">
+          <div class="faq-header">
+            <div class="faq-eyebrow">FAQ</div>
+            <h2 class="faq-title">常见问题</h2>
+            <p class="faq-desc">刚开始？这里有你需要知道的。</p>
+          </div>
+          <div class="faq-list">
+            <div
+              v-for="(item, idx) in faqs"
+              :key="idx"
+              class="faq-item"
+              :class="{ open: openFaqIdx === idx }"
+            >
+              <button
+                class="faq-question"
+                @click="toggleFaq(idx)"
+                :aria-expanded="openFaqIdx === idx"
+              >
+                <span>{{ item.q }}</span>
+                <ChevronDown :size="20" class="faq-icon" />
+              </button>
+              <div class="faq-answer" v-show="openFaqIdx === idx">
+                <div class="faq-answer-inner">{{ item.a }}</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <!-- 空状态 -->
         <EmptyState
           v-if="!loading && materials.length === 0"
@@ -349,7 +378,7 @@ import FilterChip from '@/components/common/FilterChip.vue'
 import VideoCard from '@/components/common/VideoCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import AnnouncementBanner from '@/components/common/AnnouncementBanner.vue'
-import { BarChart3, Calendar, Clock, Play, Flame, Sprout, Dumbbell, Star, Trophy, Crown, Target, Sparkles, BookOpen, Headphones, Check } from 'lucide-vue-next'
+import { BarChart3, Calendar, Clock, Play, Flame, Sprout, Dumbbell, Star, Trophy, Crown, Target, Sparkles, BookOpen, Headphones, Check, ChevronDown } from 'lucide-vue-next'
 import SfTooltip from '@/components/ui/SfTooltip.vue'
 import SfProgress from '@/components/ui/SfProgress.vue'
 import SfButton from '@/components/ui/SfButton.vue'
@@ -360,6 +389,38 @@ const userStore = useUserStore()
 const loading = ref(true)
 const loadingMore = ref(false)
 const categories = ref([])
+// Phase 0+ FAQ 手风琴
+const faqs = [
+  {
+    q: 'Fluenty 怎么用？',
+    a: '三步：选感兴趣的视频 → 边看边学（字幕 / 跟读 / AI 解读）→ 自动收词复习。每天 10 分钟就能积累。'
+  },
+  {
+    q: '视频内容从哪来？',
+    a: '我们从 YouTube / TED 等海外平台精选真实语料，覆盖访谈、演讲、科普、生活等场景，所有视频都有人工审核。'
+  },
+  {
+    q: '适合什么英语水平？',
+    a: 'CET-4 以上即可流畅使用。每个视频有难度标签，从 A2（基础）到 C1（高级）都有，可按自己水平选。'
+  },
+  {
+    q: '免费还是收费？',
+    a: '注册即送 7 天会员，全功能可体验。会员按月 / 年订阅，解锁全部视频 + 高级 AI 解读。'
+  },
+  {
+    q: '手机上能用吗？',
+    a: '完美支持。网页 PWA 体验，地铁 / 通勤路上都能用。视频支持倍速 / 字幕跟读切换。'
+  },
+  {
+    q: '学习进度会丢吗？',
+    a: '不会。所有进度 / 笔记 / 收藏都云端永久保存。换设备登录就能继续。'
+  }
+]
+const openFaqIdx = ref(null)
+const toggleFaq = (idx) => {
+  openFaqIdx.value = openFaqIdx.value === idx ? null : idx
+}
+
 // Phase 0+ SpeakVlog 风格 — 学习功能清单（首页介绍用）
 const features = [
   { title: '真实视频语料', desc: '海外 YouTube / TED 精选' },
@@ -1507,6 +1568,108 @@ onMounted(async () => {
   line-height: 1.4;
 }
 
+/* ====== FAQ 手风琴 — SpeakVlog 风格 ====== */
+.faq-section {
+  padding: 80px 32px;
+  margin: 32px 0;
+  background: var(--color-bg-card);
+  border-radius: 24px;
+  border: 1px solid var(--color-border);
+}
+
+.faq-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.faq-eyebrow {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-brand-bright);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.faq-title {
+  font-size: var(--text-section, clamp(30px, 3.5vw, 44px));
+  font-weight: 800;
+  color: var(--color-text-primary);
+  margin: 0 0 8px;
+  letter-spacing: -1px;
+}
+
+.faq-desc {
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.faq-list {
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.faq-item {
+  background: var(--color-bg-base);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.faq-item.open {
+  border-color: var(--color-brand-bright);
+  box-shadow: 0 4px 16px rgba(15, 76, 58, 0.06);
+}
+
+.faq-question {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 18px 22px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-family: inherit;
+  transition: color 0.2s ease;
+}
+
+.faq-question:hover {
+  color: var(--color-brand-bright);
+}
+
+.faq-icon {
+  flex-shrink: 0;
+  color: var(--color-brand-bright);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.faq-item.open .faq-icon {
+  transform: rotate(180deg);
+}
+
+.faq-answer {
+  overflow: hidden;
+}
+
+.faq-answer-inner {
+  padding: 0 22px 20px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--color-text-secondary);
+}
+
 /* 视频网格 — Bento 化 */
 .video-grid {
   display: grid;
@@ -1820,6 +1983,26 @@ onMounted(async () => {
 
   .features-title {
     font-size: 26px;
+  }
+
+  /* FAQ mobile */
+  .faq-section {
+    padding: 48px 20px;
+    border-radius: 18px;
+  }
+
+  .faq-header {
+    margin-bottom: 32px;
+  }
+
+  .faq-question {
+    padding: 14px 18px;
+    font-size: 14px;
+  }
+
+  .faq-answer-inner {
+    padding: 0 18px 16px;
+    font-size: 13px;
   }
 }
 
