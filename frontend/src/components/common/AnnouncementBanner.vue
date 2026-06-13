@@ -109,9 +109,9 @@ onMounted(() => {
 }
 
 .banner-update {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(167, 139, 250, 0.06));
-  border: 1px solid rgba(139, 92, 246, 0.15);
-  color: #6d28d9;
+  background: linear-gradient(135deg, rgba(15, 76, 58, 0.08), rgba(111, 163, 134, 0.06));
+  border: 1px solid rgba(15, 76, 58, 0.15);
+  color: #0F4C3A;
 }
 
 .banner-inner {
@@ -208,9 +208,9 @@ onMounted(() => {
 
 /* ========== 暗色模式 ========== */
 .dark .banner-info {
-  background: linear-gradient(135deg, rgba(96, 165, 250, 0.15), rgba(129, 140, 248, 0.1));
-  border-color: rgba(96, 165, 250, 0.3);
-  color: #93c5fd;
+  background: linear-gradient(135deg, rgba(15, 76, 58, 0.15), rgba(111, 163, 134, 0.1));
+  border-color: rgba(15, 76, 58, 0.3);
+  color: #6FA386;
 }
 
 .dark .banner-warning {
@@ -226,9 +226,9 @@ onMounted(() => {
 }
 
 .dark .banner-update {
-  background: linear-gradient(135deg, rgba(167, 139, 250, 0.15), rgba(139, 92, 246, 0.1));
-  border-color: rgba(167, 139, 250, 0.3);
-  color: #c4b5fd;
+  background: linear-gradient(135deg, rgba(15, 76, 58, 0.15), rgba(111, 163, 134, 0.1));
+  border-color: rgba(15, 76, 58, 0.3);
+  color: #6FA386;
 }
 
 .dark .banner-expand:hover {

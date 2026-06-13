@@ -47,8 +47,8 @@
   --sf-difficulty-3-text: var(--color-diff-medium-text);
   --sf-difficulty-4-bg: var(--color-diff-hard-bg);
   --sf-difficulty-4-text: var(--color-diff-hard-text);
-  --sf-difficulty-5-bg: rgba(109, 40, 217, 0.15);
-  --sf-difficulty-5-text: #6d28d9;
+  --sf-difficulty-5-bg: rgba(15, 76, 58, 0.15);
+  --sf-difficulty-5-text: #0F4C3A;
 
   /* ========== 标签色映射 ========== */
   --sf-tag-blue: var(--color-brand);
@@ -154,7 +154,7 @@
   --yt-bg-tertiary: var(--sf-bg-elevated);
   --yt-border: var(--sf-border);
   --yt-highlight-bg: var(--sf-brand-subtle);
-  --yt-highlight-border: rgba(99, 102, 241, 0.4);
+  --yt-highlight-border: rgba(15, 76, 58, 0.3);
   --yt-study-divider: var(--sf-border);
   --color-success: var(--sf-success);
   --color-warning: var(--sf-warning);
@@ -176,7 +176,7 @@
   --yt-bg-gradient: linear-gradient(180deg, #FAFAF7 0%, #F5F5F0 25%, #FAFAF7 100%);
   --glass-bg: rgba(255, 255, 255, 0.9);
   --glass-blur: blur(12px);
-  --glass-border: 1px solid rgba(99, 102, 241, 0.1);
+  --glass-border: 1px solid rgba(15, 76, 58, 0.1);
 }
 
 /* ========== 暗色主题兼容 ========== */
@@ -188,8 +188,8 @@
   --yt-bg-secondary: var(--color-bg-card);
   --yt-bg-tertiary: var(--color-bg-elevated);
   --yt-border: var(--color-border);
-  --yt-highlight-bg: rgba(99, 102, 241, 0.15);
-  --yt-highlight-border: rgba(99, 102, 241, 0.4);
+  --yt-highlight-bg: rgba(15, 76, 58, 0.1);
+  --yt-highlight-border: rgba(15, 76, 58, 0.3);
   --color-text-primary: var(--color-text-primary);
   --color-text-secondary: var(--color-text-secondary);
   --color-text-tertiary: var(--color-text-muted);

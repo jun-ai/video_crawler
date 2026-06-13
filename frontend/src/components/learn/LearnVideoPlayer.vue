@@ -157,7 +157,7 @@ defineExpose({ playerRef })
 .cover-play-btn {
   width: 80px;
   height: 80px;
-  background: rgba(99, 102, 241, 0.92);
+  background: rgba(15, 76, 58, 0.92);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -273,7 +273,7 @@ defineExpose({ playerRef })
   margin-top: 8px;
   background: var(--sf-brand-subtle);
   border-radius: var(--sf-radius-md);
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  border: 1px solid rgba(15, 76, 58, 0.2);
   text-align: center;
 }
 

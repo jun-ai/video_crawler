@@ -593,7 +593,7 @@ const getStatusBarClass = (id) => {
   font-size: 11px;
   padding: 1px 6px;
   border-radius: var(--sf-radius-full);
-  background: rgba(99, 102, 241, 0.1);
+  background: rgba(15, 76, 58, 0.1);
   color: var(--color-brand);
   font-weight: 500;
 }
