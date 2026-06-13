@@ -110,7 +110,7 @@
       </div>
 
       <!-- 主内容区（跟读模式） -->
-      <div class="sf-main-content" v-if="learningMode === 'shadowing'">
+      <div class="sf-main-content" :data-mobile-tab="mobileActiveTab" v-if="learningMode === 'shadowing'">
         <!-- 左栏：视频区域 -->
         <div class="sf-left-column">
           <div class="sf-card-inner">
@@ -282,6 +282,20 @@
       <span class="sf-badge" v-if="interpretation.words?.length">{{ interpretation.words.length }}</span>
     </button>
 
+    <!-- Phase 1B Task 2: 移动端底部 Tab Bar -->
+    <nav class="sf-mobile-tabs" v-if="!loading">
+      <button
+        v-for="tab in mobileTabs"
+        :key="tab.key"
+        :class="['sf-mobile-tab', { active: mobileActiveTab === tab.key || (tab.key === 'interpretation' && interpretationSheetOpen) }]"
+        @click="setMobileTab(tab.key)"
+        :aria-label="tab.label"
+      >
+        <component :is="tab.icon" :size="20" />
+        <span class="sf-mobile-tab-label">{{ tab.label }}</span>
+      </button>
+    </nav>
+
     <!-- 解读面板 Sheet -->
     <Sheet v-model:open="interpretationSheetOpen">
       <SheetContent side="right" class="sf-interpretation-sheet">
@@ -352,9 +366,11 @@ import {
   BookOpen,
   BarChart3,
   FileText,
+  FileVideo,
   Headphones,
   Check,
   HelpCircle,
+  Video,
   X,
   Bookmark,
   BookmarkCheck
@@ -422,6 +438,22 @@ const setPlayMode = (mode) => {
 // 学习模式：'shadowing' 跟读模式, 'dictation' 听写模式
 const learningMode = ref('shadowing')
 const dictationIndex = ref(0)  // 听写模式当前索引
+
+// Phase 1B Task 2: 移动端 tab 切换 (video / shadowing / subtitles / interpretation)
+const mobileActiveTab = ref('video')
+const mobileTabs = [
+  { key: 'video', label: '视频', icon: Video },
+  { key: 'shadowing', label: '跟读', icon: Mic },
+  { key: 'subtitles', label: '字幕', icon: FileText },
+  { key: 'interpretation', label: '解读', icon: BookOpen }
+]
+const setMobileTab = (key) => {
+  if (key === 'interpretation') {
+    interpretationSheetOpen.value = true
+    return
+  }
+  mobileActiveTab.value = key
+}
 
 // 字幕分页相关
 const subtitlePageSize = 10 // 每页显示10条字幕
@@ -2440,6 +2472,7 @@ onUnmounted(() => {
 @media (max-width: 768px) {
   .sf-learn-page {
     padding: 0 12px 20px;
+    padding-bottom: 80px; /* 给底部 tab bar 留空间 */
   }
   .sf-page-header {
     margin-bottom: 10px;
@@ -2473,6 +2506,85 @@ onUnmounted(() => {
     font-size: 32px;
     height: 64px;
     min-width: 64px;
+  }
+
+  /* ========== Phase 1B Task 2: 移动端 Tab 切换 ========== */
+  /* 默认隐藏跟读卡和中栏，由 data-mobile-tab 控制显示 */
+  .sf-left-column .sf-card-inner--secondary,
+  .sf-main-content[data-mobile-tab="video"] .sf-middle-column {
+    display: none;
+  }
+  /* shadowing tab: 显示跟读卡 + 字幕（紧凑） */
+  .sf-main-content[data-mobile-tab="shadowing"] .sf-left-column .sf-card-inner:first-child {
+    display: none;
+  }
+  .sf-main-content[data-mobile-tab="shadowing"] .sf-middle-column {
+    display: none;
+  }
+  /* subtitles tab: 显示中栏 + 隐藏视频 */
+  .sf-main-content[data-mobile-tab="subtitles"] .sf-left-column {
+    display: none;
+  }
+
+  /* 视频贴顶（mobile-only 视频 tab） */
+  .sf-main-content[data-mobile-tab="video"] {
+    margin-top: -12px;
+  }
+  .sf-main-content[data-mobile-tab="video"] .sf-card-inner:first-child {
+    border-radius: 0 0 var(--sf-radius-lg) var(--sf-radius-lg);
+    margin: 0 -12px;
+    padding: 0;
+  }
+
+  /* 解读按钮 mobile 隐藏（tab bar 接管） */
+  .sf-interpretation-trigger {
+    display: none !important;
+  }
+}
+
+/* ========== Phase 1B Task 2: 移动端底部 Tab Bar ========== */
+.sf-mobile-tabs {
+  display: none;
+}
+@media (max-width: 768px) {
+  .sf-mobile-tabs {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: var(--color-bg-card);
+    border-top: 1px solid var(--color-border);
+    z-index: 200;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .sf-mobile-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: transparent;
+    border: none;
+    color: var(--color-text-muted);
+    font-size: 11px;
+    cursor: pointer;
+    min-height: 48px;
+    transition: color var(--sf-duration-fast);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sf-mobile-tab:active {
+    transform: scale(0.96);
+  }
+  .sf-mobile-tab.active {
+    color: var(--color-brand);
+    font-weight: 600;
+  }
+  .sf-mobile-tab-label {
+    line-height: 1;
   }
 }
 
