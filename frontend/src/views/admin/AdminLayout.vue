@@ -111,9 +111,14 @@ const goHome = () => {
 </script>
 
 <style scoped>
+/* ========================================
+   AdminLayout — Phase 3 CSS-only dark sidebar
+   Reference: Linear / Vercel Dashboard
+   ======================================== */
+
 .admin-layout {
   min-height: 100vh;
-  background: var(--sf-admin-bg);
+  background: #1A2820;
 }
 
 .admin-container {
@@ -121,16 +126,24 @@ const goHome = () => {
   min-height: 100vh;
 }
 
+/* ── Desktop Sidebar ── */
 .admin-sidebar {
   width: 240px;
-  background: linear-gradient(180deg, #0A130E 0%, #142B1F 100%);
+  min-width: 240px;
+  background: #0A130E;
   display: flex;
   flex-direction: column;
-  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 200;
+  overflow-y: auto;
 }
 
 .sidebar-header {
-  padding: 20px 20px 16px;
+  padding: 24px 20px 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
@@ -144,110 +157,147 @@ const goHome = () => {
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #0F4C3A, #1A6B4F);
+  background: linear-gradient(135deg, #0F4C3A 0%, #1A6B4F 100%);
   color: #fff;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 2px 8px rgba(15, 76, 58, 0.5);
 }
 
 .logo-text {
-  color: #f1f5f9;
-  font-size: 17px;
+  color: #E2E8E2;
+  font-size: 16px;
   font-weight: 600;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
 }
 
 .sidebar-menu {
   flex: 1;
-  padding-top: 8px;
+  padding: 12px 0;
   display: flex;
   flex-direction: column;
 }
 
+/* ── Menu Items ── */
 .sidebar-menu-item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 2px 8px;
+  margin: 1px 8px;
   border-radius: 8px;
   height: 40px;
-  line-height: 40px;
   padding: 0 16px;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--sf-admin-sidebar-text);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.18s cubic-bezier(0.4, 0, 0.2, 1);
   font-size: 14px;
+  font-weight: 400;
+  user-select: none;
+}
+
+.sidebar-menu-item::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 0;
+  background: #E2725B;
+  border-radius: 0 2px 2px 0;
+  transition: height 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .sidebar-menu-item:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.85);
+  background: var(--sf-admin-sidebar-hover);
+  color: #C8D6CC;
 }
 
 .sidebar-menu-item.active {
-  background: linear-gradient(135deg, #0F4C3A, #1A6B4F);
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(15, 76, 58, 0.4);
+  background: #243A2D;
+  color: var(--sf-admin-sidebar-text-active);
+  font-weight: 500;
+}
+
+.sidebar-menu-item.active::before {
+  height: 20px;
+  background: #E2725B;
 }
 
 .sidebar-divider {
   margin: 8px 16px;
-  border-color: rgba(255, 255, 255, 0.08);
   border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+/* ── Sidebar Footer ── */
 .sidebar-footer {
-  padding: 12px 16px;
+  padding: 12px 16px 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .back-btn {
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.35);
   width: 100%;
   justify-content: flex-start;
   height: 36px;
   border-radius: 8px;
-  transition: all 0.2s;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .back-btn:hover {
-  color: rgba(255, 255, 255, 0.8) !important;
+  color: rgba(255, 255, 255, 0.75) !important;
   background: rgba(255, 255, 255, 0.06) !important;
 }
 
+/* ── Main Content ── */
 .admin-main {
   flex: 1;
-  padding: 28px;
-  background: var(--sf-admin-bg);
+  margin-left: 240px;
+  padding: 32px;
+  background: #1A2820;
   min-height: 100vh;
 }
 
-/* ====== 移动端隐藏桌面元素 ====== */
+/* ── Mobile: hidden by default ── */
 .mobile-header,
 .mobile-nav {
   display: none;
 }
 
-/* ====== 响应式 ====== */
-@media (max-width: 768px) {
+/* ========================================
+   Responsive — tablet & mobile (< 1024px)
+   ======================================== */
+@media (max-width: 1023px) {
   .admin-sidebar {
     display: none;
+  }
+
+  .admin-main {
+    margin-left: 0;
+    padding: 16px;
+    padding-bottom: 88px;
+    padding-top: 8px;
+    min-height: auto;
   }
 
   .admin-container {
     flex-direction: column;
   }
 
+  /* ── Mobile Header ── */
   .mobile-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 12px 16px;
-    background: linear-gradient(135deg, #0A130E, #142B1F);
+    background: #0A130E;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     position: sticky;
     top: 0;
     z-index: 100;
@@ -266,36 +316,36 @@ const goHome = () => {
     background: linear-gradient(135deg, #0F4C3A, #1A6B4F);
     color: #fff;
     font-weight: 700;
-    font-size: 14px;
+    font-size: 13px;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
   .mobile-title {
-    color: #f1f5f9;
-    font-size: 16px;
+    color: #E2E8E2;
+    font-size: 15px;
     font-weight: 600;
   }
 
   .mobile-back-btn {
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.5);
     font-size: 13px;
   }
 
+  /* ── Mobile Bottom Nav (dark) ── */
   .mobile-nav {
     display: flex;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(255, 255, 255, 0.96);
+    background: #0E1A13;
     backdrop-filter: blur(12px);
-    border-top: 1px solid var(--sf-admin-border);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
     z-index: 100;
     padding: 4px 0;
     padding-bottom: env(safe-area-inset-bottom, 4px);
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.06);
   }
 
   .mobile-nav-item {
@@ -304,24 +354,24 @@ const goHome = () => {
     flex-direction: column;
     align-items: center;
     gap: 2px;
-    padding: 6px 2px;
-    color: var(--sf-admin-text-muted, #9ca3af);
+    padding: 8px 2px;
+    color: #5A6B62;
     cursor: pointer;
     font-size: 10px;
     font-weight: 500;
-    transition: color 0.2s;
+    transition: color 0.18s;
     min-width: 0;
   }
 
   .mobile-nav-item.active {
-    color: #0F4C3A;
+    color: #6FA386;
   }
+}
 
+@media (max-width: 480px) {
   .admin-main {
-    padding: 16px;
+    padding: 12px;
     padding-bottom: 80px;
-    padding-top: 8px;
-    min-height: auto;
   }
 }
 </style>
