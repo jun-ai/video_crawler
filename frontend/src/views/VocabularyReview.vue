@@ -295,18 +295,18 @@ onMounted(() => {
 }
 
 .stat-badge.due {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(199, 62, 58, 0.1);
   color: var(--color-danger);
 }
 
 .stat-badge.learning {
-  background: rgba(99, 102, 241, 0.1);
-  color: var(--color-info);
+  background: var(--color-brand-subtle);
+  color: var(--color-brand);
 }
 
 .stat-badge.mastered {
-  background: rgba(46, 204, 113, 0.1);
-  color: var(--color-brand);
+  background: var(--color-brand-subtle);
+  color: var(--color-success);
 }
 
 /* 加载 & 空状态 */
@@ -512,27 +512,27 @@ onMounted(() => {
 
 .btn-forget:hover:not(:disabled) {
   border-color: var(--color-danger);
-  background: rgba(239, 68, 68, 0.05);
+  background: rgba(199, 62, 58, 0.05);
 }
 
 .btn-vague:hover:not(:disabled) {
-  border-color: var(--color-warning);
-  background: rgba(245, 158, 11, 0.05);
+  border-color: var(--color-accent);
+  background: var(--color-accent-subtle);
 }
 
 .btn-recall:hover:not(:disabled) {
-  border-color: var(--color-info);
-  background: rgba(99, 102, 241, 0.05);
+  border-color: var(--color-brand);
+  background: var(--color-brand-subtle);
 }
 
 .btn-easy:hover:not(:disabled) {
-  border-color: var(--color-brand);
-  background: rgba(46, 204, 113, 0.05);
+  border-color: var(--color-success);
+  background: var(--color-brand-subtle);
 }
 
 .btn-perfect:hover:not(:disabled) {
   border-color: var(--color-brand);
-  background: rgba(46, 204, 113, 0.1);
+  background: var(--color-brand-subtle);
 }
 
 /* 完成统计 */
