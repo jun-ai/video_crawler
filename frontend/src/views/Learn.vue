@@ -2117,8 +2117,8 @@ onUnmounted(() => {
 /* ==================== 主内容区 ==================== */
 .sf-main-content {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 16px;
   align-items: start;
   animation: fadeSlideIn 0.3s var(--sf-easing-standard);
 }
@@ -2426,35 +2426,15 @@ onUnmounted(() => {
 }
 
 /* ==================== 响应式适配 ==================== */
-@media (max-width: 1280px) {
-  .sf-main-content {
-    grid-template-columns: 1.8fr 1fr 340px;
-  }
-  .sf-left-column { margin-right: 10px; }
-  .sf-middle-column { margin-right: 10px; }
-  .sf-left-column { grid-template-rows: 1.6fr 1fr; }
-}
-
-@media (max-width: 1100px) {
-  .sf-main-content {
-    grid-template-columns: 1.6fr 1fr 300px;
-  }
-  .sf-left-column { margin-right: 8px; }
-  .sf-middle-column { margin-right: 8px; }
-  .sf-left-column { grid-template-rows: 1.4fr 1fr; }
-}
-
+/* Phase 1B Task 1: 删掉 1280px / 1100px 的 3 列布局（解读面板已改 Sheet，右栏幽灵 div 浪费 340px 空白） */
 @media (max-width: 1024px) {
   .sf-main-content {
-    grid-template-columns: 1fr 1fr;
-  }
-  .sf-right-column {
-    display: none;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
   }
   .sf-left-column {
     grid-template-rows: auto auto;
   }
-  .sf-right-column { margin-right: 0; }
 }
 
 @media (max-width: 768px) {
