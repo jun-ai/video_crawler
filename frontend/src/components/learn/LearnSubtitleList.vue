@@ -283,8 +283,8 @@ defineExpose({ listRef })
 }
 
 .sf-subtitle-item.active {
-  background: linear-gradient(135deg, var(--sf-brand-subtle) 0%, rgba(99, 102, 241, 0.04) 100%);
-  border-color: rgba(99, 102, 241, 0.2);
+  background: linear-gradient(135deg, var(--sf-brand-subtle) 0%, rgba(15, 76, 58, 0.04) 100%);
+  border-color: rgba(15, 76, 58, 0.2);
 }
 
 /* 左侧状态指示条 */
@@ -315,9 +315,9 @@ defineExpose({ listRef })
   margin-top: 1px;
 }
 .sf-subtitle-item.active .sf-subtitle-item__time {
-  background: rgba(99, 102, 241, 0.12);
+  background: rgba(15, 76, 58, 0.12);
   color: var(--color-brand);
-  border-color: rgba(99, 102, 241, 0.2);
+  border-color: rgba(15, 76, 58, 0.2);
 }
 
 /* 内容 */
@@ -515,6 +515,52 @@ defineExpose({ listRef })
   .sf-subtitle-item__time {
     font-size: 10px;
     padding: 2px 6px;
+  }
+}
+
+/* ==================== Phase 1B Task 7: Mobile 适配 ==================== */
+@media (max-width: 768px) {
+  .sf-subtitle-item {
+    padding: 12px 14px;
+    min-height: 56px;
+    gap: 10px;
+  }
+  .sf-subtitle-item__time {
+    font-size: 11px;
+    padding: 3px 8px;
+    min-width: 56px;
+  }
+  .sf-subtitle-item__text {
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .sf-subtitle-item__cn {
+    font-size: 13px;
+    margin-top: 4px;
+  }
+  .sf-subtitle-item__actions button {
+    width: 32px;
+    height: 32px;
+  }
+  .sf-pagination {
+    padding: 12px 8px;
+  }
+}
+@media (max-width: 480px) {
+  .sf-subtitle-item {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  .sf-subtitle-item__time {
+    font-size: 10px;
+    padding: 2px 6px;
+    min-width: 50px;
+  }
+  .sf-subtitle-item__text {
+    font-size: 14px;
+  }
+  .sf-subtitle-item__cn {
+    font-size: 12px;
   }
 }
 </style>
