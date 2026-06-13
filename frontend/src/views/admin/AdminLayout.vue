@@ -123,7 +123,7 @@ const goHome = () => {
 
 .admin-sidebar {
   width: 240px;
-  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+  background: linear-gradient(180deg, #0A130E 0%, #142B1F 100%);
   display: flex;
   flex-direction: column;
   box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
@@ -247,7 +247,7 @@ const goHome = () => {
     align-items: center;
     justify-content: space-between;
     padding: 12px 16px;
-    background: linear-gradient(135deg, #0f172a, #1e293b);
+    background: linear-gradient(135deg, #0A130E, #142B1F);
     position: sticky;
     top: 0;
     z-index: 100;
