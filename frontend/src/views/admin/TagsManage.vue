@@ -1,33 +1,40 @@
 <template>
   <div class="tags-manage">
     <div class="page-header">
-      <h2>标签管理</h2>
-      <SfButton type="primary" @click="showCreateDialog = true">
+      <div class="header-left">
+        <h2>标签管理</h2>
+        <span class="header-count">共 {{ filteredTags.length }} 个标签</span>
+      </div>
+      <SfButton type="primary" @click="showCreateDialog = true" class="create-btn">
         <Plus :size="16" style="margin-right: 4px;" /> 新建标签
       </SfButton>
     </div>
 
     <!-- 标签分类 Tabs -->
-    <SfTabs v-model="activeTab" :tabs="tabOptions" @update:model-value="loadTags" />
+    <div class="tabs-bar">
+      <SfTabs v-model="activeTab" :tabs="tabOptions" @update:model-value="loadTags" />
+    </div>
 
-    <!-- 标签列表 -->
-    <div class="tag-list">
-      <div v-for="tag in filteredTags" :key="tag.id" class="tag-item">
-        <div class="tag-info">
-          <span class="tag-color" :style="{ background: tag.color }"></span>
-          <span class="tag-name">{{ tag.name }}</span>
+    <!-- 标签网格 -->
+    <div class="tag-grid">
+      <div v-for="tag in filteredTags" :key="tag.id" class="tag-card">
+        <div class="tag-card-top">
+          <div class="tag-color-dot" :style="{ background: tag.color }"></div>
+          <div class="tag-card-name">{{ tag.name }}</div>
           <SfTag :type="tag.type === 'creator' ? 'brand' : 'success'" size="sm">
             {{ tag.type === 'creator' ? '博主' : '话题' }}
           </SfTag>
-          <span class="tag-order">排序: {{ tag.display_order }}</span>
         </div>
-        <div class="tag-actions">
-          <SfButton type="ghost" size="sm" @click="editTag(tag)">
-            <Pencil :size="14" />
-          </SfButton>
-          <SfButton type="danger" size="sm" @click="handleDelete(tag)">
-            <Trash2 :size="14" />
-          </SfButton>
+        <div class="tag-card-bottom">
+          <span class="tag-order-label">排序: {{ tag.display_order }}</span>
+          <div class="tag-card-actions">
+            <button class="action-btn edit-btn" @click="editTag(tag)" title="编辑">
+              <Pencil :size="14" />
+            </button>
+            <button class="action-btn delete-btn" @click="handleDelete(tag)" title="删除">
+              <Trash2 :size="14" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -192,10 +199,12 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* ====== 页面容器 ====== */
 .tags-manage {
   padding: 0;
 }
 
+/* ====== 页头 ====== */
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -203,61 +212,133 @@ onMounted(() => {
   margin-bottom: 16px;
 }
 
+.header-left {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
 .page-header h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
+  font-weight: 700;
   color: var(--color-text-primary);
 }
 
-.tag-list {
-  margin-top: 16px;
-}
-
-.tag-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border: 1px solid var(--sf-admin-sidebar-border);
-  border-radius: 8px;
-  margin-bottom: 8px;
-  background: var(--sf-admin-sidebar-bg);
-  transition: box-shadow 0.2s;
-}
-
-.tag-item:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-.tag-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.tag-color {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  flex-shrink: 0;
-}
-
-.tag-name {
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--color-text-primary);
-}
-
-.tag-order {
+.header-count {
   font-size: 12px;
   color: var(--color-text-muted);
 }
 
-.tag-actions {
-  display: flex;
-  gap: 4px;
+.create-btn {
+  border-radius: 10px;
 }
 
+/* ====== Tabs ====== */
+.tabs-bar {
+  margin-bottom: 20px;
+}
+
+/* ====== 标签网格 ====== */
+.tag-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+/* ====== 标签卡片 ====== */
+.tag-card {
+  background: var(--sf-admin-sidebar-bg);
+  border: 1px solid var(--sf-admin-sidebar-border);
+  border-radius: var(--radius-md, 12px);
+  padding: 16px 18px;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.tag-card:hover {
+  border-color: var(--sf-admin-accent);
+  background: var(--sf-admin-sidebar-active);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.tag-card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.tag-color-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.06);
+}
+
+.tag-card-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--color-text-primary);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tag-card-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tag-order-label {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ====== 操作按钮（hover 显现） ====== */
+.tag-card-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.tag-card:hover .tag-card-actions {
+  opacity: 1;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--sf-admin-sidebar-border);
+  background: var(--sf-admin-sidebar-active);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.edit-btn:hover {
+  color: var(--sf-admin-accent);
+  border-color: var(--sf-admin-accent);
+  background: var(--sf-admin-accent-light);
+}
+
+.delete-btn:hover {
+  color: #E07870;
+  border-color: rgba(199, 62, 58, 0.4);
+  background: rgba(199, 62, 58, 0.12);
+}
+
+/* ====== 对话框内颜色选择 ====== */
 .color-row {
   display: flex;
   align-items: center;
@@ -265,10 +346,10 @@ onMounted(() => {
 }
 
 .color-picker {
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 6px;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--sf-admin-sidebar-border);
+  border-radius: 10px;
   cursor: pointer;
   padding: 0;
   background: none;
@@ -277,10 +358,10 @@ onMounted(() => {
 .color-preview {
   font-size: 13px;
   color: var(--color-text-secondary);
-  font-family: monospace;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
 }
 
-/* 响应式 */
+/* ====== 响应式 ====== */
 @media (max-width: 768px) {
   .page-header {
     flex-direction: column;
@@ -288,38 +369,36 @@ onMounted(() => {
     gap: 12px;
   }
 
-  .tag-item {
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 10px 12px;
+  .page-header h2 {
+    font-size: 18px;
   }
 
-  .tag-info {
-    flex-wrap: wrap;
-    gap: 6px;
+  .tag-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
   }
 
-  .tag-order {
-    display: none;
+  .tag-card {
+    padding: 14px;
   }
 
-  .tag-actions {
-    width: 100%;
-    justify-content: flex-end;
+  /* 移动端始终显示操作按钮 */
+  .tag-card-actions {
+    opacity: 1;
   }
 
-  .tag-actions .sf-button {
+  .action-btn {
     min-width: 36px;
     min-height: 36px;
   }
 }
 
 @media (max-width: 480px) {
-  .tags-manage {
-    padding: 0;
+  .tag-grid {
+    grid-template-columns: 1fr;
   }
 
-  .tag-name {
+  .tag-card-name {
     font-size: 13px;
   }
 }
