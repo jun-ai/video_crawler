@@ -193,7 +193,7 @@
                 :key="tag.id"
                 :class="['sidebar-tag', { active: selectedTagId === tag.id }]"
                 :style="selectedTagId === tag.id
-                  ? { background: tag.color || 'var(--color-brand)', color: '#fff', borderColor: tag.color || 'var(--color-brand)' }
+                  ? { background: tag.color || 'var(--color-brand-bright)', color: '#fff', borderColor: tag.color || 'var(--color-brand-bright)' }
                   : { borderColor: tag.color || 'var(--color-border)', color: tag.color || 'var(--color-text-secondary)' }"
                 @click="toggleTag(tag.id)"
               >{{ tag.name }}</span>
@@ -293,7 +293,7 @@
                 :key="tag.id"
                 :class="['sidebar-tag', { active: selectedTagId === tag.id }]"
                 :style="selectedTagId === tag.id
-                  ? { background: tag.color || 'var(--color-brand)', color: '#fff', borderColor: tag.color || 'var(--color-brand)' }
+                  ? { background: tag.color || 'var(--color-brand-bright)', color: '#fff', borderColor: tag.color || 'var(--color-brand-bright)' }
                   : { borderColor: tag.color || 'var(--color-border)', color: tag.color || 'var(--color-text-secondary)' }"
                 @click="toggleTag(tag.id)"
               >{{ tag.name }}</span>
@@ -636,7 +636,7 @@ onMounted(() => {
 
 .toggle-btn.active {
   background: var(--color-bg-card);
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
   box-shadow: var(--shadow-sm);
 }
 
@@ -678,7 +678,7 @@ onMounted(() => {
 
 .filter-count {
   font-size: 12px;
-  color: var(--color-brand);
+  color: var(--color-brand-bright);
   font-weight: 500;
 }
 
@@ -804,9 +804,9 @@ onMounted(() => {
 }
 
 .filter-option.active {
-  background: var(--color-brand-subtle);
-  color: var(--color-brand);
-  font-weight: 500;
+  background: var(--color-bg-mint);
+  color: var(--color-brand-bright);
+  font-weight: 600;
 }
 
 .difficulty-dot {
