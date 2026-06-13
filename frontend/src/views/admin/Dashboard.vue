@@ -188,7 +188,7 @@ onMounted(() => {
   margin: 0 0 28px;
   font-size: 22px;
   font-weight: 600;
-  color: #E2E8E2;
+  color: #EDF2EE;
   letter-spacing: -0.3px;
 }
 
@@ -239,7 +239,7 @@ onMounted(() => {
 .stat-value {
   font-size: 30px;
   font-weight: 800;
-  color: #E2E8E2;
+  color: #EDF2EE;
   line-height: 1.1;
   letter-spacing: -0.5px;
   font-variant-numeric: tabular-nums;
@@ -247,7 +247,7 @@ onMounted(() => {
 
 .stat-label {
   font-size: 13px;
-  color: #647468;
+  color: #75857A;
   margin-top: 4px;
   font-weight: 400;
 }
@@ -285,7 +285,7 @@ onMounted(() => {
   margin: 0;
   font-size: 15px;
   font-weight: 600;
-  color: #E2E8E2;
+  color: #EDF2EE;
 }
 
 .test-btn {
@@ -310,13 +310,13 @@ onMounted(() => {
 
 .storage-label {
   font-size: 13px;
-  color: #94A398;
+  color: #A8B8AE;
 }
 
 .storage-value {
   font-size: 14px;
   font-weight: 600;
-  color: #E2E8E2;
+  color: #EDF2EE;
 }
 
 /* ── Category Bar Chart ── */
@@ -334,7 +334,7 @@ onMounted(() => {
 
 .cat-name {
   font-size: 13px;
-  color: #94A398;
+  color: #A8B8AE;
   width: 60px;
   flex-shrink: 0;
 }
@@ -349,7 +349,7 @@ onMounted(() => {
 
 .cat-bar {
   height: 100%;
-  background: linear-gradient(90deg, #0F4C3A, #6FA386);
+  background: linear-gradient(90deg, #0F4C3A, #6FE89A);
   border-radius: 4px;
   transition: width 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -357,7 +357,7 @@ onMounted(() => {
 .cat-count {
   font-size: 13px;
   font-weight: 600;
-  color: #E2E8E2;
+  color: #EDF2EE;
   width: 30px;
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -365,7 +365,7 @@ onMounted(() => {
 
 .empty-text {
   font-size: 13px;
-  color: #5A6B62;
+  color: #75857A;
   text-align: center;
   padding: 20px;
 }
@@ -388,13 +388,13 @@ onMounted(() => {
 
 .dist-type {
   font-size: 13px;
-  color: #94A398;
+  color: #A8B8AE;
 }
 
 .dist-count {
   font-size: 13px;
   font-weight: 500;
-  color: #E2E8E2;
+  color: #EDF2EE;
 }
 
 /* ── Responsive ── */

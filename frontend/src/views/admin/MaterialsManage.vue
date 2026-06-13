@@ -248,7 +248,7 @@ onMounted(() => {
   margin: 0;
   font-size: 22px;
   font-weight: 600;
-  color: #E2E8E2;
+  color: #EDF2EE;
   letter-spacing: -0.3px;
 }
 
@@ -283,7 +283,7 @@ onMounted(() => {
 }
 
 .card-container :deep(.sf-table th) {
-  color: #94A398;
+  color: #A8B8AE;
   background: rgba(255, 255, 255, 0.03);
   border-bottom-color: rgba(255, 255, 255, 0.06);
   font-size: 12px;
@@ -405,7 +405,7 @@ onMounted(() => {
 
   .card-container :deep(.sf-table tbody tr td:first-child) {
     font-weight: 600;
-    color: #6FA386;
+    color: #6FE89A;
     font-size: 12px;
     opacity: 0.7;
   }
@@ -413,7 +413,7 @@ onMounted(() => {
   .card-container :deep(.sf-table tbody tr td:nth-child(2)) {
     flex: 1 1 100%;
     font-weight: 600;
-    color: #E2E8E2;
+    color: #EDF2EE;
     font-size: 15px;
     padding-top: 0;
     padding-left: 8px;

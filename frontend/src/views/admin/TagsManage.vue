@@ -108,7 +108,7 @@ const tagTypeOptions = [
 const tagForm = ref({
   name: '',
   type: 'creator',
-  color: '#5c6ef5',
+  color: '#3F8A5B',       /* Phase 0+ 默认品牌色 (替原紫 #5c6ef5) */
   display_order: 0
 })
 
@@ -120,7 +120,7 @@ const resetForm = () => {
   tagForm.value = {
     name: '',
     type: activeTab.value,
-    color: '#5c6ef5',
+    color: '#3F8A5B',       /* Phase 0+ 默认品牌色 (替原紫) */
     display_order: 0
   }
   editingTag.value = null

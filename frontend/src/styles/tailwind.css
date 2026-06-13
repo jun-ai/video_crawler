@@ -209,29 +209,31 @@
 
 /* ========== 暗色模式覆盖 (Phase 0 — 墨绿/暖橙 暗色版本) ========== */
 .dark {
-  --color-text-primary: #E2E8E2;      /* 浅色文字 */
-  --color-text-secondary: #94A398;
-  --color-text-muted: #647468;
-  --color-text-quaternary: #475449;
-  --color-bg-base: #0F1A14;           /* 深绿黑 */
-  --color-bg-card: #1A2820;           /* 卡绿黑 */
+  --color-text-primary: #EDF2EE;    /* 浅色文字 — Phase 0+ 提亮 */
+  --color-text-secondary: #A8B8AE;  /* 提亮 (原 #94A398) */
+  --color-text-muted: #75857A;      /* 提亮 (原 #647468) */
+  --color-text-quaternary: #4F5E54;
+  --color-bg-base: #0F1A14;          /* 深绿黑 */
+  --color-bg-card: #1A2820;          /* 卡绿黑 */
   --color-bg-elevated: #243A2D;
   --color-bg-hover: #2A4334;
   --color-border: rgba(255, 255, 255, 0.08);
   --color-border-strong: rgba(255, 255, 255, 0.12);
-  --color-border-brand: rgba(111, 163, 134, 0.3);
+  --color-border-brand: rgba(143, 200, 159, 0.4);
 
-  --color-brand: #6FA386;            /* 暗背景下用浅墨绿 */
-  --color-brand-hover: #8FB89F;
-  --color-brand-light: rgba(111, 163, 134, 0.2);
-  --color-brand-subtle: rgba(111, 163, 134, 0.1);
-  --color-accent: #F08A72;           /* 暗背景下用浅暖橙 */
-  --color-accent-hover: #F5A48F;
-  --color-accent-light: rgba(240, 138, 114, 0.2);
-  --color-accent-subtle: rgba(240, 138, 114, 0.1);
+  --color-brand: #8FC79E;            /* Phase 0+ 提亮 (原 #6FA386) */
+  --color-brand-hover: #A8D4B5;
+  --color-brand-light: rgba(143, 200, 159, 0.25);
+  --color-brand-subtle: rgba(143, 200, 159, 0.12);
+  --color-brand-bright: #6FE89A;     /* Phase 0+ 提亮 (原 #6FA386) */
+  --color-brand-bright-hover: #8FF0AE;
+  --color-accent: #F5A48F;           /* Phase 0+ 提亮 (原 #F08A72) */
+  --color-accent-hover: #F8B9A5;
+  --color-accent-light: rgba(245, 164, 143, 0.25);
+  --color-accent-subtle: rgba(245, 164, 143, 0.12);
 
-  --color-annotation-vocabulary: #6FA386;
-  --color-annotation-phrase: #F08A72;
+  --color-annotation-vocabulary: #6FE89A;  /* Phase 0+ 提亮 */
+  --color-annotation-phrase: #F5A48F;
   --color-annotation-important: #F5C264;
 
   --color-diff-easy-bg: rgba(45, 134, 89, 0.3);
@@ -275,12 +277,12 @@
   /* Admin 独立暗色主题变量 */
   --sf-admin-sidebar-bg: #0A130E;
   --sf-admin-sidebar-active: #1A2820;
-  --sf-admin-sidebar-text: #94A398;
-  --sf-admin-sidebar-text-active: #E2E8E2;
+  --sf-admin-sidebar-text: #A8B8AE;       /* Phase 0+ 提亮 (原 #94A398) */
+  --sf-admin-sidebar-text-active: #EDF2EE; /* Phase 0+ 提亮 (原 #E2E8E2) */
   --sf-admin-sidebar-border: rgba(255, 255, 255, 0.08);
-  --sf-admin-sidebar-hover: rgba(255, 255, 255, 0.05);
-  --sf-admin-accent: #6FA386;
-  --sf-admin-accent-light: rgba(111, 163, 134, 0.15);
+  --sf-admin-sidebar-hover: rgba(143, 200, 159, 0.08);
+  --sf-admin-accent: #6FE89A;             /* Phase 0+ 提亮 (原 #6FA386) */
+  --sf-admin-accent-light: rgba(111, 232, 154, 0.18);
 
   /* Hover 背景色 */
   --color-hover-fill: rgba(111, 163, 134, 0.08);

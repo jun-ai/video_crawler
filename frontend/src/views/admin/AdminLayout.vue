@@ -168,7 +168,7 @@ const goHome = () => {
 }
 
 .logo-text {
-  color: #E2E8E2;
+  color: #EDF2EE;
   font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.3px;
@@ -323,7 +323,7 @@ const goHome = () => {
   }
 
   .mobile-title {
-    color: #E2E8E2;
+    color: #EDF2EE;
     font-size: 15px;
     font-weight: 600;
   }
@@ -355,7 +355,7 @@ const goHome = () => {
     align-items: center;
     gap: 2px;
     padding: 8px 2px;
-    color: #5A6B62;
+    color: #75857A;        /* Phase 0+ 提亮 (原 #75857A) */
     cursor: pointer;
     font-size: 10px;
     font-weight: 500;
@@ -364,7 +364,7 @@ const goHome = () => {
   }
 
   .mobile-nav-item.active {
-    color: #6FA386;
+    color: #6FE89A;        /* Phase 0+ 提亮 (原 #6FE89A) */
   }
 }
 

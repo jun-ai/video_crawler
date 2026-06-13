@@ -286,7 +286,7 @@ onMounted(() => {
   margin: 0;
   font-size: 22px;
   font-weight: 700;
-  color: #E2E8E2;
+  color: #EDF2EE;
   letter-spacing: -0.3px;
 }
 
@@ -330,7 +330,7 @@ onMounted(() => {
 .announcement-title {
   font-weight: 600;
   font-size: 15px;
-  color: #E2E8E2;
+  color: #EDF2EE;
 }
 
 /* -- Priority Badge -- */
@@ -365,7 +365,7 @@ onMounted(() => {
 /* -- Content -- */
 .announcement-content {
   font-size: 14px;
-  color: #94A398;
+  color: #A8B8AE;
   line-height: 1.65;
   margin-bottom: 12px;
   white-space: pre-wrap;
@@ -379,7 +379,7 @@ onMounted(() => {
 
 .announcement-time {
   font-size: 12px;
-  color: #647468;
+  color: #75857A;
   font-variant-numeric: tabular-nums;
 }
 
@@ -406,7 +406,7 @@ onMounted(() => {
   background: transparent;
   cursor: pointer;
   font-size: 13px;
-  color: #94A398;
+  color: #A8B8AE;
   transition: all 0.15s;
   border-right: 1px solid rgba(255, 255, 255, 0.06);
   font-weight: 500;
@@ -448,7 +448,7 @@ onMounted(() => {
   border-radius: 50%;
   background: #0F4C3A;
   cursor: pointer;
-  border: 2px solid #6FA386;
+  border: 2px solid #6FE89A;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
 }
 
@@ -458,7 +458,7 @@ onMounted(() => {
   border-radius: 50%;
   background: #0F4C3A;
   cursor: pointer;
-  border: 2px solid #6FA386;
+  border: 2px solid #6FE89A;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
 }
 
@@ -467,11 +467,11 @@ onMounted(() => {
   justify-content: space-between;
   margin-top: 6px;
   font-size: 12px;
-  color: #647468;
+  color: #75857A;
 }
 
 .priority-labels span.active {
-  color: #6FA386;
+  color: #6FE89A;
   font-weight: 600;
 }
 
