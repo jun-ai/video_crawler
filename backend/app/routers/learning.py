@@ -448,6 +448,19 @@ async def set_interpretation_status(
         )
         db.add(record)
 
+    # 触发学习信号服务（unknown 状态入生词本）
+    if data.status == "unknown":
+        try:
+            from app.services.learning_signal import LearningSignalService
+            signal = LearningSignalService(db, current_user)
+            await signal.process_interpretation_status(
+                interpretation_id=data.interpretation_id,
+                status=data.status,
+                content=interp.content_en,
+            )
+        except Exception as sig_err:
+            print(f"[WARN] LearningSignalService 失败: {sig_err}")
+
     await db.commit()
     await db.refresh(record)
 
@@ -1012,6 +1025,24 @@ async def submit_dictation(
         passed=check_result["passed"]
     )
     db.add(record)
+    await db.flush()  # 给 record 分配 id
+
+    # 3.5 触发学习信号服务（低分错词入 Vocabulary）
+    new_vocabs: list = []
+    try:
+        from app.services.learning_signal import LearningSignalService
+        signal = LearningSignalService(db, current_user)
+        new_vocabs = await signal.process_dictation_result(
+            material_id=data.material_id,
+            subtitle_id=data.subtitle_id,
+            score=check_result["score"],
+            user_input=data.user_input,
+            correct_text=subtitle.text_en,
+        )
+    except Exception as sig_err:
+        # 信号服务失败不影响主流程
+        print(f"[WARN] LearningSignalService 失败: {sig_err}")
+
     await db.commit()
     await db.refresh(record)
 
