@@ -1380,6 +1380,41 @@ async def check_bookmarks(
     return {"bookmarked_ids": bookmarked_ids}
 
 
+@router.get("/bookmarks/all", response_model=List[SubtitleBookmarkResponse])
+async def get_all_user_bookmarks(
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db)
+):
+    """获取用户所有字幕收藏（join Material, 单次查询解决 N+1）
+
+    替代前端循环调用 /bookmarks/{material_id} 的 N+1 模式。
+    按 created_at desc 排序，最新收藏在前。
+    """
+    result = await db.execute(
+        select(SubtitleBookmark, Subtitle)
+        .join(Subtitle, SubtitleBookmark.subtitle_id == Subtitle.id)
+        .where(SubtitleBookmark.user_id == current_user.id)
+        .order_by(SubtitleBookmark.created_at.desc())
+    )
+    rows = result.all()
+
+    response = []
+    for bookmark, subtitle in rows:
+        response.append(SubtitleBookmarkResponse(
+            id=bookmark.id,
+            user_id=bookmark.user_id,
+            material_id=bookmark.material_id,
+            subtitle_id=bookmark.subtitle_id,
+            note=bookmark.note,
+            practice_count=bookmark.practice_count or 0,
+            created_at=bookmark.created_at,
+            subtitle_text_en=subtitle.text_en,
+            subtitle_text_cn=subtitle.text_cn,
+            subtitle_start_time=subtitle.start_time,
+        ))
+    return response
+
+
 @router.get("/bookmarks/{material_id}", response_model=List[SubtitleBookmarkResponse])
 async def get_material_bookmarks(
     material_id: int,
