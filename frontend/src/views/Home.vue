@@ -17,8 +17,16 @@
           <button class="hero-cta-secondary" @click="scrollToVideos">查看视频库</button>
         </div>
 
-        <!-- 4 组统计 (SpeakVlog 风格) -->
-        <div class="hero-stats">
+        <!-- 未登录:精简社会证明行 -->
+        <div v-if="!userStore.isLoggedIn" class="hero-trust-line">
+          <span class="trust-badge">📚 1000+ 精选视频</span>
+          <span class="trust-divider">·</span>
+          <span class="trust-badge">🎯 AI 逐句精讲</span>
+          <span class="trust-divider">·</span>
+          <span class="trust-badge">🎙️ 影子跟读打分</span>
+        </div>
+        <!-- 已登录:4 组统计 (SpeakVlog 风格) -->
+        <div v-else class="hero-stats">
           <div class="hero-stat">
             <div class="hero-stat-value">{{ stats.total }}</div>
             <div class="hero-stat-label">总期数</div>
@@ -276,22 +284,26 @@
 
         <!-- 学习功能清单 — SpeakVlog 风格（Phase 0+） -->
         <section class="features-section">
-          <div class="features-grid">
-            <div class="features-intro">
-              <div class="features-eyebrow">为什么选 Fluenty</div>
-              <h2 class="features-title">不只是看视频，<br/>是真正用英语</h2>
-              <p class="features-desc">真实语料 · AI 解读 · 间隔重复，<br/>把被动刷剧变成主动输出。</p>
-            </div>
-            <div class="features-list">
-              <div v-for="feat in features" :key="feat.title" class="feature-item">
-                <div class="feature-check">
-                  <Check :size="18" />
-                </div>
-                <div class="feature-text">
-                  <div class="feature-title">{{ feat.title }}</div>
-                  <div class="feature-desc-sm">{{ feat.desc }}</div>
-                </div>
+          <div class="features-head">
+            <div class="features-eyebrow">为什么选 Fluenty</div>
+            <h2 class="features-title">不只是看视频，<br/>是真正用英语</h2>
+            <p class="features-desc">真实语料 · AI 解读 · 间隔重复，把被动刷剧变成主动输出。</p>
+          </div>
+          <!-- 4 核心功能卡(大卡片+图标) -->
+          <div class="core-features">
+            <div v-for="feat in coreFeatures" :key="feat.title" class="core-feature-card">
+              <div class="core-feature-icon">
+                <component :is="feat.icon" :size="28" />
               </div>
+              <h3 class="core-feature-title">{{ feat.title }}</h3>
+              <p class="core-feature-desc">{{ feat.desc }}</p>
+            </div>
+          </div>
+          <!-- 8 次要功能(紧凑双列) -->
+          <div class="secondary-features">
+            <div v-for="feat in secondaryFeatures" :key="feat.title" class="secondary-feature-item">
+              <Check :size="16" class="secondary-check" />
+              <span class="secondary-feature-text">{{ feat.title }}</span>
             </div>
           </div>
         </section>
@@ -360,20 +372,23 @@ const userStore = useUserStore()
 const loading = ref(true)
 const loadingMore = ref(false)
 const categories = ref([])
-// Phase 0+ SpeakVlog 风格 — 学习功能清单（首页介绍用）
-const features = [
-  { title: '真实视频语料', desc: '海外 YouTube / TED 精选' },
-  { title: 'AI 智能解读', desc: '逐句翻译 + 重点标注' },
-  { title: '字幕跟读练习', desc: '影子跟读 + 语速调节' },
-  { title: '生词一键收藏', desc: '自动收录到词汇本' },
-  { title: '间隔重复复习', desc: '艾宾浩斯曲线不遗忘' },
-  { title: '连续打卡激励', desc: '每天 10 分钟养成习惯' },
-  { title: '学习数据统计', desc: '日 / 周 / 月多维图表' },
-  { title: '移动端友好', desc: '通勤路上也能学' },
-  { title: '收藏夹整理', desc: '喜欢的视频分类存' },
-  { title: '跟读 AI 打分', desc: '发音准确度反馈' },
-  { title: '永久云端保存', desc: '进度 / 笔记不丢失' },
-  { title: '免费体验', desc: '注册即送 7 天会员' }
+// 4 核心功能 — 大卡片(差异化:图标+标题+描述)
+const coreFeatures = [
+  { title: '真实视频语料', desc: '海外 YouTube / TED 精选，不是课本录音', icon: Play },
+  { title: 'AI 智能解读', desc: '逐句翻译 + 重点词组 + 语法标注', icon: Sparkles },
+  { title: '字幕跟读练习', desc: '影子跟读 + 语速调节 + 发音反馈', icon: Headphones },
+  { title: '间隔重复复习', desc: '艾宾浩斯曲线，学过就不会忘', icon: Target }
+]
+// 8 次要功能 — 紧凑列表
+const secondaryFeatures = [
+  { title: '生词一键收藏' },
+  { title: '连续打卡激励' },
+  { title: '学习数据统计' },
+  { title: '移动端友好' },
+  { title: '收藏夹整理' },
+  { title: '跟读 AI 打分' },
+  { title: '永久云端保存' },
+  { title: '免费体验' }
 ]
 const materials = ref([])
 const selectedCategory = ref(null)
@@ -856,6 +871,36 @@ onMounted(async () => {
 }
 
 /* 4 组统计 — SpeakVlog 大数字风格 */
+/* 新访客:社会证明行(替代零值统计) */
+.hero-trust-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 56px;
+  flex-wrap: wrap;
+}
+
+.hero-trust-line .trust-badge {
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+}
+
+.hero-trust-line .trust-divider {
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 18px;
+  font-weight: 300;
+}
+
+/* 已登录:4 组统计 (SpeakVlog 风格) */
 .hero-stats {
   display: flex;
   align-items: center;
@@ -1410,18 +1455,10 @@ onMounted(async () => {
   border-radius: 24px;
 }
 
-.features-grid {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr 1.6fr;
-  gap: 64px;
-  align-items: start;
-}
-
-.features-intro {
-  position: sticky;
-  top: 88px;
+.features-head {
+  max-width: 600px;
+  margin: 0 auto 48px;
+  text-align: center;
 }
 
 .features-eyebrow {
@@ -1452,59 +1489,79 @@ onMounted(async () => {
   margin: 0;
 }
 
-.features-list {
+/* 4 核心功能 — 大卡片 */
+.core-features {
+  max-width: 1100px;
+  margin: 0 auto 40px;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14px 24px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
 }
 
-.feature-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px 14px;
+.core-feature-card {
+  padding: 28px 22px;
   background: var(--color-bg-card);
-  border-radius: 14px;
+  border-radius: 18px;
   border: 1px solid var(--color-border);
-  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  text-align: center;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
 }
 
-.feature-item:hover {
-  transform: translateY(-2px);
-  border-color: var(--color-brand-bright);
-  box-shadow: 0 8px 20px rgba(15, 76, 58, 0.08);
+.core-feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(15, 76, 58, 0.10);
 }
 
-.feature-check {
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+.core-feature-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--color-bg-mint);
-  color: var(--color-brand-bright);
-  border-radius: 10px;
+  color: var(--color-brand);
+  border-radius: 16px;
+}
+
+.core-feature-title {
+  font-size: 17px;
   font-weight: 700;
-}
-
-.feature-text {
-  flex: 1;
-  min-width: 0;
-}
-
-.feature-title {
-  font-size: 14px;
-  font-weight: 600;
   color: var(--color-text-primary);
-  line-height: 1.3;
-  margin-bottom: 2px;
+  margin: 0 0 8px;
 }
 
-.feature-desc-sm {
-  font-size: 12px;
+.core-feature-desc {
+  font-size: 13px;
   color: var(--color-text-muted);
-  line-height: 1.4;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* 8 次要功能 — 紧凑双列 */
+.secondary-features {
+  max-width: 800px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px 32px;
+}
+
+.secondary-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.secondary-check {
+  flex-shrink: 0;
+  color: var(--color-brand-bright);
+}
+
+.secondary-feature-text {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
 }
 
 /* 视频网格 — Bento 化 */
@@ -1708,12 +1765,25 @@ onMounted(async () => {
   }
 
   .features-grid {
-    grid-template-columns: 1fr;
-    gap: 40px;
+    display: none; /* 旧样式已废弃 */
   }
 
   .features-intro {
-    position: static;
+    display: none;
+  }
+
+  .core-features {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  .core-feature-card {
+    padding: 22px 16px;
+  }
+
+  .secondary-features {
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
 }
 
@@ -1813,9 +1883,16 @@ onMounted(async () => {
     border-radius: 18px;
   }
 
-  .features-list {
+  .core-features {
     grid-template-columns: 1fr;
-    gap: 10px;
+  }
+
+  .features-head {
+    margin-bottom: 32px;
+  }
+
+  .core-feature-title {
+    font-size: 16px;
   }
 
   .features-title {
