@@ -467,6 +467,8 @@ class SubtitleBookmarkResponse(BaseModel):
     subtitle_text_en: Optional[str] = None
     subtitle_text_cn: Optional[str] = None
     subtitle_start_time: Optional[int] = None
+    # 关联的视频信息（/bookmarks/all 端点填充）
+    material_title: Optional[str] = None
 
     class Config:
         from_attributes = True

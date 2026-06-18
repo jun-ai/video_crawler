@@ -203,11 +203,10 @@ const refreshing = ref(false)
 // ====== 字幕收藏 ======
 const subtitleLoading = ref(false)
 const subtitleBookmarks = ref([])
+// 分页由前端 slice（不依赖服务端分页，单次拉全部）
 const subtitlePage = ref(1)
 const subtitlePageSize = ref(20)
 const subtitleTotal = ref(0)
-// 缓存字幕详情
-const subtitleDetailsMap = ref({})
 
 // 按日期分组
 const groupedSubtitles = computed(() => {
@@ -253,50 +252,22 @@ const loadSubtitleBookmarks = async () => {
   if (!userStore.isLoggedIn) return
   subtitleLoading.value = true
   try {
-    // 获取所有材料的字幕收藏
-    // 先获取收藏的材料列表
-    const matRes = await favoriteAPI.getList({ page: 1, page_size: 100 })
-    const materials = matRes.items || []
-
-    // 收集所有字幕收藏
-    const allBookmarks = []
-    for (const mat of materials) {
-      try {
-        const bookmarks = await subtitleBookmarkAPI.getList(mat.id)
-        if (bookmarks && bookmarks.length) {
-          // 获取字幕详情
-          let subtitles = subtitleDetailsMap.value[mat.id]
-          if (!subtitles) {
-            try {
-              subtitles = await materialAPI.getSubtitles(mat.id)
-              subtitleDetailsMap.value[mat.id] = subtitles
-            } catch (e) {
-              subtitles = []
-            }
-          }
-
-          for (const bm of bookmarks) {
-            const sub = subtitles.find(s => s.id === bm.subtitle_id)
-            allBookmarks.push({
-              id: bm.id,
-              subtitle_id: bm.subtitle_id,
-              material_id: mat.id,
-              material_title: mat.title,
-              text_en: sub?.text_en || '',
-              text_cn: sub?.text_cn || '',
-              start_time: sub?.start_time,
-              practice_count: bm.practice_count || 0,
-              created_at: bm.created_at || new Date().toISOString()
-            })
-          }
-        }
-      } catch (e) {
-        console.error('加载材料字幕收藏失败', mat.id, e)
-      }
-    }
-
-    subtitleBookmarks.value = allBookmarks
-    subtitleTotal.value = allBookmarks.length
+    // 单次 API 拉全部（join Subtitle），不再 N+1
+    const res = await subtitleBookmarkAPI.getAll()
+    const items = Array.isArray(res) ? res : (res.items || [])
+    // 字段映射：后端 subtitle_text_en → 前端 text_en
+    subtitleBookmarks.value = items.map(item => ({
+      id: item.id,
+      subtitle_id: item.subtitle_id,
+      material_id: item.material_id,
+      material_title: item.material_title || '未分类',
+      text_en: item.subtitle_text_en || '',
+      text_cn: item.subtitle_text_cn || '',
+      start_time: item.subtitle_start_time,
+      practice_count: item.practice_count || 0,
+      created_at: item.created_at,
+    }))
+    subtitleTotal.value = items.length
   } catch (e) {
     console.error('加载字幕收藏失败', e)
   } finally {

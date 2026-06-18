@@ -153,6 +153,8 @@ export const subtitleBookmarkAPI = {
   remove: (id) => api.delete(`/learning/bookmarks/${id}`),
   check: (materialId) => api.get(`/learning/bookmarks/check/${materialId}`),
   getList: (materialId) => api.get(`/learning/bookmarks/${materialId}`),
+  /** 单次获取所有字幕收藏（join Subtitle），替代循环 N+1 */
+  getAll: () => api.get('/learning/bookmarks/all'),
   incrementPractice: (bookmarkId) => api.post(`/learning/bookmarks/${bookmarkId}/practice`)
 }
 
