@@ -6,10 +6,28 @@ import httpx
 import json
 import asyncio
 import logging
+import time
 from typing import List, Dict, Any, Optional
 from app.config import settings
 
 logger = logging.getLogger(__name__)
+
+# ==================== 熔断器 ====================
+# 402/余额不足时，5 分钟内不再请求 DeepSeek，直接快速失败
+_deepseek_unavailable_until: float = 0.0
+_CIRCUIT_BREAKER_SECONDS = 300  # 5 分钟
+
+
+def _is_deepseek_available() -> bool:
+    """检查 DeepSeek 是否可用（熔断器状态）"""
+    return time.time() > _deepseek_unavailable_until
+
+
+def _trip_circuit_breaker():
+    """触发熔断"""
+    global _deepseek_unavailable_until
+    _deepseek_unavailable_until = time.time() + _CIRCUIT_BREAKER_SECONDS
+    logger.warning(f"[DeepSeek] 熔断器已触发，{_CIRCUIT_BREAKER_SECONDS}s 内不再请求")
 
 
 def _parse_json_response(content: str) -> Any:
@@ -25,6 +43,10 @@ def _parse_json_response(content: str) -> Any:
 
 async def _call_deepseek(system_prompt: str, user_prompt: str, max_tokens: int = 4000, temperature: float = 0.3) -> str:
     """统一调用 DeepSeek API"""
+    # 熔断检查：余额不足期间快速失败
+    if not _is_deepseek_available():
+        raise Exception("DeepSeek 熔断中（余额不足），请稍后再试")
+
     if not settings.deepseek_api_key:
         raise Exception("DeepSeek API Key 未配置")
 
@@ -45,6 +67,11 @@ async def _call_deepseek(system_prompt: str, user_prompt: str, max_tokens: int =
                 "max_tokens": max_tokens
             }
         )
+
+        if response.status_code == 402:
+            # 余额不足，触发熔断
+            _trip_circuit_breaker()
+            raise Exception(f"DeepSeek API 错误: 402 - 余额不足")
 
         if response.status_code != 200:
             raise Exception(f"DeepSeek API 错误: {response.status_code} - {response.text[:200]}")
@@ -444,5 +471,9 @@ async def translate_text(text: str) -> Dict[str, str]:
 
 
 def get_deepseek_service():
-    """获取 DeepSeek 服务状态"""
-    return settings.deepseek_api_key is not None
+    """获取 DeepSeek 服务状态（含熔断检查）"""
+    if not settings.deepseek_api_key:
+        return False
+    if not _is_deepseek_available():
+        return False
+    return True

@@ -326,12 +326,7 @@ const loadVocabularies = async () => {
     vocabularies.value = res.items || []
     total.value = res.total || 0
 
-    // 批量预查询前 10 个词的发音和释义
-    vocabularies.value.slice(0, 10).forEach(item => {
-      if (!wordInfoCache[item.word.toLowerCase()]) {
-        lookupWordSilent(item.word)
-      }
-    })
+    // 不再批量预查 10 个词，改为用户点击时才查（省 API 调用）
   } catch (e) {
     console.error('加载失败', e)
   } finally {

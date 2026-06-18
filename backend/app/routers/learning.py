@@ -8,9 +8,10 @@ from sqlalchemy.orm import joinedload
 from typing import Annotated, List, Optional
 from datetime import datetime, timedelta, timezone
 import json
+import logging
 
 from app.database import get_db
-from app.models.models import User, LearningRecord, Material, Vocabulary, Subtitle, DictationRecord, SubtitleAnnotation, SubtitleBookmark
+from app.models.models import User, LearningRecord, Material, Vocabulary, Subtitle, DictationRecord, SubtitleAnnotation, SubtitleBookmark, VideoInterpretation
 from app.schemas.schemas import (
     LearningRecordCreate,
     LearningRecordResponse,
@@ -48,6 +49,8 @@ from app.services.audio_converter import convert_webm_to_wav, check_ffmpeg_avail
 from app.services.dictation_checker import dictation_checker
 from app.models.models import InterpretationLearning, VideoInterpretation
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/learning", tags=["学习记录"])
 
@@ -320,41 +323,65 @@ async def delete_vocabulary(
     return MessageResponse(message="生词已删除", success=True)
 
 
+# ==================== 单词查询缓存 ====================
+# 内存级缓存：单词不会变，查一次永久缓存
+_word_lookup_cache: dict[str, dict] = {}
+
+
 @router.get("/vocabulary/lookup")
 async def lookup_vocabulary(
     word: str = Query(..., description="要查询的单词"),
     db: AsyncSession = Depends(get_db)
 ):
-    """查询单词 - 获取音标、释义和例句"""
-    from app.services.deepseek import lookup_word, get_deepseek_service
+    """查询单词 - 获取音标、释义和例句（三级缓存：内存 → DB → DeepSeek）"""
+    word_lower = word.lower().strip()
 
+    # 第一级：内存缓存
+    if word_lower in _word_lookup_cache:
+        return _word_lookup_cache[word_lower]
+
+    # 第二级：从 VideoInterpretation 表查（管理员上传时 AI 预生成的词卡）
+    result = await db.execute(
+        select(VideoInterpretation).where(
+            VideoInterpretation.category == 'word',
+            VideoInterpretation.content_en.ilike(word_lower)
+        ).limit(1)
+    )
+    interp = result.scalar_one_or_none()
+    if interp:
+        data = {
+            "word": word_lower,
+            "phonetic": interp.phonetic or "",
+            "translation": interp.content_cn or interp.english_definition or "",
+            "example": interp.example_sentence or ""
+        }
+        _word_lookup_cache[word_lower] = data
+        return data
+
+    # 第三级：调用 DeepSeek API（仅在缓存和 DB 都没有时）
     try:
-        # 检查 DeepSeek 是否可用
+        from app.services.deepseek import lookup_word, get_deepseek_service
+
         if get_deepseek_service():
             result = await lookup_word(word)
-            return {
-                "word": word,
+            data = {
+                "word": word_lower,
                 "phonetic": result.get("phonetic", ""),
                 "translation": result.get("translation", ""),
                 "example": result.get("example", "")
             }
+            _word_lookup_cache[word_lower] = data
+            return data
         else:
-            # 如果 DeepSeek 不可用，返回简单的翻译
-            return {
-                "word": word,
-                "phonetic": "",
-                "translation": word,
-                "example": ""
-            }
+            data = {"word": word_lower, "phonetic": "", "translation": word_lower, "example": ""}
+            _word_lookup_cache[word_lower] = data
+            return data
     except Exception as e:
-        print(f"查询单词失败: {e}")
-        # 返回默认值
-        return {
-            "word": word,
-            "phonetic": "",
-            "translation": word,
-            "example": ""
-        }
+        logger.warning(f"查询单词失败({word_lower}): {e}")
+        data = {"word": word_lower, "phonetic": "", "translation": word_lower, "example": ""}
+        # 失败也缓存，避免短时间内重复调失败
+        _word_lookup_cache[word_lower] = data
+        return data
 
 
 # ==================== 发音评测 ====================
