@@ -1408,7 +1408,12 @@ async def get_review_queue(
                 Vocabulary.next_review_at <= now,
                 Vocabulary.next_review_at.is_(None)
             )
-        ).order_by(Vocabulary.next_review_at.asc().nulls_first())
+        ).order_by(
+            # MySQL: NULL 默认为 ASC 时排在最前（兼容原 PostgreSQL 行为）
+            # 用 case when 显式处理，保证跨 DB 一致
+            case((Vocabulary.next_review_at.is_(None), 0), else_=1),
+            Vocabulary.next_review_at.asc()
+        )
         .limit(limit)
     )
     vocabularies = result.scalars().unique().all()

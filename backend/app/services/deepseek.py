@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 # 402/余额不足时，5 分钟内不再请求 DeepSeek，直接快速失败
 _deepseek_unavailable_until: float = 0.0
 _CIRCUIT_BREAKER_SECONDS = 300  # 5 分钟
+# 串行锁：一次只允许一个请求打 API，避免 6 个并发同时各打一次
+_deepseek_lock = asyncio.Lock()
 
 
 def _is_deepseek_available() -> bool:
@@ -50,33 +52,40 @@ async def _call_deepseek(system_prompt: str, user_prompt: str, max_tokens: int =
     if not settings.deepseek_api_key:
         raise Exception("DeepSeek API Key 未配置")
 
-    async with httpx.AsyncClient(timeout=90.0) as client:
-        response = await client.post(
-            f"{settings.deepseek_base_url}/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {settings.deepseek_api_key}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": "deepseek-chat",
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                "temperature": temperature,
-                "max_tokens": max_tokens
-            }
-        )
+    # 串行锁：6 个并发同时进来时，只有一个真打 API，其余等锁
+    # 如果第一个返回 402 触发熔断，其余拿锁后再检查就直接快速失败
+    async with _deepseek_lock:
+        # 拿到锁后重新检查（可能上一个请求刚刚触发了熔断）
+        if not _is_deepseek_available():
+            raise Exception("DeepSeek 熔断中（余额不足），请稍后再试")
 
-        if response.status_code == 402:
-            # 余额不足，触发熔断
-            _trip_circuit_breaker()
-            raise Exception(f"DeepSeek API 错误: 402 - 余额不足")
+        async with httpx.AsyncClient(timeout=90.0) as client:
+            response = await client.post(
+                f"{settings.deepseek_base_url}/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {settings.deepseek_api_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": "deepseek-chat",
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    "temperature": temperature,
+                    "max_tokens": max_tokens
+                }
+            )
 
-        if response.status_code != 200:
-            raise Exception(f"DeepSeek API 错误: {response.status_code} - {response.text[:200]}")
+            if response.status_code == 402:
+                # 余额不足，触发熔断
+                _trip_circuit_breaker()
+                raise Exception(f"DeepSeek API 错误: 402 - 余额不足")
 
-        return response.json()["choices"][0]["message"]["content"]
+            if response.status_code != 200:
+                raise Exception(f"DeepSeek API 错误: {response.status_code} - {response.text[:200]}")
+
+            return response.json()["choices"][0]["message"]["content"]
 
 
 # ==================== 单词卡片生成 ====================
