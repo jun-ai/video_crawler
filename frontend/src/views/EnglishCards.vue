@@ -418,7 +418,7 @@ import SfTooltip from '@/components/ui/SfTooltip.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import FilterChip from '@/components/common/FilterChip.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
-import { materialAPI, interpretationAPI } from '@/api'
+import { materialAPI, interpretationAPI, vocabularyAPI } from '@/api'
 import { useUserStore } from '@/stores/user'
 
 const userStore = useUserStore()
@@ -581,6 +581,23 @@ async function setStatus(interpretationId, status) {
       material_id: selectedMaterialId.value,
       status
     })
+    // 标 unknown 时同步入生词本（后端 LearningSignalService 也会做，前端做一次确保 UI 同步）
+    if (status === 'unknown') {
+      const allItems = [
+        ...(interpretationData.value.words || []),
+        ...(interpretationData.value.phrases || []),
+        ...(interpretationData.value.grammar || []),
+      ]
+      const item = allItems.find(i => i.id === interpretationId)
+      if (item) {
+        vocabularyAPI.add({
+          word: item.content_en || item.word || '',
+          translation: item.content_cn || item.translation || '',
+          context: item.context_sentence || item.context || '',
+          material_id: selectedMaterialId.value,
+        }).catch(err => console.warn('[EnglishCards] 同步生词本失败', err))
+      }
+    }
     toast.success(status === 'known' ? '已标记为认识' : '已标记为不认识')
   } catch (e) {
     // Revert on failure

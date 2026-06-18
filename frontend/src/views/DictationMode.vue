@@ -217,6 +217,7 @@ import {
   List
 } from 'lucide-vue-next'
 import SfDialog from '@/components/ui/SfDialog.vue'
+import { dictationAPI } from '@/api'
 
 const props = defineProps({
   material: Object,
@@ -496,6 +497,21 @@ const submitAnswer = async () => {
     isSubmitted.value = true
     completedSentences.value.add(props.currentIndex)
     scoreHistory.value.push(score)
+
+    // 上报后端（写入 DictationRecord + 触发 LearningSignalService）
+    // 失败不阻塞本地展示，toast 轻提示
+    try {
+      const currentSub = props.subtitles?.[props.currentIndex]
+      if (currentSub) {
+        await dictationAPI.submit({
+          material_id: props.material?.id,
+          subtitle_id: currentSub.id,
+          user_input: blankWords.value.map((_, i) => userAnswers.value[i] || '').join(' '),
+        })
+      }
+    } catch (err) {
+      console.warn('[DictationMode] 上报后端失败（不影响本地）', err)
+    }
 
   } catch (e) {
     toast.error('提交失败')
