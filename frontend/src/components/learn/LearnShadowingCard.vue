@@ -25,23 +25,66 @@
 
       <!-- 操作区 -->
       <div class="sf-shadowing-card__actions">
-        <!-- 导航组 -->
-        <div class="sf-shadowing-card__nav">
-          <button class="sf-icon-btn" @click="$emit('prev')" :disabled="currentIndex <= 0" :title="'上一句'">
-            <ArrowLeft :size="16" />
-          </button>
-          <button class="sf-icon-btn" @click="$emit('replay')" :disabled="currentIndex < 0" :title="'重播（视频+TTS）'">
-            <RefreshCw :size="16" />
-          </button>
-          <button class="sf-icon-btn" @click="$emit('speak')" :disabled="currentIndex < 0" :title="'仅发音（TTS）'">
-            <Send :size="16" />
-          </button>
-          <button class="sf-icon-btn" @click="$emit('next')" :disabled="currentIndex >= totalSubtitles - 1" :title="'下一句'">
-            <ArrowRight :size="16" />
-          </button>
+        <!-- 第一行：导航 + 快捷开关 -->
+        <div class="sf-shadowing-card__row">
+          <!-- 导航组 -->
+          <div class="sf-shadowing-card__nav">
+            <button class="sf-icon-btn" @click="$emit('prev')" :disabled="currentIndex <= 0" :title="'上一句'">
+              <ArrowLeft :size="16" />
+            </button>
+            <button class="sf-icon-btn" @click="$emit('replay')" :disabled="currentIndex < 0" :title="'重播'">
+              <RefreshCw :size="16" />
+            </button>
+            <button class="sf-icon-btn" @click="$emit('next')" :disabled="currentIndex >= totalSubtitles - 1" :title="'下一句'">
+              <ArrowRight :size="16" />
+            </button>
+          </div>
+          <!-- 快捷开关 -->
+          <div class="sf-shadowing-card__toggles">
+            <button
+              :class="['sf-tool-btn', 'sf-tool-btn--compact', { active: showTranslation }]"
+              @click="$emit('toggle-translation')"
+              :disabled="showOnlyChinese"
+              title="显示/隐藏翻译"
+            >
+              <MessageCircle :size="14" />
+            </button>
+            <button
+              :class="['sf-tool-btn', 'sf-tool-btn--compact', { active: showMoreTools }]"
+              @click="showMoreTools = !showMoreTools"
+              title="更多工具"
+            >
+              <MoreHorizontal :size="14" />
+            </button>
+          </div>
         </div>
 
-        <!-- 核心操作组 -->
+        <!-- 展开工具栏（低频功能） -->
+        <transition name="sf-fade">
+          <div v-if="showMoreTools" class="sf-shadowing-card__more">
+            <button class="sf-tool-btn" @click="$emit('speak')" :disabled="currentIndex < 0">
+              <Send :size="14" />
+              TTS 发音
+            </button>
+            <button
+              :class="['sf-tool-btn', { active: showOnlyChinese }]"
+              @click="$emit('toggle-chinese-only')"
+            >
+              <FileText :size="14" />
+              {{ showOnlyChinese ? '退出练习' : '翻译练习' }}
+            </button>
+            <button
+              class="sf-tool-btn"
+              @click="$emit('add-vocabulary')"
+              :disabled="!isLoggedIn || !currentSubtitle"
+            >
+              <BookOpen :size="14" />
+              加入生词本
+            </button>
+          </div>
+        </transition>
+
+        <!-- 第二行：核心操作 -->
         <div class="sf-shadowing-card__main">
           <button
             :class="['sf-record-btn', { recording: isRecording }]"
@@ -59,33 +102,6 @@
           >
             <BarChart3 :size="16" />
             评测发音
-          </button>
-        </div>
-
-        <!-- 工具组 -->
-        <div class="sf-shadowing-card__tools">
-          <button
-            :class="['sf-tool-btn', { active: showTranslation }]"
-            @click="$emit('toggle-translation')"
-            :disabled="showOnlyChinese"
-          >
-            <MessageCircle :size="14" />
-            {{ showTranslation ? '隐藏翻译' : '显示翻译' }}
-          </button>
-          <button
-            :class="['sf-tool-btn', { active: showOnlyChinese }]"
-            @click="$emit('toggle-chinese-only')"
-          >
-            <FileText :size="14" />
-            {{ showOnlyChinese ? '退出练习' : '翻译练习' }}
-          </button>
-          <button
-            class="sf-tool-btn"
-            @click="$emit('add-vocabulary')"
-            :disabled="!isLoggedIn || !currentSubtitle"
-          >
-            <BookOpen :size="14" />
-            生词本
           </button>
         </div>
       </div>
@@ -148,8 +164,11 @@
 <script setup>
 import {
   ArrowLeft, ArrowRight, Mic, Pause, RefreshCw,
-  MessageCircle, BookOpen, BarChart3, FileText, Send
+  MessageCircle, BookOpen, BarChart3, FileText, Send, MoreHorizontal
 } from 'lucide-vue-next'
+import { ref } from 'vue'
+
+const showMoreTools = ref(false)
 
 defineProps({
   currentSubtitle: { type: Object, default: null },
@@ -284,11 +303,42 @@ const getScoreClass = (score) => {
   gap: 10px;
 }
 
+/* 第一行：导航 + 快捷开关 */
+.sf-shadowing-card__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .sf-shadowing-card__nav {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 8px;
+}
+
+.sf-shadowing-card__toggles {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 紧凑工具按钮（仅图标） */
+.sf-tool-btn--compact {
+  padding: 6px 8px;
+  gap: 0;
+}
+
+/* 展开工具栏 */
+.sf-shadowing-card__more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px;
+  background: var(--color-bg-pale, rgba(0,0,0,0.02));
+  border-radius: var(--sf-radius-md, 10px);
 }
 
 .sf-shadowing-card__main {
@@ -296,14 +346,6 @@ const getScoreClass = (score) => {
   align-items: center;
   justify-content: center;
   gap: 10px;
-}
-
-.sf-shadowing-card__tools {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 6px;
 }
 
 /* 录音按钮 */

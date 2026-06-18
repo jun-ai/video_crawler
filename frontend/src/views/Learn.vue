@@ -127,6 +127,7 @@
             :subtitles="subtitles"
             :paginated-subtitles="paginatedSubtitles"
             :current-subtitle-index-in-page="currentSubtitleIndexInPage"
+            :current-index="currentIndex"
             :show-translation="showTranslation"
             :show-only-chinese="showOnlyChinese"
             :bookmarked-ids="bookmarkedSubtitleIds"
@@ -223,8 +224,18 @@
           </div>
         </div>
 
-        <!-- 右栏：解读面板 -->
-        <!-- 解读面板已改为 Sheet 浮动抽屉，在页面底部 -->
+        <!-- 右栏：学习工具箱 -->
+        <div class="sf-right-column">
+          <LearnToolbox
+            :learning-progress="learningProgress"
+            :vocab-count="interpretation.words.length + interpretation.phrases.length"
+            :bookmark-count="bookmarkedSubtitleIds.size"
+            :annotation-count="annotationCount"
+            :has-interpretation="hasInterpretation"
+            :is-generating="isGenerating"
+            @open-interpretation="interpretationSheetOpen = true"
+          />
+        </div>
       </div>
     </template>
 
@@ -373,6 +384,7 @@ import LearnShadowingCard from '@/components/learn/LearnShadowingCard.vue'
 import LearnSubtitleList from '@/components/learn/LearnSubtitleList.vue'
 import LearnModeSwitcher from '@/components/learn/LearnModeSwitcher.vue'
 import LearnHeader from '@/components/learn/LearnHeader.vue'
+import LearnToolbox from '@/components/learn/LearnToolbox.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -590,6 +602,11 @@ const hasInterpretation = computed(() => {
          interpretation.value.phrases.length > 0 ||
          interpretation.value.grammar.length > 0 ||
          interpretation.value.idioms.length > 0
+})
+
+// 标注总数（工具箱用）
+const annotationCount = computed(() => {
+  return Object.values(annotations.value).reduce((sum, arr) => sum + arr.length, 0)
 })
 
 // 隐藏解读中文翻译
@@ -2068,7 +2085,7 @@ onUnmounted(() => {
 /* ==================== 主内容区 ==================== */
 .sf-main-content {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) 220px;
   gap: 16px;
   align-items: start;
   animation: fadeSlideIn 0.3s var(--sf-easing-standard);
@@ -2377,7 +2394,15 @@ onUnmounted(() => {
 }
 
 /* ==================== 响应式适配 ==================== */
-/* Phase 1B Task 1: 删掉 1280px / 1100px 的 3 列布局（解读面板已改 Sheet，右栏幽灵 div 浪费 340px 空白） */
+/* 1024px 以下: 2 栏(隐藏右栏工具箱) */
+@media (max-width: 1280px) {
+  .sf-right-column {
+    display: none;
+  }
+  .sf-main-content {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  }
+}
 @media (max-width: 1024px) {
   .sf-main-content {
     grid-template-columns: minmax(0, 1fr);

@@ -47,11 +47,11 @@
           v-for="(sub, pageIndex) in paginatedSubtitles"
           :key="sub.id"
           :id="'subtitle-page-' + pageIndex"
-          :class="['sf-subtitle-item', { active: currentSubtitleIndexInPage === pageIndex }]"
+          :class="['sf-subtitle-item', { active: currentSubtitleIndexInPage === pageIndex, read: getGlobalIndex(pageIndex) < currentIndex }]"
           @click="$emit('subtitle-click', sub, getGlobalIndex(pageIndex))"
         >
           <!-- 左侧状态指示条 -->
-          <div :class="['sf-subtitle-item__indicator', { active: currentSubtitleIndexInPage === pageIndex }]"></div>
+          <div :class="['sf-subtitle-item__indicator', { active: currentSubtitleIndexInPage === pageIndex, read: getGlobalIndex(pageIndex) < currentIndex }]"></div>
 
           <span class="sf-subtitle-item__time">{{ formatTime(sub.start_time) }}</span>
           <div class="sf-subtitle-item__content">
@@ -128,6 +128,7 @@ const props = defineProps({
   subtitles: { type: Array, default: () => [] },
   paginatedSubtitles: { type: Array, default: () => [] },
   currentSubtitleIndexInPage: { type: Number, default: -1 },
+  currentIndex: { type: Number, default: -1 },
   showTranslation: { type: Boolean, default: true },
   showOnlyChinese: { type: Boolean, default: false },
   bookmarkedIds: { type: Set, default: () => new Set() },
@@ -300,6 +301,15 @@ defineExpose({ listRef })
 }
 .sf-subtitle-item__indicator.active {
   background: linear-gradient(180deg, var(--color-brand-bright) 0%, var(--color-accent) 100%);
+}
+
+/* 已读字幕：指示条变绿 + 文字微调 */
+.sf-subtitle-item__indicator.read {
+  background: var(--color-brand-bright);
+  opacity: 0.4;
+}
+.sf-subtitle-item.read .sf-subtitle-item__text {
+  color: var(--sf-text-muted);
 }
 
 /* 时间戳 */
