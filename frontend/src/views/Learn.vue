@@ -1130,8 +1130,8 @@ const checkInterpretationStatus = async () => {
       isGenerating.value = true
       startPolling()
     } else if (res.status === 'pending') {
-      // 自动触发生成
-      await triggerGeneration()
+      // 不自动触发 LLM，只标记状态，等上传时的后台任务自己跑完
+      interpretationGeneratingStatus.value = 'pending'
     } else if (res.status === 'failed') {
       isGenerating.value = false
     }
@@ -1202,8 +1202,33 @@ const seekToSubtitle = (item) => {
 
 const generateInterpretation = async () => {
   if (!material.value) return
-  // 使用新的触发生成逻辑
-  await triggerGeneration()
+  // 先查状态：done 直接读数据库（秒开），不重复调 LLM
+  try {
+    const statusRes = await materialAPI.getInterpretationStatus(material.value.id)
+    if (statusRes.status === 'done') {
+      // 数据已有，直接加载
+      interpretationGeneratingStatus.value = 'done'
+      await loadInterpretation()
+      return
+    }
+    if (statusRes.status === 'generating') {
+      // 正在生成中，开始轮询
+      isGenerating.value = true
+      interpretationGeneratingStatus.value = 'generating'
+      startPolling()
+      return
+    }
+    // pending / failed：后台任务可能还没跑或失败了，不再让用户侧触发 LLM
+    if (statusRes.status === 'pending') {
+      toast.info('AI 解读正在准备中，请稍后刷新重试')
+    } else if (statusRes.status === 'failed') {
+      toast.error('AI 解读生成失败，请联系管理员重新上传')
+    }
+    interpretationGeneratingStatus.value = statusRes.status
+  } catch (e) {
+    console.error('加载解读失败', e)
+    toast.error('加载解读失败')
+  }
 }
 
 // 添加到生词本

@@ -68,14 +68,27 @@ async def generate_interpretations_for_material(material_id: int):
             # 构建 sequence → subtitle 映射表
             seq_map = {s.sequence: s for s in subtitles}
 
-            # 3. 并行调用 AI（单词 + 短语 + 语法 + 地道表达）
+            # 3. 并行调用 AI（单词 + 短语 + 语法 + 地道表达），每个带 2 次重试
             logger.info(f"[InterpTask] Starting AI generation for material {material_id}")
 
+            async def _retry(fn, *args, max_retries=2):
+                """带重试的 AI 调用包装"""
+                for attempt in range(max_retries + 1):
+                    try:
+                        return await fn(*args)
+                    except Exception as e:
+                        if attempt < max_retries:
+                            logger.warning(f"[InterpTask] {fn.__name__} attempt {attempt+1} failed: {e}, retrying...")
+                            await asyncio.sleep(2 * (attempt + 1))
+                        else:
+                            raise
+                return []
+
             results = await asyncio.gather(
-                generate_word_cards(subtitle_dicts),
-                generate_phrase_cards(subtitle_dicts),
-                generate_grammar_points(subtitle_dicts),
-                generate_idiom_cards(subtitle_dicts),
+                _retry(generate_word_cards, subtitle_dicts),
+                _retry(generate_phrase_cards, subtitle_dicts),
+                _retry(generate_grammar_points, subtitle_dicts),
+                _retry(generate_idiom_cards, subtitle_dicts),
                 return_exceptions=True,
             )
 

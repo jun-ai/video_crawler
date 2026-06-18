@@ -370,9 +370,10 @@ async def get_interpretation_status(
 async def generate_interpretation_endpoint(
     request: Request,
     material_id: int,
+    force: bool = False,
     db: AsyncSession = Depends(get_db)
 ):
-    """触发后台生成视频解读内容（立即返回，后台执行）"""
+    """触发后台生成视频解读内容（立即返回，后台执行）。force=true 可强制重新生成。"""
     from app.services.interpretation_tasks import generate_interpretations_for_material
 
     # 检查视频是否存在
@@ -383,6 +384,10 @@ async def generate_interpretation_endpoint(
 
     if material.interpretation_status == 'generating':
         return {"message": "正在生成中", "status": "generating", "material_id": material_id}
+
+    # 已有解读数据 → 直接返回，不重复调 LLM（force=true 除外）
+    if material.interpretation_status == 'done' and not force:
+        return {"message": "解读已生成", "status": "done", "material_id": material_id}
 
     # 检查字幕
     result = await db.execute(
