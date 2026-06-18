@@ -263,14 +263,14 @@ const handleLogin = async () => {
   background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%)) !important;
   border: none;
   border-radius: var(--radius-full, 9999px);
-  box-shadow: 0 6px 20px rgba(63, 138, 91, 0.3);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
               box-shadow 0.25s ease;
 }
 
 .login-submit:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(63, 138, 91, 0.4);
+  box-shadow: 0 10px 28px rgba(37, 99, 235, 0.4);
 }
 
 .login-submit:active {

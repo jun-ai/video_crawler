@@ -326,7 +326,7 @@ defineExpose({ listRef })
   margin-top: 1px;
 }
 .sf-subtitle-item.active .sf-subtitle-item__time {
-  background: rgba(63, 138, 91, 0.18);
+  background: rgba(37, 99, 235, 0.18);
   color: var(--color-brand-bright);
   border-color: rgba(37, 99, 235, 0.2);
 }
@@ -472,7 +472,7 @@ defineExpose({ listRef })
   background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   color: #fff;
   border-color: transparent;
-  box-shadow: 0 4px 14px rgba(63, 138, 91, 0.35);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
 }
 
 /* 收藏按钮旋转动画 */

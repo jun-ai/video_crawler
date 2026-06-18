@@ -229,7 +229,7 @@ defineExpose({ playerRef })
 .speed-selector__btn.active {
   background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   color: #fff;
-  box-shadow: 0 2px 8px rgba(63, 138, 91, 0.3);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
 }
 
 /* 保留 el-select 样式兼容 */

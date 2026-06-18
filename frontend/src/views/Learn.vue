@@ -25,7 +25,7 @@
             <div class="sf-skeleton-line" style="height: 48px; border-radius: var(--sf-radius-md);" v-for="i in 8" :key="i"></div>
           </div>
         </div>
-        <div class="sf-right-column">
+        <div class="sf-right-column" :class="{ 'drawer-open': showToolboxDrawer }">
           <div class="sf-card-inner">
             <div class="sf-skeleton-block" style="height: 320px; border-radius: var(--sf-radius-lg);"></div>
           </div>
@@ -225,7 +225,10 @@
         </div>
 
         <!-- 右栏：学习工具箱 -->
-        <div class="sf-right-column">
+        <div class="sf-right-column" :class="{ 'drawer-open': showToolboxDrawer }">
+          <button class="sf-drawer-close" @click="showToolboxDrawer = false" aria-label="关闭">
+            <X :size="18" />
+          </button>
           <LearnToolbox
             :learning-progress="learningProgress"
             :vocab-count="interpretation.words.length + interpretation.phrases.length"
@@ -250,6 +253,15 @@
       <span>词汇解读</span>
       <span class="sf-badge" v-if="interpretation.words?.length">{{ interpretation.words.length }}</span>
     </button>
+
+    <!-- 工具箱抽屉触发器（仅 < 1280px 显示） -->
+    <button class="sf-toolbox-trigger" @click="showToolboxDrawer = true" v-if="!loading">
+      <Wrench :size="18" />
+      <span class="sf-badge" v-if="vocabCount + bookmarkedSubtitleIds.size > 0">{{ vocabCount + bookmarkedSubtitleIds.size }}</span>
+    </button>
+
+    <!-- 工具箱抽屉遮罩 -->
+    <div class="sf-toolbox-overlay" v-if="showToolboxDrawer" @click="showToolboxDrawer = false"></div>
 
     <!-- Phase 1B Task 2: 移动端底部 Tab Bar -->
     <nav class="sf-mobile-tabs" v-if="!loading">
@@ -367,7 +379,8 @@ import {
   Video,
   X,
   Bookmark,
-  BookmarkCheck
+  BookmarkCheck,
+  Wrench
 } from 'lucide-vue-next'
 import SfDialog from '@/components/ui/SfDialog.vue'
 import SfInput from '@/components/ui/SfInput.vue'
@@ -409,6 +422,10 @@ const lastPosition = ref(0)  // 上次播放位置（秒）
 const showResumeBanner = ref(false)  // 是否显示继续学习横幅
 const showShortcutPanel = ref(false)  // 是否显示快捷键帮助面板
 const interpretationSheetOpen = ref(false)  // 是否显示解读面板 Sheet
+const showToolboxDrawer = ref(false)  // 工具箱抽屉（< 1280px 用）
+
+// 工具箱 badge 计数
+const vocabCount = computed(() => interpretation.words.length + interpretation.phrases.length)
 
 // 播放模式：single(单次) / single-loop(单集循环) / continuous(连续播放) / sentence-loop(单句循环)
 const playMode = ref('single')
@@ -2056,7 +2073,6 @@ onUnmounted(() => {
 <style scoped>
 /* ==================== 页面容器 ==================== */
 .sf-learn-page {
-  max-width: 1600px;
   margin: 0 auto;
   padding: 0 20px 24px;
 }
@@ -2098,12 +2114,12 @@ onUnmounted(() => {
   background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   color: #fff;
   border-color: transparent;
-  box-shadow: 0 4px 14px rgba(63, 138, 91, 0.3);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
 }
 .sf-btn--primary:hover {
   background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   filter: brightness(1.08);
-  box-shadow: 0 6px 20px rgba(63, 138, 91, 0.4);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
 }
 .sf-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -2210,7 +2226,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 6px 20px rgba(63, 138, 91, 0.4);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
   z-index: 100;
   transition: all var(--sf-duration-fast) var(--sf-ease-bounce);
   border: none;
@@ -2238,7 +2254,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 6px;
   cursor: pointer;
-  box-shadow: 0 6px 20px rgba(63, 138, 91, 0.4);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
   z-index: 100;
   transition: all var(--sf-duration-fast) var(--sf-ease-bounce);
   border: none;
@@ -2248,8 +2264,73 @@ onUnmounted(() => {
 
 .sf-interpretation-trigger:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(63, 138, 91, 0.5);
+  box-shadow: 0 8px 28px rgba(37, 99, 235, 0.4);
   filter: brightness(1.05);
+}
+
+/* 工具箱抽屉触发器 — 仅 < 1280px */
+.sf-toolbox-trigger {
+  position: fixed;
+  bottom: 24px;
+  right: 144px;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--sf-radius-full);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  z-index: 100;
+  transition: all var(--sf-duration-fast) var(--sf-ease-bounce);
+}
+.sf-toolbox-trigger:hover {
+  transform: translateY(-2px);
+  color: var(--color-brand-bright);
+  border-color: var(--color-brand-bright);
+}
+.sf-toolbox-trigger .sf-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--color-brand);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+@media (max-width: 1280px) {
+  .sf-toolbox-trigger {
+    display: flex;
+  }
+}
+@media (max-width: 768px) {
+  .sf-toolbox-trigger {
+    bottom: 76px;
+  }
+}
+
+/* 工具箱抽屉遮罩 */
+.sf-toolbox-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 199;
+  display: none;
+}
+@media (max-width: 1280px) {
+  .sf-toolbox-overlay {
+    display: block;
+  }
 }
 
 .sf-interpretation-trigger .sf-badge {
@@ -2422,8 +2503,51 @@ onUnmounted(() => {
 /* 1024px 以下: 2 栏(隐藏右栏工具箱) */
 @media (max-width: 1280px) {
   .sf-right-column {
-    display: none;
+    position: fixed;
+    top: 64px;
+    right: 0;
+    bottom: 0;
+    width: 280px;
+    z-index: 200;
+    background: var(--sf-bg-card);
+    border-left: 1px solid var(--color-border);
+    box-shadow: -8px 0 32px rgba(0, 0, 0, 0.08);
+    transform: translateX(100%);
+    transition: transform 0.3s var(--sf-easing-standard);
+    padding: 48px 16px 16px;
+    overflow-y: auto;
+    display: block !important;
   }
+  .sf-right-column.drawer-open {
+    transform: translateX(0);
+  }
+  .sf-drawer-close {
+    display: flex;
+  }
+}
+
+.sf-drawer-close {
+  display: none;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--sf-radius-md);
+  border: none;
+  background: var(--color-bg-elevated);
+  color: var(--color-text-muted);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1;
+  transition: all 0.15s;
+}
+.sf-drawer-close:hover {
+  color: var(--color-text-primary);
+  background: var(--color-border);
+}
+@media (max-width: 1280px) {
   .sf-main-content {
     grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
   }

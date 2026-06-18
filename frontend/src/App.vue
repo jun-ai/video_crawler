@@ -35,7 +35,7 @@
         </div>
 
         <!-- 右侧操作 -->
-        <div class="flex items-center gap-3 flex-shrink-0">
+        <div class="flex items-center gap-2 flex-shrink-0">
           <template v-if="userStore.isLoggedIn">
             <SfDropdown>
               <template #trigger>
@@ -100,7 +100,7 @@
       </header>
 
       <!-- 主内容区 -->
-      <main class="mt-16 px-6 min-[calc(100vh-64px)] max-w-[1440px] mx-auto" style="padding-bottom: env(safe-area-inset-bottom, 0px)">
+      <main class="app-main mt-16 px-6 max-w-[1440px] mx-auto">
         <router-view v-slot="{ Component }">
           <transition name="page-slide" mode="in-out">
             <component :is="Component" />
@@ -171,7 +171,7 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useThemeStore } from '@/stores/theme'
-import { Home, Video, BarChart3, Star, BookOpen, Layers } from 'lucide-vue-next'
+import { Home, Video, BarChart3, Star, BookOpen, Layers, UserCircle, UserCheck } from 'lucide-vue-next'
 import SfProvider from '@/components/ui/SfProvider.vue'
 import SfDropdown from '@/components/ui/SfDropdown.vue'
 import SfAvatar from '@/components/ui/SfAvatar.vue'
@@ -185,12 +185,13 @@ const navItems = computed(() => {
   const items = [
     { path: '/', label: '首页' },
     { path: '/materials', label: '视频库' },
-    { path: '/learning-center', label: '学习记录' },
-    { path: '/english-cards', label: '英语卡片' }
+    { path: '/learning-center', label: '学习' },
+    { path: '/english-cards', label: '卡片' },
+    { path: '/vocabulary', label: '生词本' },
+    { path: '/vocabulary-review', label: '复习' }
   ]
   if (userStore.isLoggedIn) {
     items.push({ path: '/favorites', label: '收藏' })
-    items.push({ path: '/vocabulary', label: '生词本' })
   }
   if (userStore.isAdmin) {
     items.push({ path: '/admin', label: '管理' })
@@ -198,13 +199,13 @@ const navItems = computed(() => {
   return items
 })
 
-const mobileNavItems = [
+const mobileNavItems = computed(() => [
   { path: '/', label: '首页', icon: Home },
   { path: '/materials', label: '视频库', icon: Video },
   { path: '/learning-center', label: '学习', icon: BarChart3 },
-  { path: '/vocabulary', label: '生词本', icon: BookOpen },
-  { path: '/english-cards', label: '卡片', icon: Layers }
-]
+  { path: '/english-cards', label: '卡片', icon: Layers },
+  { path: '/profile', label: '我的', icon: userStore.isLoggedIn ? UserCheck : UserCircle }
+])
 
 const isActiveRoute = (path) => {
   if (path === '/') return route.path === '/'
@@ -222,6 +223,17 @@ const logout = () => {
 </script>
 
 <style scoped>
+.app-main {
+  min-height: calc(100vh - 64px);
+  padding-bottom: 0;
+}
+/* 手机端给底部导航栏留空间 */
+@media (max-width: 1023px) {
+  .app-main {
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 .page-slide-enter-active,
 .page-slide-leave-active {
   transition: opacity 0.15s ease;

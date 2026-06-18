@@ -686,8 +686,8 @@ watch(() => props.currentIndex, () => {
   color: #fff;
   margin-bottom: 24px;
   box-shadow:
-    0 6px 20px rgba(63, 138, 91, 0.3),
-    0 2px 6px rgba(63, 138, 91, 0.15);
+    0 6px 20px rgba(37, 99, 235, 0.3),
+    0 2px 6px rgba(37, 99, 235, 0.15);
   transition: transform 0.25s var(--ease-bounce, cubic-bezier(0.34, 1.56, 0.64, 1));
 }
 

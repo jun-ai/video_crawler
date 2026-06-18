@@ -363,11 +363,11 @@ const getScoreClass = (score) => {
   background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   color: #fff;
   font-family: inherit;
-  box-shadow: 0 4px 12px rgba(63, 138, 91, 0.3);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 .sf-record-btn:hover {
   filter: brightness(1.08);
-  box-shadow: 0 6px 16px rgba(63, 138, 91, 0.4);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
   transform: translateY(-1px);
 }
 .sf-record-btn.recording {

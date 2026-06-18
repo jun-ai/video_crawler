@@ -55,9 +55,44 @@
 
     <!-- 主内容区域：全宽视频网格 -->
     <div class="materials-body">
-      <!-- 桌面端顶部筛选条 (替代右侧栏) -->
+      <!-- 桌面端筛选条 (可折叠) -->
       <div class="filter-bar" v-if="!isMobileOrTablet">
-        <div class="filter-bar__inner">
+        <!-- 折叠时：紧凑工具栏 -->
+        <div class="filter-bar__compact" v-if="!desktopFilterExpanded">
+          <button class="filter-toggle-btn desktop" @click="desktopFilterExpanded = true">
+            <SlidersHorizontal :size="16" />
+            筛选
+            <span v-if="activeFilterCount > 0" class="filter-badge">{{ activeFilterCount }}</span>
+          </button>
+          <!-- 已选条件 chips -->
+          <div class="filter-active-chips" v-if="activeFilterCount > 0">
+            <span class="active-chip" v-if="filters.category">
+              {{ categoryLabels[filters.category] }}
+              <X :size="12" @click="selectCategory('')" />
+            </span>
+            <span class="active-chip" v-if="filters.difficulty">
+              {{ difficultyLabels[filters.difficulty] }}
+              <X :size="12" @click="selectDifficulty(0)" />
+            </span>
+            <span class="active-chip" v-if="filters.duration">
+              {{ filters.duration }}
+              <X :size="12" @click="selectDuration('')" />
+            </span>
+            <span class="active-chip" v-if="selectedTagId">
+              {{ selectedTagName }}
+              <X :size="12" @click="selectTag(null)" />
+            </span>
+          </div>
+        </div>
+
+        <!-- 展开时：完整筛选 -->
+        <div class="filter-bar__inner" v-if="desktopFilterExpanded">
+          <button
+            class="filter-collapse-btn"
+            @click="desktopFilterExpanded = false"
+          >
+            <ChevronUp :size="16" /> 收起
+          </button>
           <!-- 清除按钮 -->
           <button
             v-if="activeFilterCount > 0"
@@ -322,7 +357,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { LayoutGrid, List, SlidersHorizontal, Search, X } from 'lucide-vue-next'
+import { LayoutGrid, List, SlidersHorizontal, Search, X, ChevronUp } from 'lucide-vue-next'
 import SfInput from '@/components/ui/SfInput.vue'
 import SfPagination from '@/components/ui/SfPagination.vue'
 import SfButton from '@/components/ui/SfButton.vue'
@@ -379,6 +414,7 @@ const learningProgress = ref({})
 
 // 筛选
 const mobileFilterOpen = ref(false)
+const desktopFilterExpanded = ref(false)
 
 const filters = reactive({
   category: route.query.category || '',
@@ -393,6 +429,12 @@ const topicTags = ref([])
 const selectedTagId = ref(null)
 
 const allTags = computed(() => [...creatorTags.value, ...topicTags.value])
+
+const selectedTagName = computed(() => {
+  if (!selectedTagId.value) return ''
+  const tag = allTags.value.find(t => t.id === selectedTagId.value)
+  return tag ? tag.name : ''
+})
 
 const activeFilterCount = computed(() => {
   let count = 0
@@ -719,6 +761,81 @@ onMounted(() => {
   box-shadow: var(--shadow-sm);
 }
 
+/* 折叠态紧凑工具栏 */
+.filter-bar__compact {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-toggle-btn.desktop {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-full, 9999px);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.filter-toggle-btn.desktop:hover {
+  border-color: var(--color-brand-bright);
+  color: var(--color-brand-bright);
+}
+
+.filter-active-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.active-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full, 9999px);
+  background: var(--color-brand-subtle);
+  color: var(--color-brand);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.active-chip svg {
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+.active-chip svg:hover {
+  opacity: 1;
+}
+
+.filter-collapse-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.filter-collapse-btn:hover {
+  color: var(--color-text-primary);
+  background: var(--color-bg-elevated);
+}
+
 .filter-bar__inner {
   display: flex;
   align-items: center;
@@ -799,7 +916,7 @@ onMounted(() => {
   border-color: transparent;
   color: #fff;
   font-weight: 600;
-  box-shadow: 0 4px 14px rgba(63, 138, 91, 0.3);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
 }
 
 .tag-pill {
@@ -974,7 +1091,7 @@ onMounted(() => {
   border-color: transparent;
   color: #fff;
   font-weight: 600;
-  box-shadow: 0 4px 14px rgba(63, 138, 91, 0.3);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
 }
 
 .mobile-filter-footer {

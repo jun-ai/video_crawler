@@ -299,13 +299,17 @@
               <p class="core-feature-desc">{{ feat.desc }}</p>
             </div>
           </div>
-          <!-- 8 次要功能(紧凑双列) -->
-          <div class="secondary-features">
-            <div v-for="feat in secondaryFeatures" :key="feat.title" class="secondary-feature-item">
+          <!-- 8 次要功能(紧凑双列，可折叠) -->
+          <div class="secondary-features" :class="{ collapsed: !showAllFeatures }">
+            <div v-for="feat in displayFeatures" :key="feat.title" class="secondary-feature-item">
               <Check :size="16" class="secondary-check" />
               <span class="secondary-feature-text">{{ feat.title }}</span>
             </div>
           </div>
+          <button class="features-toggle" @click="showAllFeatures = !showAllFeatures">
+            {{ showAllFeatures ? '收起' : `展开全部 ${secondaryFeatures.length} 项功能` }}
+            <ChevronDown :size="14" :class="{ rotated: showAllFeatures }" />
+          </button>
         </section>
 
         <!-- 视频网格 -->
@@ -344,7 +348,7 @@
           description="浏览语料库，选择感兴趣的视频开始学习吧"
         >
           <template #actions>
-            <SfButton type="primary" @click="loadMaterials">刷新</SfButton>
+            <SfButton type="primary" @click="$router.push('/materials')">浏览全部视频</SfButton>
           </template>
         </EmptyState>
       </div>
@@ -361,7 +365,7 @@ import FilterChip from '@/components/common/FilterChip.vue'
 import VideoCard from '@/components/common/VideoCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import AnnouncementBanner from '@/components/common/AnnouncementBanner.vue'
-import { BarChart3, Calendar, Clock, Play, Flame, Sprout, Dumbbell, Star, Trophy, Crown, Target, Sparkles, BookOpen, Headphones, Check } from 'lucide-vue-next'
+import { BarChart3, Calendar, Clock, Play, Flame, Sprout, Dumbbell, Star, Trophy, Crown, Target, Sparkles, BookOpen, Headphones, Check, ChevronDown } from 'lucide-vue-next'
 import SfTooltip from '@/components/ui/SfTooltip.vue'
 import SfProgress from '@/components/ui/SfProgress.vue'
 import SfButton from '@/components/ui/SfButton.vue'
@@ -390,6 +394,11 @@ const secondaryFeatures = [
   { title: '永久云端保存' },
   { title: '免费体验' }
 ]
+// 默认折叠，只展示前 4 项
+const showAllFeatures = ref(false)
+const displayFeatures = computed(() =>
+  showAllFeatures.value ? secondaryFeatures : secondaryFeatures.slice(0, 4)
+)
 const materials = ref([])
 const selectedCategory = ref(null)
 const creatorTags = ref([])
@@ -718,7 +727,6 @@ onMounted(async () => {
    ============================================================ */
 
 .yt-home {
-  max-width: 1600px;
   margin: 0 auto;
 }
 
@@ -743,7 +751,7 @@ onMounted(async () => {
   right: -10%;
   width: 60%;
   height: 180%;
-  background: radial-gradient(circle, rgba(63, 138, 91, 0.18) 0%, transparent 60%);
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.18) 0%, transparent 60%);
   pointer-events: none;
 }
 
@@ -822,14 +830,14 @@ onMounted(async () => {
   border: none;
   border-radius: 999px;
   cursor: pointer;
-  box-shadow: 0 6px 20px rgba(63, 138, 91, 0.4);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
   min-height: 48px;
 }
 
 .hero-cta-primary:hover {
   transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 10px 28px rgba(63, 138, 91, 0.5);
+  box-shadow: 0 10px 28px rgba(37, 99, 235, 0.5);
 }
 
 .hero-cta-primary:active {
@@ -1444,7 +1452,7 @@ onMounted(async () => {
   background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   color: #fff;
   border-color: transparent;
-  box-shadow: 0 4px 14px rgba(63, 138, 91, 0.3);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
 }
 
 /* ====== 学习功能清单 — SpeakVlog 风格 ====== */
@@ -1459,6 +1467,11 @@ onMounted(async () => {
   max-width: 600px;
   margin: 0 auto 48px;
   text-align: center;
+}
+
+.sf-home-container {
+  margin: 0 auto;
+  padding: 0 0 24px;
 }
 
 .features-eyebrow {
@@ -1562,6 +1575,30 @@ onMounted(async () => {
   font-size: 14px;
   color: var(--color-text-secondary);
   font-weight: 500;
+}
+
+.features-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 16px auto 0;
+  padding: 8px 20px;
+  border-radius: var(--sf-radius-full, 999px);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-elevated);
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.features-toggle:hover {
+  border-color: var(--color-brand-bright);
+  color: var(--color-brand-bright);
+}
+.features-toggle .rotated {
+  transform: rotate(180deg);
+  transition: transform 0.2s ease;
 }
 
 /* 视频网格 — Bento 化 */

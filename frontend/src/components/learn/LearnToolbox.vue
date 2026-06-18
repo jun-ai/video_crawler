@@ -243,7 +243,7 @@ const dashOffset = computed(() => {
   color: #F59E0B;
 }
 .sf-stat-item__icon--annot {
-  background: rgba(63, 138, 91, 0.12);
+  background: rgba(37, 99, 235, 0.12);
   color: var(--color-brand-bright, #3B82F6);
 }
 
