@@ -425,7 +425,7 @@ const interpretationSheetOpen = ref(false)  // 是否显示解读面板 Sheet
 const showToolboxDrawer = ref(false)  // 工具箱抽屉（< 1280px 用）
 
 // 工具箱 badge 计数
-const vocabCount = computed(() => interpretation.words.length + interpretation.phrases.length)
+const vocabCount = computed(() => (interpretation.value?.words?.length || 0) + (interpretation.value?.phrases?.length || 0))
 
 // 播放模式：single(单次) / single-loop(单集循环) / continuous(连续播放) / sentence-loop(单句循环)
 const playMode = ref('single')
@@ -1503,16 +1503,16 @@ const loadBookmarks = async () => {
   if (!userStore.isLoggedIn || !material.value) return
 
   try {
-    const result = await subtitleBookmarkAPI.check(material.value.id)
-    bookmarkedSubtitleIds.value = new Set(result.bookmarked_ids || [])
-
-    // 同时加载完整收藏列表用于获取 bookmark id 和 practice_count
+    // 只调一次 getList，从中提取 subtitle_id 集合（去掉冗余的 check 调用）
     const bookmarks = await subtitleBookmarkAPI.getList(material.value.id)
     const map = {}
+    const idSet = new Set()
     bookmarks.forEach(b => {
       map[b.subtitle_id] = b
+      idSet.add(b.subtitle_id)
     })
     bookmarkedSubtitleMap.value = map
+    bookmarkedSubtitleIds.value = idSet
   } catch (e) {
     console.error('加载收藏失败', e)
   }

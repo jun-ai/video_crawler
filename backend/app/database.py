@@ -3,9 +3,11 @@ from sqlalchemy.orm import DeclarativeBase
 from app.config import settings
 
 # 创建异步引擎
+# echo=False: SQL 日志改由 logging 控制（setup_logging 里设 level），
+# 避免 echo=True 导致每条 SQL 打印两遍
 engine = create_async_engine(
     settings.database_url,
-    echo=settings.debug,
+    echo=False,
     future=True
 )
 

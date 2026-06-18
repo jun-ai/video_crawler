@@ -168,6 +168,9 @@ def setup_logging(app_name: str = "english-learning", debug: bool = False):
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
     logging.getLogger("aiomysql").setLevel(logging.WARNING)
+    # SQLAlchemy 引擎日志：echo=False 时仍可能输出，统一压制到 WARNING
+    logging.getLogger("sqlalchemy.engine.Engine").setLevel(logging.WARNING)
+    logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
 
     return root_logger
 

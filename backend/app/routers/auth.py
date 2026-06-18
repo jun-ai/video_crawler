@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import Annotated
 import re
+import time
 
 from app.database import get_db
 from app.utils.rate_limit import limiter
@@ -24,6 +25,11 @@ router = APIRouter(prefix="/api/auth", tags=["认证"])
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
+# ==================== 用户查询短时缓存 ====================
+# 同一个 token 在 15 秒内只查一次 DB，避免前端页面加载并发 6+ 个请求时重复查 user
+_user_cache: dict[str, tuple[float, User]] = {}
+_USER_CACHE_TTL = 15  # 秒
+
 
 def validate_phone(phone: str) -> bool:
     """验证手机号格式"""
@@ -35,7 +41,7 @@ async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
     db: AsyncSession = Depends(get_db)
 ) -> User:
-    """获取当前登录用户"""
+    """获取当前登录用户（带 15s 短时缓存）"""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="无效的认证凭证",
@@ -50,6 +56,13 @@ async def get_current_user(
     if user_id_str is None:
         raise credentials_exception
 
+    # 检查短时缓存
+    cached = _user_cache.get(token)
+    if cached:
+        cached_at, cached_user = cached
+        if time.time() - cached_at < _USER_CACHE_TTL:
+            return cached_user
+
     try:
         user_id: int = int(user_id_str)
     except (ValueError, TypeError):
@@ -60,6 +73,15 @@ async def get_current_user(
 
     if user is None:
         raise credentials_exception
+
+    # 写入缓存
+    _user_cache[token] = (time.time(), user)
+    # 清理过期条目（防止内存泄漏）
+    if len(_user_cache) > 200:
+        now = time.time()
+        expired = [k for k, (t, _) in _user_cache.items() if now - t > _USER_CACHE_TTL]
+        for k in expired:
+            del _user_cache[k]
 
     return user
 
