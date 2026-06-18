@@ -265,7 +265,7 @@ const handleRegister = async () => {
   justify-content: center;
   margin: 0 auto 18px;
   background: var(--color-brand);
-  box-shadow: 0 6px 20px rgba(15, 76, 58, 0.22);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.22);
 }
 
 .register-title {
@@ -307,7 +307,7 @@ const handleRegister = async () => {
   height: 48px !important;
   font-size: 16px;
   font-weight: 600;
-  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%)) !important;
+  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%)) !important;
   border: none;
   border-radius: var(--radius-full, 9999px);
   width: 100%;

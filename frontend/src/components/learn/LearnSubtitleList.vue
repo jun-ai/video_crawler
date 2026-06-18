@@ -328,7 +328,7 @@ defineExpose({ listRef })
 .sf-subtitle-item.active .sf-subtitle-item__time {
   background: rgba(63, 138, 91, 0.18);
   color: var(--color-brand-bright);
-  border-color: rgba(15, 76, 58, 0.2);
+  border-color: rgba(37, 99, 235, 0.2);
 }
 
 /* 内容 */
@@ -469,7 +469,7 @@ defineExpose({ listRef })
   background: var(--sf-bg-card);
 }
 .sf-subtitle-play-mode__btn.active {
-  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   color: #fff;
   border-color: transparent;
   box-shadow: 0 4px 14px rgba(63, 138, 91, 0.35);

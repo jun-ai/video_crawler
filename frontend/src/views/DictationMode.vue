@@ -576,7 +576,7 @@ watch(() => props.currentIndex, () => {
 <style scoped>
 /* ================================================
    DictationMode — Phase 2 CSS-only redesign
-   Design system: ink green #0F4C3A + warm orange #E2725B
+   Design system: ink green #2563EB + warm orange #F59E0B
    ================================================ */
 
 .sf-dictation-mode {
@@ -667,7 +667,7 @@ watch(() => props.currentIndex, () => {
   align-items: center;
   padding: 48px 32px;
   background:
-    radial-gradient(ellipse at 50% 0%, rgba(15, 76, 58, 0.08) 0%, transparent 70%),
+    radial-gradient(ellipse at 50% 0%, rgba(37, 99, 235, 0.08) 0%, transparent 70%),
     var(--color-bg-elevated);
   border-radius: var(--radius-xl, 24px);
   text-align: center;
@@ -678,7 +678,7 @@ watch(() => props.currentIndex, () => {
 .sf-dictation-audio__icon {
   width: 80px;
   height: 80px;
-  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -696,8 +696,8 @@ watch(() => props.currentIndex, () => {
 }
 
 @keyframes audioPulse {
-  0%, 100% { transform: scale(1); box-shadow: 0 4px 12px rgba(15, 76, 58, 0.25); }
-  50% { transform: scale(1.08); box-shadow: 0 0 0 14px rgba(15, 76, 58, 0.12); }
+  0%, 100% { transform: scale(1); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); }
+  50% { transform: scale(1.08); box-shadow: 0 0 0 14px rgba(37, 99, 235, 0.12); }
 }
 
 .sf-dictation-audio__title {
@@ -877,7 +877,7 @@ watch(() => props.currentIndex, () => {
 }
 
 .sf-dictation-choice-btn.selected {
-  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   border-color: var(--color-brand-bright);
   color: #fff;
 }
@@ -928,17 +928,17 @@ watch(() => props.currentIndex, () => {
 }
 
 .sf-dictation-score.score-high {
-  background: rgba(45, 134, 89, 0.12);
+  background: rgba(22, 163, 74, 0.12);
   color: var(--color-success);
 }
 
 .sf-dictation-score.score-medium {
-  background: rgba(226, 114, 91, 0.12);
+  background: rgba(245, 158, 11, 0.12);
   color: var(--color-accent);
 }
 
 .sf-dictation-score.score-low {
-  background: rgba(199, 62, 58, 0.1);
+  background: rgba(220, 38, 38, 0.1);
   color: var(--color-danger);
 }
 
@@ -1005,12 +1005,12 @@ watch(() => props.currentIndex, () => {
 }
 
 .sf-word-tag--correct {
-  background: rgba(45, 134, 89, 0.12);
+  background: rgba(22, 163, 74, 0.12);
   color: var(--color-success);
 }
 
 .sf-word-tag--wrong {
-  background: rgba(199, 62, 58, 0.1);
+  background: rgba(220, 38, 38, 0.1);
   color: var(--color-danger);
 }
 
@@ -1034,14 +1034,14 @@ watch(() => props.currentIndex, () => {
 }
 
 .sf-word-tag-row--correct {
-  background: rgba(45, 134, 89, 0.08);
-  border-color: rgba(45, 134, 89, 0.3);
+  background: rgba(22, 163, 74, 0.08);
+  border-color: rgba(22, 163, 74, 0.3);
   color: var(--color-success);
 }
 
 .sf-word-tag-row--wrong {
-  background: rgba(199, 62, 58, 0.08);
-  border-color: rgba(199, 62, 58, 0.3);
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.3);
   color: var(--color-danger);
 }
 

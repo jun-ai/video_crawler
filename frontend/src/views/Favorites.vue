@@ -383,7 +383,7 @@ onMounted(() => {
 <style scoped>
 /* ================================================
    Favorites — Phase 2 CSS-only redesign
-   Design system: ink green #0F4C3A + warm orange #E2725B
+   Design system: ink green #2563EB + warm orange #F59E0B
    ================================================ */
 
 .yt-favorites {
@@ -550,7 +550,7 @@ onMounted(() => {
   bottom: 12px;
   width: 3px;
   border-radius: 0 3px 3px 0;
-  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   opacity: 0;
   transition: opacity 0.2s var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 }
@@ -606,7 +606,7 @@ onMounted(() => {
 .fav-practice-count {
   font-size: 11px;
   color: #fff;
-  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   padding: 2px 10px;
   border-radius: var(--radius-full, 9999px);
   font-weight: 500;
@@ -640,7 +640,7 @@ onMounted(() => {
 
 .fav-practice-btn {
   font-size: var(--text-sm, 13px);
-  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%)) !important;
+  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%)) !important;
   border-color: var(--color-brand-bright) !important;
   min-height: 44px;
 }
@@ -726,7 +726,7 @@ onMounted(() => {
 .vocab-speak-btn {
   width: 32px !important;
   height: 32px !important;
-  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%)) !important;
+  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%)) !important;
   border-color: var(--color-brand-bright) !important;
   color: #fff !important;
   min-height: 44px !important;

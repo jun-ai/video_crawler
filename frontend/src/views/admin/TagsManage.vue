@@ -108,7 +108,7 @@ const tagTypeOptions = [
 const tagForm = ref({
   name: '',
   type: 'creator',
-  color: '#3F8A5B',       /* Phase 0+ 默认品牌色 (替原紫 #5c6ef5) */
+  color: '#3B82F6',       /* Phase 0+ 默认品牌色 (替原紫 #5c6ef5) */
   display_order: 0
 })
 
@@ -120,7 +120,7 @@ const resetForm = () => {
   tagForm.value = {
     name: '',
     type: activeTab.value,
-    color: '#3F8A5B',       /* Phase 0+ 默认品牌色 (替原紫) */
+    color: '#3B82F6',       /* Phase 0+ 默认品牌色 (替原紫) */
     display_order: 0
   }
   editingTag.value = null
@@ -333,9 +333,9 @@ onMounted(() => {
 }
 
 .delete-btn:hover {
-  color: #E07870;
-  border-color: rgba(199, 62, 58, 0.4);
-  background: rgba(199, 62, 58, 0.12);
+  color: #F87171;
+  border-color: rgba(220, 38, 38, 0.4);
+  background: rgba(220, 38, 38, 0.12);
 }
 
 /* ====== 对话框内颜色选择 ====== */

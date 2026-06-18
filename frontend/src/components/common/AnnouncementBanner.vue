@@ -91,9 +91,9 @@ onMounted(() => {
 }
 
 .banner-info {
-  background: linear-gradient(135deg, rgba(15, 76, 58, 0.08), rgba(45, 134, 89, 0.06));
-  border: 1px solid rgba(15, 76, 58, 0.15);
-  color: #0F4C3A;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(22, 163, 74, 0.06));
+  border: 1px solid rgba(37, 99, 235, 0.15);
+  color: #2563EB;
 }
 
 .banner-warning {
@@ -109,9 +109,9 @@ onMounted(() => {
 }
 
 .banner-update {
-  background: linear-gradient(135deg, rgba(15, 76, 58, 0.08), rgba(111, 163, 134, 0.06));
-  border: 1px solid rgba(15, 76, 58, 0.15);
-  color: #0F4C3A;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(96, 165, 250, 0.06));
+  border: 1px solid rgba(37, 99, 235, 0.15);
+  color: #2563EB;
 }
 
 .banner-inner {
@@ -208,9 +208,9 @@ onMounted(() => {
 
 /* ========== 暗色模式 ========== */
 .dark .banner-info {
-  background: linear-gradient(135deg, rgba(15, 76, 58, 0.15), rgba(111, 163, 134, 0.1));
-  border-color: rgba(15, 76, 58, 0.3);
-  color: #6FA386;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(96, 165, 250, 0.1));
+  border-color: rgba(37, 99, 235, 0.3);
+  color: #60A5FA;
 }
 
 .dark .banner-warning {
@@ -226,9 +226,9 @@ onMounted(() => {
 }
 
 .dark .banner-update {
-  background: linear-gradient(135deg, rgba(15, 76, 58, 0.15), rgba(111, 163, 134, 0.1));
-  border-color: rgba(15, 76, 58, 0.3);
-  color: #6FA386;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(96, 165, 250, 0.1));
+  border-color: rgba(37, 99, 235, 0.3);
+  color: #60A5FA;
 }
 
 .dark .banner-expand:hover {

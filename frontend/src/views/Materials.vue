@@ -423,11 +423,11 @@ const difficultyLabels = {
 }
 
 const difficultyColors = {
-  1: '#6FA386',
-  2: '#0F4C3A',
-  3: '#E2725B',
-  4: '#C95E47',
-  5: '#C73E3A'
+  1: '#60A5FA',
+  2: '#2563EB',
+  3: '#F59E0B',
+  4: '#D97706',
+  5: '#DC2626'
 }
 
 const durationOptions = [
@@ -795,7 +795,7 @@ onMounted(() => {
 }
 
 .filter-pill.active {
-  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   border-color: transparent;
   color: #fff;
   font-weight: 600;
@@ -970,7 +970,7 @@ onMounted(() => {
 }
 
 .mobile-chip.active {
-  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   border-color: transparent;
   color: #fff;
   font-weight: 600;

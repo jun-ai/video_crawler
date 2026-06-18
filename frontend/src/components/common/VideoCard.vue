@@ -96,11 +96,11 @@ const emit = defineEmits(['click', 'toggle-favorite'])
 
 // 墨绿系难度色
 const difficultyColors = {
-  1: '#B8D4C5', // 入门 - brand-light
+  1: '#93C5FD', // 入门 - brand-light
   2: '#8BBFA5', // 基础
   3: '#5DA882', // 中级
-  4: '#2D8659', // 进阶
-  5: '#0F4C3A'  // 高级 - brand
+  4: '#16A34A', // 进阶
+  5: '#2563EB'  // 高级 - brand
 }
 
 const difficultyLabel = computed(() => {
@@ -159,7 +159,7 @@ const handleClick = () => {
 
 .video-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 16px 40px rgba(15, 76, 58, 0.15), 0 4px 12px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 16px 40px rgba(37, 99, 235, 0.15), 0 4px 12px rgba(0, 0, 0, 0.06);
   border-color: var(--color-brand);
 }
 

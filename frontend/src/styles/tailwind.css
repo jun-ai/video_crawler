@@ -23,15 +23,15 @@
   --ring: var(--color-brand);
   --radius: var(--radius-md);
 
-  /* Admin 浅色主题变量 (Phase 0+) */
+  /* Admin 浅色主题变量 (Phase 5) */
   --sf-admin-sidebar-bg: #FFFFFF;
-  --sf-admin-sidebar-active: #E8F5EE;
-  --sf-admin-sidebar-text: #5A6B62;
-  --sf-admin-sidebar-text-active: #0F4C3A;
-  --sf-admin-sidebar-border: #E5E9E5;
-  --sf-admin-sidebar-hover: #F0F4F1;
-  --sf-admin-accent: #0F4C3A;
-  --sf-admin-accent-light: rgba(15, 76, 58, 0.08);
+  --sf-admin-sidebar-active: #EFF6FF;
+  --sf-admin-sidebar-text: #64748B;
+  --sf-admin-sidebar-text-active: #2563EB;
+  --sf-admin-sidebar-border: #E2E8F0;
+  --sf-admin-sidebar-hover: #F1F5F9;
+  --sf-admin-accent: #2563EB;
+  --sf-admin-accent-light: rgba(37, 99, 235, 0.08);
 
   /* 兼容旧 --yt-* 变量 */
   --yt-text-primary: var(--color-text-primary);
@@ -51,69 +51,69 @@
 }
 
 @theme {
-  /* ========== 品牌色 (墨绿系 — Phase 0) ========== */
-  --color-brand: #0F4C3A;            /* 主品牌色 — 墨绿 */
-  --color-brand-hover: #0A3A2D;      /* 悬停 — 更深 */
-  --color-brand-light: #B8D4C5;      /* 浅 — 文字背景 */
-  --color-brand-subtle: #E8F0EB;     /* 极浅 — 高亮背景 */
+  /* ========== 品牌色 (清新蓝系 — Phase 5) ========== */
+  --color-brand: #2563EB;            /* 主品牌色 — 亮蓝 */
+  --color-brand-hover: #1D4ED8;      /* 悬停 — 更深蓝 */
+  --color-brand-light: #93C5FD;      /* 浅蓝 — 文字背景 */
+  --color-brand-subtle: #EFF6FF;     /* 极浅蓝 — 高亮背景 */
 
-  /* ========== 品牌色 (SpeakVlog 借鉴 — Phase 0+) ========== */
-  --color-brand-bright: #3F8A5B;       /* 品牌亮绿 — CTA 渐变用 */
-  --color-brand-bright-hover: #4DA06C; /* 亮绿 hover / 渐变亮端 */
-  --color-bg-frosted: rgba(246, 250, 245, 0.85); /* 导航毛玻璃底 */
-  --color-bg-pale: #F6FAF5;           /* 极浅绿背景 */
-  --color-bg-mint: #E8F3EA;           /* 薄荷绿背景 */
-  --color-footer: #F1F6EE;            /* footer 底色 */
+  /* ========== 品牌色 (亮色辅助 — Phase 5) ========== */
+  --color-brand-bright: #3B82F6;       /* 品牌亮蓝 — CTA 渐变用 */
+  --color-brand-bright-hover: #60A5FA; /* 亮蓝 hover / 渐变亮端 */
+  --color-bg-frosted: rgba(248, 250, 252, 0.85); /* 导航毛玻璃底 */
+  --color-bg-pale: #F5F9FF;           /* 极浅蓝背景 */
+  --color-bg-mint: #E0EFFC;           /* 淡蓝背景 */
+  --color-footer: #F0F6FF;            /* footer 底色 */
 
-  /* ========== 强调色 (暖橙系 — Phase 0) ========== */
-  --color-accent: #E2725B;           /* 强调 — 暖橙 */
-  --color-accent-hover: #C95E47;
-  --color-accent-light: #F5C8B5;
-  --color-accent-subtle: #FBEDE6;
+  /* ========== 强调色 (琥珀金 — Phase 5) ========== */
+  --color-accent: #F59E0B;           /* 强调 — 琥珀金 */
+  --color-accent-hover: #D97706;
+  --color-accent-light: #FCD34D;
+  --color-accent-subtle: #FEF3C7;
 
-  /* ========== 语义色 (Phase 0 去紫调) ========== */
-  --color-success: #2D8659;           /* 深绿，配合 brand */
-  --color-success-light: #D4ECDC;
-  --color-warning: #E2725B;           /* 用 accent 表示警告 */
-  --color-warning-light: #FBEDE6;
-  --color-danger: #C73E3A;            /* 警示红，去紫调 */
-  --color-danger-light: #F8D9D7;
-  --color-info: #0F4C3A;              /* 用 brand 色，去紫 */
-  --color-info-light: #E8F0EB;
+  /* ========== 语义色 (Phase 5) ========== */
+  --color-success: #16A34A;           /* 明亮绿 */
+  --color-success-light: #DCFCE7;
+  --color-warning: #F59E0B;           /* 用 accent 表示警告 */
+  --color-warning-light: #FEF3C7;
+  --color-danger: #DC2626;            /* 警示红 */
+  --color-danger-light: #FEE2E2;
+  --color-info: #2563EB;              /* 用 brand 色 */
+  --color-info-light: #EFF6FF;
 
   /* ========== 文字色（亮色） ========== */
-  --color-text-primary: #1A2B22;      /* 深绿黑，主文字 */
-  --color-text-secondary: #5A6B62;
-  --color-text-muted: #8B9A91;
-  --color-text-quaternary: #C5CCC8;
+  --color-text-primary: #1E293B;      /* 深石板色，主文字 */
+  --color-text-secondary: #64748B;
+  --color-text-muted: #94A3B8;
+  --color-text-quaternary: #CBD5E1;
   --color-text-inverse: #FFFFFF;
 
   /* ========== 背景色（亮色） ========== */
-  --color-bg-base: #FAFAF7;           /* 米白底 */
+  --color-bg-base: #F8FAFC;           /* 冷白底 */
   --color-bg-card: #FFFFFF;
-  --color-bg-elevated: #F0F0EB;
-  --color-bg-hover: #F5F5F0;
+  --color-bg-elevated: #F1F5F9;
+  --color-bg-hover: #F8FAFC;
 
   /* Hover 背景色 */
-  --color-hover-fill: rgba(45, 134, 89, 0.08);
+  --color-hover-fill: rgba(37, 99, 235, 0.08);
 
   /* ========== 边框色（亮色） ========== */
-  --color-border: #E5E5DE;
-  --color-border-strong: #D0D0C8;
-  --color-border-brand: #B8D4C5;
+  --color-border: #E2E8F0;
+  --color-border-strong: #CBD5E1;
+  --color-border-brand: #93C5FD;
 
-  /* ========== 难度色 (Phase 0 去紫) ========== */
-  --color-diff-easy-bg: #D4ECDC;
-  --color-diff-easy-text: #1F6B47;
-  --color-diff-medium-bg: #E8F0EB;
-  --color-diff-medium-text: #0F4C3A;
-  --color-diff-hard-bg: #FBEDE6;
-  --color-diff-hard-text: #C73E3A;
+  /* ========== 难度色 (Phase 5) ========== */
+  --color-diff-easy-bg: #DCFCE7;
+  --color-diff-easy-text: #15803D;
+  --color-diff-medium-bg: #EFF6FF;
+  --color-diff-medium-text: #2563EB;
+  --color-diff-hard-bg: #FEE2E2;
+  --color-diff-hard-text: #DC2626;
 
-  /* ========== 标注色 (Phase 0 墨绿/暖橙/暖黄) ========== */
-  --color-annotation-vocabulary: #0F4C3A;
-  --color-annotation-phrase: #E2725B;
-  --color-annotation-important: #C4922F;
+  /* ========== 标注色 (Phase 5 蓝/琥珀/红) ========== */
+  --color-annotation-vocabulary: #2563EB;
+  --color-annotation-phrase: #F59E0B;
+  --color-annotation-important: #DC2626;
 
   /* ========== 字体 (Phase 0 加 Noto Sans SC) ========== */
   --font-sans: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
@@ -217,100 +217,100 @@
   50% { opacity: 0.7; }
 }
 
-/* ========== 暗色模式覆盖 (Phase 0 — 墨绿/暖橙 暗色版本) ========== */
+/* ========== 暗色模式覆盖 (Phase 5 — 清新蓝 暗色版本) ========== */
 .dark {
-  --color-text-primary: #EDF2EE;    /* 浅色文字 — Phase 0+ 提亮 */
-  --color-text-secondary: #A8B8AE;  /* 提亮 (原 #94A398) */
-  --color-text-muted: #75857A;      /* 提亮 (原 #647468) */
-  --color-text-quaternary: #4F5E54;
-  --color-bg-base: #0F1A14;          /* 深绿黑 */
-  --color-bg-card: #1A2820;          /* 卡绿黑 */
-  --color-bg-elevated: #243A2D;
-  --color-bg-hover: #2A4334;
+  --color-text-primary: #F1F5F9;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted: #64748B;
+  --color-text-quaternary: #475569;
+  --color-bg-base: #0F172A;          /* 深石板黑 */
+  --color-bg-card: #1E293B;          /* 卡片深蓝灰 */
+  --color-bg-elevated: #334155;
+  --color-bg-hover: #3B4B63;
   --color-border: rgba(255, 255, 255, 0.08);
   --color-border-strong: rgba(255, 255, 255, 0.12);
-  --color-border-brand: rgba(143, 200, 159, 0.4);
+  --color-border-brand: rgba(96, 165, 250, 0.4);
 
-  --color-brand: #8FC79E;            /* Phase 0+ 提亮 (原 #6FA386) */
-  --color-brand-hover: #A8D4B5;
-  --color-brand-light: rgba(143, 200, 159, 0.25);
-  --color-brand-subtle: rgba(143, 200, 159, 0.12);
-  --color-brand-bright: #6FE89A;     /* Phase 0+ 提亮 (原 #6FA386) */
-  --color-brand-bright-hover: #8FF0AE;
-  --color-accent: #F5A48F;           /* Phase 0+ 提亮 (原 #F08A72) */
-  --color-accent-hover: #F8B9A5;
-  --color-accent-light: rgba(245, 164, 143, 0.25);
-  --color-accent-subtle: rgba(245, 164, 143, 0.12);
+  --color-brand: #60A5FA;            /* 亮蓝 */
+  --color-brand-hover: #93C5FD;
+  --color-brand-light: rgba(96, 165, 250, 0.25);
+  --color-brand-subtle: rgba(96, 165, 250, 0.12);
+  --color-brand-bright: #7DD3FC;
+  --color-brand-bright-hover: #BAE6FD;
+  --color-accent: #FBBF24;           /* 琥珀亮 */
+  --color-accent-hover: #FCD34D;
+  --color-accent-light: rgba(251, 191, 36, 0.25);
+  --color-accent-subtle: rgba(251, 191, 36, 0.12);
 
-  --color-annotation-vocabulary: #6FE89A;  /* Phase 0+ 提亮 */
-  --color-annotation-phrase: #F5A48F;
-  --color-annotation-important: #F5C264;
+  --color-annotation-vocabulary: #60A5FA;
+  --color-annotation-phrase: #FBBF24;
+  --color-annotation-important: #F87171;
 
-  --color-diff-easy-bg: rgba(45, 134, 89, 0.3);
-  --color-diff-easy-text: #93D8B0;
-  --color-diff-medium-bg: rgba(111, 163, 134, 0.3);
-  --color-diff-medium-text: #B8D4C5;
-  --color-diff-hard-bg: rgba(199, 62, 58, 0.3);
-  --color-diff-hard-text: #F5A8A5;
+  --color-diff-easy-bg: rgba(22, 163, 74, 0.3);
+  --color-diff-easy-text: #86EFAC;
+  --color-diff-medium-bg: rgba(59, 130, 246, 0.3);
+  --color-diff-medium-text: #93C5FD;
+  --color-diff-hard-bg: rgba(220, 38, 38, 0.3);
+  --color-diff-hard-text: #FCA5A5;
 
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.4);
 
-  --color-success-light: rgba(45, 134, 89, 0.2);
-  --color-warning-light: rgba(226, 114, 91, 0.2);
-  --color-danger-light: rgba(199, 62, 58, 0.2);
-  --color-info-light: rgba(111, 163, 134, 0.2);
+  --color-success-light: rgba(22, 163, 74, 0.2);
+  --color-warning-light: rgba(251, 191, 36, 0.2);
+  --color-danger-light: rgba(220, 38, 38, 0.2);
+  --color-info-light: rgba(96, 165, 250, 0.2);
 
   /* shadcn 暗色变量 */
-  --primary: #6FA386;
-  --primary-foreground: #0F1A14;
-  --secondary: #243A2D;
-  --secondary-foreground: #E2E8E2;
-  --muted: #243A2D;
-  --muted-foreground: #94A398;
-  --accent: #F08A72;
-  --accent-foreground: #0F1A14;
-  --destructive: #E07870;
-  --destructive-foreground: #FFFFFF;
-  --background: #0F1A14;
-  --foreground: #E2E8E2;
-  --card: #1A2820;
-  --card-foreground: #E2E8E2;
-  --popover: #1A2820;
-  --popover-foreground: #E2E8E2;
+  --primary: #60A5FA;
+  --primary-foreground: #0F172A;
+  --secondary: #334155;
+  --secondary-foreground: #E2E8F0;
+  --muted: #334155;
+  --muted-foreground: #94A3B8;
+  --accent: #FBBF24;
+  --accent-foreground: #0F172A;
+  --destructive: #F87171;
+  --destructive-foreground: #0F172A;
+  --background: #0F172A;
+  --foreground: #E2E8F0;
+  --card: #1E293B;
+  --card-foreground: #E2E8F0;
+  --popover: #1E293B;
+  --popover-foreground: #E2E8F0;
   --border: rgba(255, 255, 255, 0.08);
   --input: rgba(255, 255, 255, 0.12);
-  --ring: #6FA386;
+  --ring: #60A5FA;
   --radius: var(--radius-md);
 
   /* Admin 独立暗色主题变量 */
-  --sf-admin-sidebar-bg: #0A130E;
-  --sf-admin-sidebar-active: #1A2820;
-  --sf-admin-sidebar-text: #A8B8AE;       /* Phase 0+ 提亮 (原 #94A398) */
-  --sf-admin-sidebar-text-active: #EDF2EE; /* Phase 0+ 提亮 (原 #E2E8E2) */
+  --sf-admin-sidebar-bg: #0F172A;
+  --sf-admin-sidebar-active: #1E293B;
+  --sf-admin-sidebar-text: #94A3B8;
+  --sf-admin-sidebar-text-active: #F1F5F9;
   --sf-admin-sidebar-border: rgba(255, 255, 255, 0.08);
-  --sf-admin-sidebar-hover: rgba(143, 200, 159, 0.08);
-  --sf-admin-accent: #6FE89A;             /* Phase 0+ 提亮 (原 #6FA386) */
-  --sf-admin-accent-light: rgba(111, 232, 154, 0.18);
+  --sf-admin-sidebar-hover: rgba(96, 165, 250, 0.08);
+  --sf-admin-accent: #60A5FA;
+  --sf-admin-accent-light: rgba(96, 165, 250, 0.18);
 
   /* Hover 背景色 */
-  --color-hover-fill: rgba(111, 163, 134, 0.08);
+  --color-hover-fill: rgba(96, 165, 250, 0.08);
 
   /* 兼容旧 --yt-* 变量（暗色） */
-  --yt-text-primary: #E2E8E2;
-  --yt-text-secondary: #94A398;
-  --yt-text-tertiary: #647468;
-  --yt-text-quaternary: #475449;
-  --yt-bg: #0F1A14;
-  --yt-bg-card: #1A2820;
-  --yt-bg-secondary: #243A2D;
-  --yt-bg-tertiary: #1A2820;
+  --yt-text-primary: #E2E8F0;
+  --yt-text-secondary: #94A3B8;
+  --yt-text-tertiary: #64748B;
+  --yt-text-quaternary: #475569;
+  --yt-bg: #0F172A;
+  --yt-bg-card: #1E293B;
+  --yt-bg-secondary: #334155;
+  --yt-bg-tertiary: #1E293B;
   --yt-border: rgba(255, 255, 255, 0.08);
-  --yt-brand: #6FA386;
-  --yt-brand-light: rgba(111, 163, 134, 0.2);
-  --yt-brand-softer: rgba(111, 163, 134, 0.15);
-  --glass-bg: rgba(26, 40, 32, 0.9);
+  --yt-brand: #60A5FA;
+  --yt-brand-light: rgba(96, 165, 250, 0.2);
+  --yt-brand-softer: rgba(96, 165, 250, 0.15);
+  --glass-bg: rgba(30, 41, 59, 0.9);
   --glass-blur: blur(12px);
 }
 

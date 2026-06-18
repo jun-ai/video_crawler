@@ -47,8 +47,8 @@
   --sf-difficulty-3-text: var(--color-diff-medium-text);
   --sf-difficulty-4-bg: var(--color-diff-hard-bg);
   --sf-difficulty-4-text: var(--color-diff-hard-text);
-  --sf-difficulty-5-bg: rgba(15, 76, 58, 0.15);
-  --sf-difficulty-5-text: #0F4C3A;
+  --sf-difficulty-5-bg: rgba(37, 99, 235, 0.15);
+  --sf-difficulty-5-text: #2563EB;
 
   /* ========== 标签色映射 ========== */
   --sf-tag-blue: var(--color-brand);
@@ -154,7 +154,7 @@
   --yt-bg-tertiary: var(--sf-bg-elevated);
   --yt-border: var(--sf-border);
   --yt-highlight-bg: var(--sf-brand-subtle);
-  --yt-highlight-border: rgba(15, 76, 58, 0.3);
+  --yt-highlight-border: rgba(37, 99, 235, 0.3);
   --yt-study-divider: var(--sf-border);
   --color-success: var(--sf-success);
   --color-warning: var(--sf-warning);
@@ -172,12 +172,12 @@
   --transition-fast: var(--sf-duration-fast);
   --transition-normal: var(--sf-duration-normal);
   --transition-slow: var(--sf-duration-slow);
-  --yt-brand-gradient: linear-gradient(135deg, #0F4C3A 0%, #1A6B4F 50%, #E2725B 100%);
-  --yt-cta-gradient: linear-gradient(#4DA06C 0%, #3F8A5B 100%);  /* SpeakVlog 借鉴 CTA 按钮 */
-  --yt-bg-gradient: linear-gradient(180deg, #FAFAF7 0%, #F5F5F0 25%, #FAFAF7 100%);
+  --yt-brand-gradient: linear-gradient(135deg, #2563EB 0%, #3B82F6 50%, #F59E0B 100%);
+  --yt-cta-gradient: linear-gradient(#3B82F6 0%, #2563EB 100%);  /* CTA 按钮渐变 */
+  --yt-bg-gradient: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 25%, #F8FAFC 100%);
   --glass-bg: rgba(255, 255, 255, 0.9);
   --glass-blur: blur(12px);
-  --glass-border: 1px solid rgba(15, 76, 58, 0.1);
+  --glass-border: 1px solid rgba(37, 99, 235, 0.1);
 }
 
 /* ========== 暗色主题兼容 ========== */
@@ -189,8 +189,8 @@
   --yt-bg-secondary: var(--color-bg-card);
   --yt-bg-tertiary: var(--color-bg-elevated);
   --yt-border: var(--color-border);
-  --yt-highlight-bg: rgba(15, 76, 58, 0.1);
-  --yt-highlight-border: rgba(15, 76, 58, 0.3);
+  --yt-highlight-bg: rgba(37, 99, 235, 0.1);
+  --yt-highlight-border: rgba(37, 99, 235, 0.3);
   --color-text-primary: var(--color-text-primary);
   --color-text-secondary: var(--color-text-secondary);
   --color-text-tertiary: var(--color-text-muted);
@@ -202,8 +202,8 @@
   --color-bg-tertiary: var(--color-bg-elevated);
   --color-bg-hover: var(--color-bg-elevated);
   --color-bg-mask: rgba(0, 0, 0, 0.7);
-  --yt-brand-gradient: linear-gradient(135deg, #6FA386 0%, #4A8068 100%);
-  --yt-bg-gradient: linear-gradient(180deg, #0F1A14 0%, #1A2820 15%, #0F1A14 100%);
+  --yt-brand-gradient: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+  --yt-bg-gradient: linear-gradient(180deg, #0F172A 0%, #1E293B 15%, #0F172A 100%);
   --glass-bg: rgba(30, 41, 59, 0.9);
   --glass-border: 1px solid rgba(255, 255, 255, 0.08);
 }

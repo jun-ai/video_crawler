@@ -2095,13 +2095,13 @@ onUnmounted(() => {
   border-color: var(--color-border-brand);
 }
 .sf-btn--primary {
-  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   color: #fff;
   border-color: transparent;
   box-shadow: 0 4px 14px rgba(63, 138, 91, 0.3);
 }
 .sf-btn--primary:hover {
-  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   filter: brightness(1.08);
   box-shadow: 0 6px 20px rgba(63, 138, 91, 0.4);
 }
@@ -2204,7 +2204,7 @@ onUnmounted(() => {
   width: 40px;
   height: 40px;
   border-radius: var(--sf-radius-full);
-  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   color: #fff;
   display: flex;
   align-items: center;
@@ -2232,7 +2232,7 @@ onUnmounted(() => {
   height: 40px;
   padding: 0 16px;
   border-radius: var(--sf-radius-full);
-  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   color: #fff;
   display: flex;
   align-items: center;

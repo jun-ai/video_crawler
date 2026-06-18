@@ -308,7 +308,7 @@ onMounted(() => {
 
 .announcement-card:hover {
   background: #F0F4F1;
-  border-color: rgba(111, 163, 134, 0.2);
+  border-color: rgba(96, 165, 250, 0.2);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
@@ -343,15 +343,15 @@ onMounted(() => {
 }
 
 .priority-badge.urgent {
-  background: rgba(199, 62, 58, 0.15);
+  background: rgba(220, 38, 38, 0.15);
   color: #E8827A;
-  border: 1px solid rgba(199, 62, 58, 0.25);
+  border: 1px solid rgba(220, 38, 38, 0.25);
 }
 
 .priority-badge.important {
-  background: rgba(226, 114, 91, 0.15);
-  color: #F08A72;
-  border: 1px solid rgba(226, 114, 91, 0.25);
+  background: rgba(245, 158, 11, 0.15);
+  color: #FBBF24;
+  border: 1px solid rgba(245, 158, 11, 0.25);
 }
 
 /* -- Actions -- */
@@ -417,12 +417,12 @@ onMounted(() => {
 }
 
 .radio-btn:hover {
-  background: rgba(111, 163, 134, 0.08);
+  background: rgba(96, 165, 250, 0.08);
   color: #C5D9CC;
 }
 
 .radio-btn.active {
-  background: #0F4C3A;
+  background: #2563EB;
   color: #fff;
 }
 
@@ -446,9 +446,9 @@ onMounted(() => {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #0F4C3A;
+  background: #2563EB;
   cursor: pointer;
-  border: 2px solid #0F4C3A;
+  border: 2px solid #2563EB;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
 }
 
@@ -456,9 +456,9 @@ onMounted(() => {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #0F4C3A;
+  background: #2563EB;
   cursor: pointer;
-  border: 2px solid #0F4C3A;
+  border: 2px solid #2563EB;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
 }
 
@@ -471,7 +471,7 @@ onMounted(() => {
 }
 
 .priority-labels span.active {
-  color: #0F4C3A;
+  color: #2563EB;
   font-weight: 600;
 }
 

@@ -88,7 +88,7 @@
                 登录
               </span>
               <button class="px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all duration-200"
-                      style="background: linear-gradient(#4DA06C 0%, #3F8A5B 100%)"
+                      style="background: linear-gradient(#60A5FA 0%, #3B82F6 100%)"
                       @mouseenter="$event.target.style.opacity = '0.9'"
                       @mouseleave="$event.target.style.opacity = '1'"
                       @click="$router.push('/login')">
@@ -246,7 +246,7 @@ const logout = () => {
   grid-template-columns: 1.4fr 2fr;
   gap: 56px;
   padding-bottom: 32px;
-  border-bottom: 1px solid rgba(15, 76, 58, 0.1);
+  border-bottom: 1px solid rgba(37, 99, 235, 0.1);
 }
 
 .app-footer-logo {

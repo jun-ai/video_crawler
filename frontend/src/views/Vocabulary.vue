@@ -455,7 +455,7 @@ onMounted(() => {
 <style scoped>
 /* ============================================
    Phase 1D — Vocabulary Redesign
-   墨绿 #0F4C3A + 暖橙 #E2725B + Noto Sans SC
+   墨绿 #2563EB + 暖橙 #F59E0B + Noto Sans SC
    ============================================ */
 
 .yt-vocabulary {
@@ -532,7 +532,7 @@ onMounted(() => {
 
 .vocab-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(15, 76, 58, 0.1);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.1);
   border-color: var(--color-brand-bright);
 }
 
@@ -547,15 +547,15 @@ onMounted(() => {
 }
 
 .status-new {
-  background: var(--color-accent, #E2725B);
+  background: var(--color-accent, #F59E0B);
 }
 
 .status-review {
-  background: var(--color-brand, #0F4C3A);
+  background: var(--color-brand, #2563EB);
 }
 
 .status-mastered {
-  background: var(--color-success, #2D8659);
+  background: var(--color-success, #16A34A);
 }
 
 .vocab-card-inner {
@@ -764,15 +764,15 @@ onMounted(() => {
 }
 
 .strength-low {
-  background: var(--color-accent, #E2725B);
+  background: var(--color-accent, #F59E0B);
 }
 
 .strength-mid {
-  background: var(--color-brand, #0F4C3A);
+  background: var(--color-brand, #2563EB);
 }
 
 .strength-high {
-  background: var(--color-success, #2D8659);
+  background: var(--color-success, #16A34A);
 }
 
 .review-strength-count {
@@ -877,7 +877,7 @@ onMounted(() => {
 .vocab-source:hover {
   background: var(--color-brand-subtle);
   color: var(--color-brand-bright);
-  border-color: var(--color-border-brand, #B8D4C5);
+  border-color: var(--color-border-brand, #93C5FD);
 }
 
 .vocab-source svg {
@@ -947,11 +947,11 @@ onMounted(() => {
 }
 
 .vocab-list :deep(.el-loading-spinner .path) {
-  stroke: var(--color-brand, #0F4C3A);
+  stroke: var(--color-brand, #2563EB);
 }
 
 .vocab-list :deep(.el-loading-spinner .el-loading-text) {
-  color: var(--color-brand, #0F4C3A);
+  color: var(--color-brand, #2563EB);
 }
 
 /* ---- 空状态 ---- */

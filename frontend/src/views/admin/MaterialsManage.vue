@@ -304,7 +304,7 @@ onMounted(() => {
 }
 
 .card-container :deep(.sf-table tbody tr:hover td) {
-  background: rgba(111, 163, 134, 0.08);
+  background: rgba(96, 165, 250, 0.08);
 }
 
 /* ── Status & Action Cells ── */
@@ -319,7 +319,7 @@ onMounted(() => {
 }
 
 .action-cell :deep(.sf-btn--danger):hover {
-  background: #C73E3A;
+  background: #DC2626;
 }
 
 /* ── Pagination ── */
@@ -405,7 +405,7 @@ onMounted(() => {
 
   .card-container :deep(.sf-table tbody tr td:first-child) {
     font-weight: 600;
-    color: #0F4C3A;
+    color: #2563EB;
     font-size: 12px;
     opacity: 0.7;
   }

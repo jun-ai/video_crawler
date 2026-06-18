@@ -725,7 +725,7 @@ onMounted(async () => {
 /* ====== Hero Section — SpeakVlog 风格（Phase 0+） ====== */
 .home-hero {
   position: relative;
-  background: var(--yt-brand-gradient, linear-gradient(135deg, #0F4C3A 0%, #1A6B4F 50%, #E2725B 100%));
+  background: var(--yt-brand-gradient, linear-gradient(135deg, #2563EB 0%, #3B82F6 50%, #F59E0B 100%));
   border-radius: 0; /* 全宽：去掉圆角包裹 */
   padding: 88px 48px 64px;
   margin-bottom: 0;
@@ -782,7 +782,7 @@ onMounted(async () => {
 }
 
 .hero-title-a {
-  color: #4DA06C; /* 品牌亮绿 */
+  color: #60A5FA; /* 品牌亮绿 */
   display: inline-block;
 }
 
@@ -818,7 +818,7 @@ onMounted(async () => {
   font-size: 15px;
   font-weight: 700;
   color: #fff;
-  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   border: none;
   border-radius: 999px;
   cursor: pointer;
@@ -941,7 +941,7 @@ onMounted(async () => {
 }
 
 .hero-stat-learned {
-  color: #6FE89A; /* 已学 — 浅亮绿 */
+  color: #7DD3FC; /* 已学 — 浅亮绿 */
 }
 
 .hero-stat-unlearned {
@@ -1043,11 +1043,11 @@ onMounted(async () => {
 }
 
 .mobile-stat-chip svg {
-  color: var(--color-brand, #0F4C3A);
+  color: var(--color-brand, #2563EB);
 }
 
 .mobile-stat-streak svg {
-  color: var(--color-accent, #E2725B);
+  color: var(--color-accent, #F59E0B);
 }
 
 .mobile-stat-month {
@@ -1441,7 +1441,7 @@ onMounted(async () => {
 }
 
 .tag-chip.active {
-  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   color: #fff;
   border-color: transparent;
   box-shadow: 0 4px 14px rgba(63, 138, 91, 0.3);
@@ -1509,7 +1509,7 @@ onMounted(async () => {
 
 .core-feature-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(15, 76, 58, 0.10);
+  box-shadow: 0 12px 32px rgba(37, 99, 235, 0.10);
 }
 
 .core-feature-icon {
@@ -1642,7 +1642,7 @@ onMounted(async () => {
 }
 .continue-learn-card:hover {
   transform: translateY(-4px) scale(1.01);
-  box-shadow: 0 16px 40px rgba(15, 76, 58, 0.15);
+  box-shadow: 0 16px 40px rgba(37, 99, 235, 0.15);
   border-color: var(--color-brand-bright);
 }
 .cl-card-cover {
@@ -1702,7 +1702,7 @@ onMounted(async () => {
 }
 .cl-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #4DA06C 0%, #6FE89A 100%);
+  background: linear-gradient(90deg, #60A5FA 0%, #7DD3FC 100%);
   transition: width 0.3s ease;
   border-radius: 0 2px 2px 0;
 }

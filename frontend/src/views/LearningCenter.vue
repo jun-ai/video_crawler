@@ -62,7 +62,7 @@
           <div class="trend-chart">
             <svg viewBox="0 0 100 50" preserveAspectRatio="none" class="chart-svg">
               <!-- 区域填充 -->
-              <path :d="getAreaPath()" fill="rgba(15, 76, 58, 0.08)" />
+              <path :d="getAreaPath()" fill="rgba(37, 99, 235, 0.08)" />
               <!-- 折线 -->
               <path :d="getChartPath()" fill="none" stroke="var(--color-brand-bright)" stroke-width="0.6" stroke-linejoin="round" />
               <!-- 数据点 -->
@@ -484,7 +484,7 @@ onMounted(() => {
   align-items: center;
   gap: 4px;
   padding: 6px 12px;
-  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   color: #fff;
   border-radius: var(--radius-full);
   font-size: 13px;
@@ -689,7 +689,7 @@ onMounted(() => {
 .tab-item.active {
   color: #fff;
   font-weight: 600;
-  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   border-color: var(--color-brand-bright);
 }
 

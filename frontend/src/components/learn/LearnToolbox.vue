@@ -127,7 +127,7 @@ const dashOffset = computed(() => {
 
 /* 进度环 */
 .sf-toolbox__progress {
-  background: var(--color-brand, #0F4C3A);
+  background: var(--color-brand, #2563EB);
   border-radius: 16px;
   padding: 20px;
   display: flex;
@@ -161,7 +161,7 @@ const dashOffset = computed(() => {
   stroke: rgba(255,255,255,0.12);
 }
 .sf-progress-ring__fill {
-  stroke: var(--color-brand-bright, #3F8A5B);
+  stroke: var(--color-brand-bright, #3B82F6);
   transition: stroke-dashoffset 0.5s ease;
 }
 .sf-progress-ring__text {
@@ -210,11 +210,11 @@ const dashOffset = computed(() => {
   font-family: inherit;
 }
 .sf-stat-item:hover {
-  border-color: var(--color-brand-bright, #3F8A5B);
+  border-color: var(--color-brand-bright, #3B82F6);
   transform: translateX(2px);
 }
 .sf-stat-item.active {
-  border-color: var(--color-brand-bright, #3F8A5B);
+  border-color: var(--color-brand-bright, #3B82F6);
   background: var(--color-bg-mint, #E8F5EE);
 }
 .sf-stat-item--static {
@@ -235,16 +235,16 @@ const dashOffset = computed(() => {
   flex-shrink: 0;
 }
 .sf-stat-item__icon--vocab {
-  background: rgba(15, 76, 58, 0.1);
-  color: var(--color-brand, #0F4C3A);
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--color-brand, #2563EB);
 }
 .sf-stat-item__icon--bookmark {
-  background: rgba(226, 114, 91, 0.12);
-  color: #E2725B;
+  background: rgba(245, 158, 11, 0.12);
+  color: #F59E0B;
 }
 .sf-stat-item__icon--annot {
   background: rgba(63, 138, 91, 0.12);
-  color: var(--color-brand-bright, #3F8A5B);
+  color: var(--color-brand-bright, #3B82F6);
 }
 
 .sf-stat-item__info {
@@ -270,7 +270,7 @@ const dashOffset = computed(() => {
   justify-content: center;
   gap: 8px;
   padding: 12px 16px;
-  background: linear-gradient(135deg, var(--color-brand-bright, #3F8A5B), var(--color-brand, #0F4C3A));
+  background: linear-gradient(135deg, var(--color-brand-bright, #3B82F6), var(--color-brand, #2563EB));
   color: #fff;
   border: none;
   border-radius: 12px;
@@ -279,11 +279,11 @@ const dashOffset = computed(() => {
   cursor: pointer;
   transition: all 0.2s;
   font-family: inherit;
-  box-shadow: 0 2px 12px rgba(15, 76, 58, 0.2);
+  box-shadow: 0 2px 12px rgba(37, 99, 235, 0.2);
 }
 .sf-toolbox__ai-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 20px rgba(15, 76, 58, 0.3);
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.3);
 }
 .sf-toolbox__ai-btn.generating {
   opacity: 0.7;

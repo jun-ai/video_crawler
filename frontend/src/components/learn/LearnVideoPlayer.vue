@@ -158,7 +158,7 @@ defineExpose({ playerRef })
 .cover-play-btn {
   width: 80px;
   height: 80px;
-  background: rgba(15, 76, 58, 0.92);
+  background: rgba(37, 99, 235, 0.92);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -227,7 +227,7 @@ defineExpose({ playerRef })
 }
 
 .speed-selector__btn.active {
-  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   color: #fff;
   box-shadow: 0 2px 8px rgba(63, 138, 91, 0.3);
 }
@@ -274,7 +274,7 @@ defineExpose({ playerRef })
   margin-top: 8px;
   background: var(--sf-brand-subtle);
   border-radius: var(--sf-radius-md);
-  border: 1px solid rgba(15, 76, 58, 0.2);
+  border: 1px solid rgba(37, 99, 235, 0.2);
   text-align: center;
 }
 

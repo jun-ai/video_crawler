@@ -252,14 +252,14 @@ onMounted(() => {
 
 /* -- Code cell -- */
 .code-cell {
-  background: rgba(111, 163, 134, 0.12);
+  background: rgba(96, 165, 250, 0.12);
   padding: 3px 10px;
   border-radius: 6px;
   font-size: 13px;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  color: #0F4C3A;
+  color: #2563EB;
   letter-spacing: 0.5px;
-  border: 1px solid rgba(111, 163, 134, 0.15);
+  border: 1px solid rgba(96, 165, 250, 0.15);
 }
 
 /* -- Usage info -- */
@@ -282,7 +282,7 @@ onMounted(() => {
 }
 
 .expire-text.permanent {
-  color: #0F4C3A;
+  color: #2563EB;
   font-weight: 600;
 }
 
@@ -305,7 +305,7 @@ onMounted(() => {
 }
 
 .result-codes::-webkit-scrollbar-thumb {
-  background: rgba(111, 163, 134, 0.25);
+  background: rgba(96, 165, 250, 0.25);
   border-radius: 2px;
 }
 
@@ -321,15 +321,15 @@ onMounted(() => {
 }
 
 .code-item:hover {
-  background: rgba(111, 163, 134, 0.08);
-  border-color: rgba(111, 163, 134, 0.2);
+  background: rgba(96, 165, 250, 0.08);
+  border-color: rgba(96, 165, 250, 0.2);
 }
 
 .code-text {
   font-size: 15px;
   font-weight: 600;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  color: #0F4C3A;
+  color: #2563EB;
   letter-spacing: 1px;
 }
 

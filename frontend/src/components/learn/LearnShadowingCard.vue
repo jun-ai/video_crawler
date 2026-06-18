@@ -234,7 +234,7 @@ const getScoreClass = (score) => {
   background: var(--sf-brand-subtle);
   padding: 2px 10px;
   border-radius: var(--sf-radius-full);
-  border: 1px solid rgba(15, 76, 58, 0.2);
+  border: 1px solid rgba(37, 99, 235, 0.2);
 }
 
 /* 主体分区 */
@@ -261,7 +261,7 @@ const getScoreClass = (score) => {
   left: 0;
   width: 48px;
   height: 3px;
-  background: var(--yt-cta-gradient, linear-gradient(90deg, #4DA06C, #3F8A5B));
+  background: var(--yt-cta-gradient, linear-gradient(90deg, #60A5FA, #3B82F6));
   border-radius: 2px;
 }
 
@@ -360,7 +360,7 @@ const getScoreClass = (score) => {
   border: none;
   cursor: pointer;
   transition: all var(--sf-duration-fast) var(--sf-ease-standard);
-  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   color: #fff;
   font-family: inherit;
   box-shadow: 0 4px 12px rgba(63, 138, 91, 0.3);
@@ -415,7 +415,7 @@ const getScoreClass = (score) => {
   font-family: inherit;
 }
 .sf-eval-btn:hover {
-  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   border-color: transparent;
   color: #fff;
   transform: translateY(-1px);
@@ -442,7 +442,7 @@ const getScoreClass = (score) => {
   color: var(--color-brand-bright);
 }
 .sf-tool-btn.active {
-  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   border-color: transparent;
   color: #fff;
 }
@@ -459,12 +459,12 @@ const getScoreClass = (score) => {
   gap: 10px;
   margin-top: 12px;
   padding: 10px 16px;
-  background: rgba(15, 76, 58, 0.08);
+  background: rgba(37, 99, 235, 0.08);
   border-radius: var(--sf-radius-full);
   color: var(--color-brand-bright);
   font-size: 13px;
   font-weight: 500;
-  border: 1px solid rgba(15, 76, 58, 0.2);
+  border: 1px solid rgba(37, 99, 235, 0.2);
 }
 
 .sf-recording-dot {

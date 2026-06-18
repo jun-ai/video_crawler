@@ -349,7 +349,7 @@ onMounted(() => {
 
 .cat-bar {
   height: 100%;
-  background: linear-gradient(90deg, #0F4C3A, #0F4C3A);
+  background: linear-gradient(90deg, #2563EB, #2563EB);
   border-radius: 4px;
   transition: width 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }

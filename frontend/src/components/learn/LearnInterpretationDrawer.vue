@@ -593,7 +593,7 @@ const getStatusBarClass = (id) => {
   font-size: 11px;
   padding: 1px 6px;
   border-radius: var(--sf-radius-full);
-  background: rgba(15, 76, 58, 0.1);
+  background: rgba(37, 99, 235, 0.1);
   color: var(--color-brand);
   font-weight: 500;
 }
@@ -892,8 +892,8 @@ const getStatusBarClass = (id) => {
   font-size: 10px;
   padding: 2px 7px;
   border-radius: var(--sf-radius-full);
-  background: rgba(15, 76, 58, 0.1);
-  color: #0F4C3A;
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563EB;
   font-weight: 600;
 }
 .sf-difficulty-tag {

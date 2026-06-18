@@ -91,7 +91,7 @@ const handleClick = () => {
 }
 
 .sf-filter-chip.active {
-  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   color: #fff;
   border-color: transparent;
   box-shadow: 0 4px 14px rgba(63, 138, 91, 0.35);

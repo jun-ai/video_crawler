@@ -295,7 +295,7 @@ onMounted(() => {
 }
 
 .stat-badge.due {
-  background: rgba(199, 62, 58, 0.1);
+  background: rgba(220, 38, 38, 0.1);
   color: var(--color-danger);
 }
 
@@ -512,7 +512,7 @@ onMounted(() => {
 
 .btn-forget:hover:not(:disabled) {
   border-color: var(--color-danger);
-  background: rgba(199, 62, 58, 0.05);
+  background: rgba(220, 38, 38, 0.05);
 }
 
 .btn-vague:hover:not(:disabled) {
@@ -610,7 +610,7 @@ onMounted(() => {
 }
 
 .summary-actions .sf-btn--primary {
-  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   border-color: var(--color-brand-bright);
 }
 

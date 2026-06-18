@@ -701,7 +701,7 @@ onMounted(() => {
 
 .ec-search-input:focus {
   border-color: var(--color-brand-bright);
-  box-shadow: 0 0 0 3px rgba(15, 76, 58, 0.1);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .ec-sidebar-list {
@@ -862,7 +862,7 @@ onMounted(() => {
 .ec-tab.active {
   color: #fff;
   font-weight: 600;
-  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   border-color: var(--color-brand-bright);
 }
 
@@ -949,7 +949,7 @@ onMounted(() => {
 .ec-vocab-card.ec-card-selected {
   background: var(--color-brand-light);
   border-color: var(--color-brand-bright);
-  box-shadow: 0 4px 16px rgba(15, 76, 58, 0.12);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.12);
 }
 
 /* Card Header */
@@ -1003,7 +1003,7 @@ onMounted(() => {
 }
 
 .ec-speak-btn:hover {
-  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   color: #fff;
 }
 
@@ -1210,7 +1210,7 @@ onMounted(() => {
   font-size: 12px;
   font-weight: 600;
   color: #fff;
-  background: var(--yt-cta-gradient, linear-gradient(#4DA06C 0%, #3F8A5B 100%));
+  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   border: none;
   border-radius: 14px;
   cursor: pointer;
@@ -1500,7 +1500,7 @@ onMounted(() => {
 }
 
 .dark .ec-vocab-card.ec-card-known {
-  background: rgba(15, 76, 58, 0.08);
+  background: rgba(37, 99, 235, 0.08);
   border-color: var(--color-brand-bright);
 }
 
@@ -1510,7 +1510,7 @@ onMounted(() => {
 }
 
 .dark .ec-vocab-card.ec-card-selected {
-  background: rgba(15, 76, 58, 0.12);
+  background: rgba(37, 99, 235, 0.12);
   border-color: var(--color-brand-bright);
 }
 
