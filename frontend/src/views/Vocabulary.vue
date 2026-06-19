@@ -3,6 +3,17 @@
     <!-- 页面标题 -->
     <PageHeader title="生词本">
       <template #actions>
+        <!-- 5-P0-4: 批量操作模式开关 -->
+        <SfButton
+          v-if="total > 0"
+          :type="batchMode ? 'primary' : 'ghost'"
+          size="sm"
+          @click="toggleBatchMode"
+        >
+          <CheckSquare v-if="batchMode" :size="14" />
+          <Square v-else :size="14" />
+          {{ batchMode ? '退出批量' : '批量操作' }}
+        </SfButton>
         <!-- 5-P0-6: 显示中文开关加 label + localStorage 持久化 -->
         <SfSwitch
           v-model="showChinese"
@@ -115,6 +126,30 @@
         </div>
       </div>
 
+      <!-- 5-P0-4: 批量操作浮动工具栏 (选中>0 才显示, sticky 顶部) -->
+      <transition name="vocab-batch-bar">
+        <div v-if="batchMode && selectedIds.size > 0" class="vocab-batch-bar">
+          <span class="vocab-batch-count">
+            已选 <strong>{{ selectedIds.size }}</strong> / {{ total }} 词
+          </span>
+          <SfButton size="sm" type="ghost" @click="selectAllOnPage">
+            <CheckCheck :size="14" /> 全选当前页
+          </SfButton>
+          <SfButton size="sm" type="ghost" @click="clearSelection">
+            <X :size="14" /> 清空
+          </SfButton>
+          <SfButton size="sm" type="primary" @click="batchMaster">
+            <Check :size="14" /> 标记掌握
+          </SfButton>
+          <SfButton size="sm" type="warning" @click="batchUnmaster">
+            <RotateCcw :size="14" /> 取消掌握
+          </SfButton>
+          <SfButton size="sm" type="danger" @click="batchDelete">
+            <Trash2 :size="14" /> 删除
+          </SfButton>
+        </div>
+      </transition>
+
       <div class="vocab-list" v-loading="loading">
         <div
           v-for="item in vocabularies"
@@ -122,11 +157,22 @@
           :class="['vocab-card', {
             'vocab-mastered': item.mastered,
             'vocab-learning': !item.mastered && item.review_count > 0,
-            'vocab-new': !item.mastered && item.review_count === 0
+            'vocab-new': !item.mastered && item.review_count === 0,
+            'vocab-selected': batchMode && selectedIds.has(item.id)
           }]"
         >
           <!-- 状态色条 -->
           <div class="vocab-status-bar" :class="item.mastered ? 'status-mastered' : (item.review_count > 0 ? 'status-review' : 'status-new')"></div>
+
+          <!-- 5-P0-4: 批量模式 checkbox (卡片左上角, status-bar 旁边) -->
+          <label v-if="batchMode" class="vocab-checkbox" @click.stop>
+            <input
+              type="checkbox"
+              :checked="selectedIds.has(item.id)"
+              @change="toggleSelect(item.id)"
+              :aria-label="`选择 ${item.word}`"
+            />
+          </label>
 
           <div class="vocab-card-inner">
             <!-- 单词头部 -->
@@ -316,7 +362,7 @@ import { useRouter } from 'vue-router'
 import { toast } from '@/composables/useToast'
 import { useTTS } from '@/composables/useTTS'
 import { showConfirm } from '@/composables/useConfirm'
-import { Headphones, Play, Flame, Search, X } from 'lucide-vue-next'
+import { Headphones, Play, Flame, Search, X, CheckSquare, Square, CheckCheck, Check, RotateCcw, Trash2 } from 'lucide-vue-next'
 import SfSwitch from '@/components/ui/SfSwitch.vue'
 import SfSelect from '@/components/ui/SfSelect.vue'
 import SfInput from '@/components/ui/SfInput.vue'
@@ -347,6 +393,10 @@ watch(showChinese, (val) => {
   try { localStorage.setItem('vocab-show-chinese', String(val)) } catch (e) { /* ignore */ }
 })
 const filterStatus = ref('all')  // 4-P1-3: 'all'/'learning'/'mastered'/'new' (原 filterMastered bool 升级为 string)
+
+// 5-P0-4: 批量操作状态
+const batchMode = ref(false)
+const selectedIds = ref(new Set())
 const filterMaterialId = ref(null)
 const sortBy = ref('newest')
 const materialsList = ref([])
@@ -619,6 +669,87 @@ const deleteVocab = async (item) => {
       console.error('删除失败', e)
       toast.error('删除失败')
     }
+  }
+}
+
+// ==================== 5-P0-4: 词汇批量操作 ====================
+const toggleBatchMode = () => {
+  batchMode.value = !batchMode.value
+  if (!batchMode.value) {
+    // 退出批量模式时清空选择
+    selectedIds.value = new Set()
+  }
+}
+
+const toggleSelect = (id) => {
+  const next = new Set(selectedIds.value)
+  if (next.has(id)) {
+    next.delete(id)
+  } else {
+    next.add(id)
+  }
+  selectedIds.value = next
+}
+
+const selectAllOnPage = () => {
+  const next = new Set(selectedIds.value)
+  for (const v of vocabularies.value) {
+    next.add(v.id)
+  }
+  selectedIds.value = next
+}
+
+const clearSelection = () => {
+  selectedIds.value = new Set()
+}
+
+const batchMaster = async () => {
+  const ids = Array.from(selectedIds.value)
+  if (ids.length === 0) return
+  try {
+    const res = await vocabularyAPI.batchMaster(ids)
+    toast.success(res.message || `已标记 ${ids.length} 词为已掌握`)
+    clearSelection()
+    loadVocabularies()
+    loadReviewStats()  // 复习统计可能变化 (已掌握不算待复习)
+  } catch (e) {
+    console.error('批量标记失败', e)
+    toast.error('批量标记失败')
+  }
+}
+
+const batchUnmaster = async () => {
+  const ids = Array.from(selectedIds.value)
+  if (ids.length === 0) return
+  try {
+    const res = await vocabularyAPI.batchUnmaster(ids)
+    toast.success(res.message || `已取消 ${ids.length} 词的掌握状态`)
+    clearSelection()
+    loadVocabularies()
+    loadReviewStats()
+  } catch (e) {
+    console.error('批量取消失败', e)
+    toast.error('批量取消失败')
+  }
+}
+
+const batchDelete = async () => {
+  const ids = Array.from(selectedIds.value)
+  if (ids.length === 0) return
+  const confirmed = await showConfirm({
+    title: '批量删除',
+    message: `确定要删除选中的 ${ids.length} 个生词？此操作不可撤销。`
+  })
+  if (!confirmed) return
+  try {
+    const res = await vocabularyAPI.batchDelete(ids)
+    toast.success(res.message || `已删除 ${ids.length} 词`)
+    clearSelection()
+    loadVocabularies()
+    loadReviewStats()
+  } catch (e) {
+    console.error('批量删除失败', e)
+    toast.error('批量删除失败')
   }
 }
 
@@ -1327,5 +1458,78 @@ onMounted(() => {
   .review-strength {
     width: 100%;
   }
+}
+
+/* ==================== 5-P0-4: 批量操作 ==================== */
+/* 选中状态卡片: 蓝色边框 + 浅蓝背景 */
+.vocab-card.vocab-selected {
+  outline: 2px solid var(--color-brand);
+  outline-offset: -2px;
+  background: rgba(37, 99, 235, 0.04);
+}
+
+/* 批量 checkbox: 卡片左上角, status-bar 旁边 */
+.vocab-checkbox {
+  position: absolute;
+  top: 12px;
+  left: 14px;  /* status-bar 4px + 间距 */
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 4px;
+  padding: 2px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+.vocab-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--color-brand);
+}
+
+/* 批量模式时, vocab-card-inner 左 padding 让出 checkbox 位置 */
+.vocab-card:has(.vocab-checkbox) .vocab-card-inner {
+  padding-left: 40px;
+}
+
+/* 批量操作浮动工具栏 (sticky 顶部) */
+.vocab-batch-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-brand);
+  border-radius: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  flex-wrap: wrap;
+}
+.vocab-batch-count {
+  font-size: 14px;
+  color: var(--color-text-secondary, #475569);
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+.vocab-batch-count strong {
+  color: var(--color-brand);
+  font-weight: 700;
+  margin: 0 2px;
+}
+
+/* 工具栏显示/隐藏过渡 */
+.vocab-batch-bar-enter-active,
+.vocab-batch-bar-leave-active {
+  transition: opacity var(--sf-duration-fast) var(--sf-ease-standard),
+              transform var(--sf-duration-fast) var(--sf-ease-standard);
+}
+.vocab-batch-bar-enter-from,
+.vocab-batch-bar-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
 }
 </style>

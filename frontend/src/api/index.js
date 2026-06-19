@@ -95,6 +95,10 @@ export const vocabularyAPI = {
   markMastered: (id) => api.put(`/learning/vocabulary/${id}/master`),
   unmarkMastered: (id) => api.put(`/learning/vocabulary/${id}/unmaster`), // 5-P0-1
   delete: (id) => api.delete(`/learning/vocabulary/${id}`),
+  // 5-P0-4: 批量操作 (3 个端点共用 BatchIdsRequest)
+  batchMaster: (ids) => api.post('/learning/vocabulary/batch-master', { ids }),
+  batchUnmaster: (ids) => api.post('/learning/vocabulary/batch-unmaster', { ids }),
+  batchDelete: (ids) => api.post('/learning/vocabulary/batch-delete', { ids }),
   lookup: (word) => api.get(`/learning/vocabulary/lookup?word=${encodeURIComponent(word)}`, { timeout: 30000 }),
   // 复习相关
   getReviewQueue: (limit = 20) => api.get(`/learning/vocabulary/review-queue?limit=${limit}`),

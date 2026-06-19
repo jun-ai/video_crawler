@@ -398,6 +398,114 @@ async def delete_vocabulary(
     return MessageResponse(message="生词已删除", success=True)
 
 
+# ==================== 5-P0-4: 词汇批量操作 ====================
+@router.post("/vocabulary/batch-master", response_model=MessageResponse)
+async def batch_master_vocabulary(
+    data: BatchIdsRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db)
+):
+    """5-P0-4: 批量标记生词为已掌握
+
+    接受 ids 数组, 单次更新多个词汇 (减少 N 个 HTTP 请求 → 1 个)
+    权限: 仅操作当前用户自己的生词 (user_id 隔离, 防止越权)
+    SM-2 历史 (review_count / ease_factor / next_review_at) 保留不变
+    """
+    if not data.ids:
+        return MessageResponse(message="无选中项", success=False)
+
+    result = await db.execute(
+        select(Vocabulary).where(
+            Vocabulary.id.in_(data.ids),
+            Vocabulary.user_id == current_user.id  # 权限隔离
+        )
+    )
+    vocabularies = result.scalars().all()
+    updated_count = 0
+    for v in vocabularies:
+        v.mastered = True
+        updated_count += 1
+    await db.commit()
+
+    skipped = len(data.ids) - updated_count
+    msg = f"已标记 {updated_count} 词为已掌握"
+    if skipped > 0:
+        msg += f" (跳过 {skipped} 条: 不存在或非本人)"
+
+    return MessageResponse(message=msg, success=True)
+
+
+@router.post("/vocabulary/batch-unmaster", response_model=MessageResponse)
+async def batch_unmaster_vocabulary(
+    data: BatchIdsRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db)
+):
+    """5-P0-4: 批量取消生词的已掌握状态
+
+    mastered=False, 保留 SM-2 历史 (ease_factor/review_count/next_review_at)
+    让用户能"重新激活"已掌握的词
+    """
+    if not data.ids:
+        return MessageResponse(message="无选中项", success=False)
+
+    result = await db.execute(
+        select(Vocabulary).where(
+            Vocabulary.id.in_(data.ids),
+            Vocabulary.user_id == current_user.id
+        )
+    )
+    vocabularies = result.scalars().all()
+    updated_count = 0
+    for v in vocabularies:
+        v.mastered = False
+        updated_count += 1
+    await db.commit()
+
+    skipped = len(data.ids) - updated_count
+    msg = f"已取消 {updated_count} 词的掌握状态"
+    if skipped > 0:
+        msg += f" (跳过 {skipped} 条: 不存在或非本人)"
+
+    return MessageResponse(message=msg, success=True)
+
+
+@router.post("/vocabulary/batch-delete", response_model=MessageResponse)
+async def batch_delete_vocabulary(
+    data: BatchIdsRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db)
+):
+    """5-P0-4: 批量删除生词
+
+    接受 ids 数组, 单次删除多个词汇 (减少 N 个 HTTP 请求 → 1 个)
+    权限: 仅删除当前用户自己的生词 (user_id 隔离)
+    不支持撤销 (与单条删除一致: 后端不存 backup, 撤销需重新 add)
+    """
+    if not data.ids:
+        return MessageResponse(message="无选中项", success=False)
+
+    result = await db.execute(
+        select(Vocabulary).where(
+            Vocabulary.id.in_(data.ids),
+            Vocabulary.user_id == current_user.id
+        )
+    )
+    vocabularies = result.scalars().all()
+    deleted_count = 0
+    for v in vocabularies:
+        await db.delete(v)
+        deleted_count += 1
+    await db.commit()
+
+    skipped = len(data.ids) - deleted_count
+    msg = f"已删除 {deleted_count} 词"
+    if skipped > 0:
+        msg += f" (跳过 {skipped} 条: 不存在或非本人)"
+
+    return MessageResponse(message=msg, success=True)
+
+
 # ==================== 单词查询缓存 ====================
 # 内存级缓存：单词不会变，查一次永久缓存
 _word_lookup_cache: dict[str, dict] = {}
