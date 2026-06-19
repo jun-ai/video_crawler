@@ -97,11 +97,11 @@
       width="400px"
       :close-on-click-modal="false"
     >
-      <el-form :model="editForm" label-width="80px">
-        <el-form-item label="用户名">
-          <el-input v-model="editForm.username" placeholder="请输入用户名" />
-        </el-form-item>
-      </el-form>
+      <SfForm @submit="saveProfile">
+        <SfFormItem label="用户名" required>
+          <SfInput v-model="editForm.username" placeholder="请输入用户名" />
+        </SfFormItem>
+      </SfForm>
       <template #footer>
         <SfButton type="ghost" @click="showEditDialog = false">取消</SfButton>
         <SfButton type="primary" @click="saveProfile" :loading="saving">保存</SfButton>
@@ -124,6 +124,9 @@ import {
 import SfDialog from '@/components/ui/SfDialog.vue'
 import SfButton from '@/components/ui/SfButton.vue'
 import SfAvatar from '@/components/ui/SfAvatar.vue'
+import SfForm from '@/components/ui/SfForm.vue'
+import SfFormItem from '@/components/ui/SfFormItem.vue'
+import SfInput from '@/components/ui/SfInput.vue'
 import { useUserStore } from '@/stores/user'
 import { learningStatsAPI } from '@/api'
 import PageHeader from '@/components/common/PageHeader.vue'

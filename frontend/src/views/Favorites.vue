@@ -211,12 +211,11 @@
         </EmptyState>
 
         <div class="pagination" v-if="subtitleTotal > subtitlePageSize">
-          <el-pagination
-            v-model:current-page="subtitlePage"
+          <SfPagination
+            :current-page="subtitlePage"
             :page-size="subtitlePageSize"
             :total="subtitleTotal"
-            layout="prev, pager, next"
-            @current-change="loadSubtitleBookmarks"
+            @change="loadSubtitleBookmarks"
           />
         </div>
       </div>
@@ -270,12 +269,11 @@
         </EmptyState>
 
         <div class="pagination" v-if="vocabTotal > vocabPageSize">
-          <el-pagination
-            v-model:current-page="vocabPage"
+          <SfPagination
+            :current-page="vocabPage"
             :page-size="vocabPageSize"
             :total="vocabTotal"
-            layout="prev, pager, next"
-            @current-change="loadVocabList"
+            @change="loadVocabList"
           />
         </div>
       </div>
@@ -368,6 +366,7 @@ import SfButton from '@/components/ui/SfButton.vue'
 import SfTag from '@/components/ui/SfTag.vue'
 import SfEmpty from '@/components/ui/SfEmpty.vue'
 import SfDropdown from '@/components/ui/SfDropdown.vue'
+import SfPagination from '@/components/ui/SfPagination.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import { favoriteAPI, vocabularyAPI, subtitleBookmarkAPI, materialAPI } from '@/api'
 import { useUserStore } from '@/stores/user'

@@ -253,13 +253,11 @@
             ]" size="sm" />
           </div>
         </div>
-        <el-pagination
-          v-model:current-page="currentPage"
+        <SfPagination
+          :current-page="currentPage"
           :page-size="pageSize"
           :total="total"
-          layout="prev, pager, next"
-          :pager-count="5"
-          @current-change="loadVocabularies"
+          @change="loadVocabularies"
         />
       </div>
     </template>
@@ -278,6 +276,7 @@ import SfSelect from '@/components/ui/SfSelect.vue'
 import SfEmpty from '@/components/ui/SfEmpty.vue'
 import SfButton from '@/components/ui/SfButton.vue'
 import SfTag from '@/components/ui/SfTag.vue'
+import SfPagination from '@/components/ui/SfPagination.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import FilterChip from '@/components/common/FilterChip.vue'
 import EmptyState from '@/components/common/EmptyState.vue'

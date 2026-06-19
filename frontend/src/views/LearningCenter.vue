@@ -232,12 +232,11 @@
 
           <!-- 分页 -->
           <div class="pagination" v-if="recordsTotal > recordsPageSize">
-            <el-pagination
-              v-model:current-page="recordsPage"
+            <SfPagination
+              :current-page="recordsPage"
               :page-size="recordsPageSize"
               :total="recordsTotal"
-              layout="prev, pager, next"
-              @current-change="loadRecords"
+              @change="loadRecords"
             />
           </div>
         </div>
@@ -258,6 +257,7 @@ import {
 } from 'lucide-vue-next'
 import SfButton from '@/components/ui/SfButton.vue'
 import SfEmpty from '@/components/ui/SfEmpty.vue'
+import SfPagination from '@/components/ui/SfPagination.vue'
 import { learningStatsAPI } from '@/api'
 import { useUserStore } from '@/stores/user'
 import PageHeader from '@/components/common/PageHeader.vue'
