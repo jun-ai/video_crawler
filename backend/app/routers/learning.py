@@ -27,6 +27,7 @@ from app.schemas.schemas import (
     LearningTrendResponse,
     LearningRecordWithMaterialResponse,
     LearningRecordListResponse,
+    DashboardResponse,
     SpeechRecognizeResponse,
     DictationSubmitRequest,
     DictationSubmitResponse,
@@ -881,6 +882,212 @@ async def get_learning_records(
         page=page,
         page_size=page_size
     )
+
+
+@router.get("/dashboard", response_model=DashboardResponse)
+async def get_dashboard(
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db)
+):
+    """LearningCenter 仪表盘合并端点 (3.1)
+
+    一次返回 5 个视图数据,前端 LearningCenter 从 5 HTTP → 1 HTTP:
+    - statistics: 9 个核心指标
+    - trend: 最近 7 天每日学习数
+    - recent: 最近 10 条未完成
+    - completed: 最近 10 条已完成
+    - records: 第一页 10 条全记录(分页用)
+    """
+    try:
+        today = datetime.now().date()
+        now = datetime.now()
+
+        # 1. statistics
+        # 1.1 学习材料统计
+        result = await db.execute(
+            select(
+                func.count(LearningRecord.id).label('total'),
+                func.sum(case((LearningRecord.completed == True, 1), else_=0)).label('completed')
+            ).where(LearningRecord.user_id == current_user.id)
+        )
+        row = result.first()
+        total_materials = row[0] or 0 if row else 0
+        completed_materials = row[1] or 0 if row else 0
+        in_progress_materials = total_materials - completed_materials
+
+        # 1.2 生词统计
+        result = await db.execute(
+            select(
+                func.count(Vocabulary.id).label('total'),
+                func.sum(case((Vocabulary.mastered == True, 1), else_=0)).label('mastered')
+            ).where(Vocabulary.user_id == current_user.id)
+        )
+        vocab_row = result.first()
+        total_vocabulary = vocab_row[0] or 0 if vocab_row else 0
+        mastered_vocabulary = vocab_row[1] or 0 if vocab_row else 0
+
+        # 1.3 学习天数
+        result = await db.execute(
+            select(func.count(func.distinct(func.date(LearningRecord.updated_at))))
+            .where(LearningRecord.user_id == current_user.id)
+        )
+        total_learning_days = result.scalar() or 0
+
+        # 1.4 本周学习天数
+        week_start = today - timedelta(days=today.weekday())
+        result = await db.execute(
+            select(func.count(func.distinct(func.date(LearningRecord.updated_at))))
+            .where(
+                LearningRecord.user_id == current_user.id,
+                func.date(LearningRecord.updated_at) >= week_start
+            )
+        )
+        this_week_learning_days = result.scalar() or 0
+
+        # 1.5 连续学习天数 (3.3 修复点)
+        result = await db.execute(
+            select(func.distinct(func.date(LearningRecord.updated_at)))
+            .where(LearningRecord.user_id == current_user.id)
+            .order_by(func.date(LearningRecord.updated_at).desc())
+        )
+        # 3.3 修复: func.date() 在 SQLite 测试返回 string,在 MySQL 返回 date
+        # 统一转 date 对象, 避免 string != date 比较错乱
+        raw_dates = [row[0] for row in result.fetchall() if row[0] is not None]
+        learning_dates = []
+        for d in raw_dates:
+            if isinstance(d, str):
+                # SQLite: 'YYYY-MM-DD'
+                learning_dates.append(datetime.strptime(d, '%Y-%m-%d').date())
+            elif isinstance(d, datetime):
+                learning_dates.append(d.date())
+            else:
+                learning_dates.append(d)
+
+        streak_days = 0
+        if learning_dates:
+            check_date = today
+            if learning_dates[0] != today:
+                check_date = today - timedelta(days=1)
+            for i, date in enumerate(learning_dates):
+                expected_date = check_date - timedelta(days=i)
+                if date == expected_date:
+                    streak_days += 1
+                else:
+                    break
+
+        # 1.6 累计观看时长(分钟)
+        result = await db.execute(
+            select(func.coalesce(func.sum(LearningRecord.watch_duration), 0))
+            .where(LearningRecord.user_id == current_user.id)
+        )
+        total_watch_minutes = (result.scalar() or 0) // 60
+
+        statistics = LearningStatisticsResponse(
+            total_materials=total_materials,
+            completed_materials=completed_materials,
+            in_progress_materials=in_progress_materials,
+            total_vocabulary=total_vocabulary,
+            mastered_vocabulary=mastered_vocabulary,
+            total_learning_days=total_learning_days,
+            this_week_learning_days=this_week_learning_days,
+            streak_days=streak_days,
+            total_watch_minutes=total_watch_minutes
+        )
+
+        # 2. trend (7 天)
+        days = 7
+        start_date = today - timedelta(days=days - 1)
+        result = await db.execute(
+            select(
+                func.date(LearningRecord.updated_at).label('date'),
+                func.count(func.distinct(LearningRecord.material_id)).label('count')
+            ).where(
+                LearningRecord.user_id == current_user.id,
+                func.date(LearningRecord.updated_at) >= start_date,
+                func.date(LearningRecord.updated_at) <= today
+            ).group_by(func.date(LearningRecord.updated_at))
+        )
+        daily_data = {}
+        for row in result.fetchall():
+            if row.date is None:
+                continue
+            d = row.date
+            if isinstance(d, str):
+                d = datetime.strptime(d, '%Y-%m-%d').date()
+            elif isinstance(d, datetime):
+                d = d.date()
+            daily_data[d] = row.count
+
+        trend_dates = []
+        trend_counts = []
+        for i in range(days):
+            d = start_date + timedelta(days=i)
+            trend_dates.append(d.strftime('%m-%d'))
+            trend_counts.append(daily_data.get(d, 0))
+        trend = LearningTrendResponse(dates=trend_dates, counts=trend_counts)
+
+        # 3. recent (10 条未完成)
+        result = await db.execute(
+            select(LearningRecord, Material)
+            .join(Material, LearningRecord.material_id == Material.id)
+            .where(
+                LearningRecord.user_id == current_user.id,
+                LearningRecord.completed == False
+            )
+            .order_by(LearningRecord.updated_at.desc())
+            .limit(10)
+        )
+        recent = [_build_record_with_material(r, m) for r, m in result.all()]
+
+        # 4. completed (10 条已完成)
+        result = await db.execute(
+            select(LearningRecord, Material)
+            .join(Material, LearningRecord.material_id == Material.id)
+            .where(
+                LearningRecord.user_id == current_user.id,
+                LearningRecord.completed == True
+            )
+            .order_by(LearningRecord.updated_at.desc())
+            .limit(10)
+        )
+        completed = [_build_record_with_material(r, m) for r, m in result.all()]
+
+        # 5. records (第一页 10 条)
+        result = await db.execute(
+            select(func.count(LearningRecord.id))
+            .where(LearningRecord.user_id == current_user.id)
+        )
+        total = result.scalar() or 0
+
+        result = await db.execute(
+            select(LearningRecord, Material)
+            .join(Material, LearningRecord.material_id == Material.id)
+            .where(LearningRecord.user_id == current_user.id)
+            .order_by(LearningRecord.updated_at.desc())
+            .limit(10)
+        )
+        records = LearningRecordListResponse(
+            items=[_build_record_with_material(r, m) for r, m in result.all()],
+            total=total,
+            page=1,
+            page_size=10
+        )
+
+        return DashboardResponse(
+            statistics=statistics,
+            trend=trend,
+            recent=recent,
+            completed=completed,
+            records=records
+        )
+    except Exception as e:
+        print(f"Error in get_dashboard: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"获取仪表盘数据失败: {str(e)}"
+        )
 
 
 # ==================== 语音识别 ====================

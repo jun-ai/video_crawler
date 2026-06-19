@@ -339,6 +339,23 @@ class LearningRecordListResponse(BaseModel):
     page_size: int
 
 
+class DashboardResponse(BaseModel):
+    """LearningCenter 仪表盘合并响应 (3.1)
+
+    一次返回 5 个视图所需数据,前端从 5 HTTP → 1 HTTP。
+    - statistics: 9 个核心指标 (含 streak_days)
+    - trend: 最近 7 天每日学习材料数
+    - recent: 最近 10 条未完成记录
+    - completed: 最近 10 条已完成记录
+    - records: 第一页 10 条全部记录(分页用)
+    """
+    statistics: "LearningStatisticsResponse"
+    trend: "LearningTrendResponse"
+    recent: List["LearningRecordWithMaterialResponse"]
+    completed: List["LearningRecordWithMaterialResponse"]
+    records: "LearningRecordListResponse"
+
+
 # ==================== 语音识别 Schemas ====================
 
 class SpeechRecognizeResponse(BaseModel):
