@@ -223,21 +223,21 @@ onMounted(() => {
   align-items: center;
   margin-bottom: 24px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #E5E9E5;
+  border-bottom: 1px solid var(--sf-admin-border);
 }
 
 .page-header h2 {
   margin: 0;
   font-size: 22px;
   font-weight: 700;
-  color: #1A2820;
+  color: var(--sf-admin-text-primary);
   letter-spacing: -0.3px;
 }
 
 /* -- Table Card -- */
 .list-card {
   background: #F8FAF8;
-  border: 1px solid #E5E9E5;
+  border: 1px solid var(--sf-admin-border);
   border-radius: 16px;
   padding: 4px;
   overflow: hidden;
@@ -246,7 +246,7 @@ onMounted(() => {
 /* -- Form tip -- */
 .form-tip {
   font-size: 12px;
-  color: #8A9A90;
+  color: var(--sf-admin-text-muted);
   margin-top: 4px;
 }
 
@@ -271,14 +271,14 @@ onMounted(() => {
 
 .usage-text {
   font-size: 13px;
-  color: #5A6B62;
+  color: var(--sf-admin-text-secondary);
   font-variant-numeric: tabular-nums;
 }
 
 /* -- Expire text -- */
 .expire-text {
   font-size: 13px;
-  color: #5A6B62;
+  color: var(--sf-admin-text-secondary);
 }
 
 .expire-text.permanent {
@@ -314,7 +314,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 10px 14px;
-  background: #F0F4F1;
+  background: var(--sf-admin-bg-hover);
   border-radius: 10px;
   border: 1px solid #EDF0ED;
   transition: background 0.15s, border-color 0.15s;

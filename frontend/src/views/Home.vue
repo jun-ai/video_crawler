@@ -19,11 +19,11 @@
 
         <!-- 未登录:精简社会证明行 -->
         <div v-if="!userStore.isLoggedIn" class="hero-trust-line">
-          <span class="trust-badge">📚 1000+ 精选视频</span>
+          <span class="trust-badge"><BookOpen :size="14" class="trust-icon" />1000+ 精选视频</span>
           <span class="trust-divider">·</span>
-          <span class="trust-badge">🎯 AI 逐句精讲</span>
+          <span class="trust-badge"><Target :size="14" class="trust-icon" />AI 逐句精讲</span>
           <span class="trust-divider">·</span>
-          <span class="trust-badge">🎙️ 影子跟读打分</span>
+          <span class="trust-badge"><Mic :size="14" class="trust-icon" />影子跟读打分</span>
         </div>
         <!-- 已登录:4 组统计 (SpeakVlog 风格) -->
         <div v-else class="hero-stats">
@@ -365,7 +365,7 @@ import FilterChip from '@/components/common/FilterChip.vue'
 import VideoCard from '@/components/common/VideoCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import AnnouncementBanner from '@/components/common/AnnouncementBanner.vue'
-import { BarChart3, Calendar, Clock, Play, Flame, Sprout, Dumbbell, Star, Trophy, Crown, Target, Sparkles, BookOpen, Headphones, Check, ChevronDown } from 'lucide-vue-next'
+import { BarChart3, Calendar, Clock, Play, Flame, Sprout, Dumbbell, Star, Trophy, Crown, Target, Sparkles, BookOpen, Headphones, Mic, Check, ChevronDown } from 'lucide-vue-next'
 import SfTooltip from '@/components/ui/SfTooltip.vue'
 import SfProgress from '@/components/ui/SfProgress.vue'
 import SfButton from '@/components/ui/SfButton.vue'
@@ -890,16 +890,20 @@ onMounted(async () => {
 }
 
 .hero-trust-line .trust-badge {
-  font-size: 15px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.85);
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
   padding: 8px 18px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 999px;
+}
+.hero-trust-line .trust-icon {
+  flex-shrink: 0;
+  vertical-align: middle;
 }
 
 .hero-trust-line .trust-divider {

@@ -279,14 +279,14 @@ onMounted(() => {
   align-items: center;
   margin-bottom: 24px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #E5E9E5;
+  border-bottom: 1px solid var(--sf-admin-border);
 }
 
 .page-header h2 {
   margin: 0;
   font-size: 22px;
   font-weight: 700;
-  color: #1A2820;
+  color: var(--sf-admin-text-primary);
   letter-spacing: -0.3px;
 }
 
@@ -302,12 +302,12 @@ onMounted(() => {
   background: #F8FAF8;
   border-radius: 14px;
   padding: 18px 22px;
-  border: 1px solid #E5E9E5;
+  border: 1px solid var(--sf-admin-border);
   transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
 }
 
 .announcement-card:hover {
-  background: #F0F4F1;
+  background: var(--sf-admin-bg-hover);
   border-color: rgba(96, 165, 250, 0.2);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
@@ -330,7 +330,7 @@ onMounted(() => {
 .announcement-title {
   font-weight: 600;
   font-size: 15px;
-  color: #1A2820;
+  color: var(--sf-admin-text-primary);
 }
 
 /* -- Priority Badge -- */
@@ -365,7 +365,7 @@ onMounted(() => {
 /* -- Content -- */
 .announcement-content {
   font-size: 14px;
-  color: #5A6B62;
+  color: var(--sf-admin-text-secondary);
   line-height: 1.65;
   margin-bottom: 12px;
   white-space: pre-wrap;
@@ -379,7 +379,7 @@ onMounted(() => {
 
 .announcement-time {
   font-size: 12px;
-  color: #8A9A90;
+  color: var(--sf-admin-text-muted);
   font-variant-numeric: tabular-nums;
 }
 
@@ -406,9 +406,9 @@ onMounted(() => {
   background: transparent;
   cursor: pointer;
   font-size: 13px;
-  color: #5A6B62;
+  color: var(--sf-admin-text-secondary);
   transition: all 0.15s;
-  border-right: 1px solid #E5E9E5;
+  border-right: 1px solid var(--sf-admin-border);
   font-weight: 500;
 }
 
@@ -435,7 +435,7 @@ onMounted(() => {
   width: 100%;
   appearance: none;
   height: 6px;
-  background: #F5F7F5;
+  background: var(--sf-admin-bg);
   border-radius: 3px;
   outline: none;
   cursor: pointer;
@@ -467,7 +467,7 @@ onMounted(() => {
   justify-content: space-between;
   margin-top: 6px;
   font-size: 12px;
-  color: #8A9A90;
+  color: var(--sf-admin-text-muted);
 }
 
 .priority-labels span.active {

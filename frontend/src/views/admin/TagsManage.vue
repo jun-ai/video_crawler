@@ -274,7 +274,7 @@ onMounted(() => {
   height: 14px;
   border-radius: 4px;
   flex-shrink: 0;
-  box-shadow: 0 0 0 2px #E5E9E5;
+  box-shadow: 0 0 0 2px var(--sf-admin-border);
 }
 
 .tag-card-name {

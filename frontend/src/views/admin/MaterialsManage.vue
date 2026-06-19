@@ -248,7 +248,7 @@ onMounted(() => {
   margin: 0;
   font-size: 22px;
   font-weight: 600;
-  color: #1A2820;
+  color: var(--sf-admin-text-primary);
   letter-spacing: -0.3px;
 }
 
@@ -256,7 +256,7 @@ onMounted(() => {
 .filter-card {
   margin-bottom: 24px;
   background: #FFFFFF;
-  border-color: #E5E9E5;
+  border-color: var(--sf-admin-border);
 }
 
 .filter-row {
@@ -274,18 +274,18 @@ onMounted(() => {
 /* ── Table Card ── */
 .card-container {
   background: #FFFFFF;
-  border-color: #E5E9E5;
+  border-color: var(--sf-admin-border);
 }
 
 /* ── Table Overrides (dark admin) ── */
 .card-container :deep(.sf-table-wrap) {
-  border-color: #E5E9E5;
+  border-color: var(--sf-admin-border);
 }
 
 .card-container :deep(.sf-table th) {
-  color: #5A6B62;
+  color: var(--sf-admin-text-secondary);
   background: rgba(255, 255, 255, 0.03);
-  border-bottom-color: #E5E9E5;
+  border-bottom-color: var(--sf-admin-border);
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -389,7 +389,7 @@ onMounted(() => {
     padding: 16px;
     background: #FFFFFF;
     border-radius: 12px;
-    border: 1px solid #E5E9E5;
+    border: 1px solid var(--sf-admin-border);
     align-items: center;
   }
 
@@ -413,7 +413,7 @@ onMounted(() => {
   .card-container :deep(.sf-table tbody tr td:nth-child(2)) {
     flex: 1 1 100%;
     font-weight: 600;
-    color: #1A2820;
+    color: var(--sf-admin-text-primary);
     font-size: 15px;
     padding-top: 0;
     padding-left: 8px;

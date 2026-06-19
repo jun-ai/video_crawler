@@ -178,6 +178,19 @@
   --glass-bg: rgba(255, 255, 255, 0.9);
   --glass-blur: blur(12px);
   --glass-border: 1px solid rgba(37, 99, 235, 0.1);
+
+  /* ========== Admin 后台独立令牌 (P0 硬编码颜色变量化) ========== */
+  --sf-admin-bg: #F5F7F5;            /* 后台底色(暖灰白) */
+  --sf-admin-bg-card: #FFFFFF;        /* 卡片背景 */
+  --sf-admin-bg-hover: #F0F4F1;       /* hover 背景 */
+  --sf-admin-bg-active: #E8F5EE;      /* 菜单激活背景 */
+  --sf-admin-border: #E5E9E5;         /* 边框 */
+  --sf-admin-border-hover: #DDE2DD;   /* 边框 hover */
+  --sf-admin-text-primary: #1A2820;   /* 主文字 */
+  --sf-admin-text-secondary: #5A6B62; /* 次文字 */
+  --sf-admin-text-muted: #8A9A90;     /* 弱化文字 */
+  --sf-admin-accent: #F59E0B;         /* 琥珀强调 */
+  --sf-admin-overlay: rgba(255, 255, 255, 0.04); /* 内部叠加层 */
 }
 
 /* ========== 暗色主题兼容 ========== */
@@ -203,7 +216,20 @@
   --color-bg-hover: var(--color-bg-elevated);
   --color-bg-mask: rgba(0, 0, 0, 0.7);
   --yt-brand-gradient: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
-  --yt-bg-gradient: linear-gradient(180deg, #0F172A 0%, #1E293B 15%, #0F172A 100%);
-  --glass-bg: rgba(30, 41, 59, 0.9);
+  --yt-bg-gradient: linear-gradient(180deg, #1a1a2e 0%, #252540 15%, #1a1a2e 100%);  /* P2: 暗色背景渐变 */
+  --glass-bg: rgba(37, 37, 64, 0.9);  /* P2: 暗色玻璃背景 */
   --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+
+  /* ========== Admin 后台暗色主题 ========== */
+  --sf-admin-bg: #1a1a2e;            /* P2: 暗色后台底 */
+  --sf-admin-bg-card: #252540;        /* P2: 暗色卡片 */
+  --sf-admin-bg-hover: rgba(96, 165, 250, 0.08);
+  --sf-admin-bg-active: rgba(96, 165, 250, 0.15);
+  --sf-admin-border: rgba(255, 255, 255, 0.08);
+  --sf-admin-border-hover: rgba(255, 255, 255, 0.16);
+  --sf-admin-text-primary: #F1F5F9;
+  --sf-admin-text-secondary: #94A3B8;
+  --sf-admin-text-muted: #64748B;
+  --sf-admin-accent: #60A5FA;
+  --sf-admin-overlay: rgba(255, 255, 255, 0.04);
 }

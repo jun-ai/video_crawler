@@ -117,7 +117,7 @@ const goHome = () => {
 
 .admin-layout {
   min-height: 100vh;
-  background: #F5F7F5;
+  background: var(--sf-admin-bg);
 }
 
 .admin-container {
@@ -129,10 +129,10 @@ const goHome = () => {
 .admin-sidebar {
   width: 240px;
   min-width: 240px;
-  background: #FFFFFF;
+  background: var(--sf-admin-bg-card);
   display: flex;
   flex-direction: column;
-  border-right: 1px solid #E5E9E5;
+  border-right: 1px solid var(--sf-admin-border);
   position: fixed;
   top: 0;
   left: 0;
@@ -143,7 +143,7 @@ const goHome = () => {
 
 .sidebar-header {
   padding: 24px 20px 20px;
-  border-bottom: 1px solid #E5E9E5;
+  border-bottom: 1px solid var(--sf-admin-border);
 }
 
 .sidebar-logo {
@@ -156,7 +156,7 @@ const goHome = () => {
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #2563EB 0%, #3B82F6 100%);
+  background: var(--yt-cta-gradient);
   color: #fff;
   font-weight: 700;
   font-size: 15px;
@@ -167,7 +167,7 @@ const goHome = () => {
 }
 
 .logo-text {
-  color: #1A2820;
+  color: var(--sf-admin-text-primary);
   font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.3px;
@@ -190,10 +190,10 @@ const goHome = () => {
   border-radius: 8px;
   height: 40px;
   padding: 0 16px;
-  color: #5A6B62;
+  color: var(--sf-admin-text-secondary);
   cursor: pointer;
-  transition: background 0.18s cubic-bezier(0.4, 0, 0.2, 1),
-              color 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background var(--sf-duration-fast) var(--sf-ease-standard),
+              color var(--sf-duration-fast) var(--sf-ease-standard);
   font-size: 14px;
   font-weight: 400;
   user-select: none;
@@ -207,51 +207,51 @@ const goHome = () => {
   transform: translateY(-50%);
   width: 3px;
   height: 0;
-  background: #F59E0B;
+  background: var(--sf-admin-accent);
   border-radius: 0 2px 2px 0;
-  transition: height 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: height var(--sf-duration-normal) var(--sf-ease-bounce);
 }
 
 .sidebar-menu-item:hover {
-  background: #F0F4F1;
-  color: #1A2820;
+  background: var(--sf-admin-bg-hover);
+  color: var(--sf-admin-text-primary);
 }
 
 .sidebar-menu-item.active {
-  background: #E8F5EE;
-  color: #2563EB;
+  background: var(--sf-admin-bg-active);
+  color: var(--color-brand);
   font-weight: 600;
 }
 
 .sidebar-menu-item.active::before {
   height: 20px;
-  background: #F59E0B;
+  background: var(--sf-admin-accent);
 }
 
 .sidebar-divider {
   margin: 8px 16px;
   border: none;
-  border-top: 1px solid #E5E9E5;
+  border-top: 1px solid var(--sf-admin-border);
 }
 
 /* ── Sidebar Footer ── */
 .sidebar-footer {
   padding: 12px 16px 16px;
-  border-top: 1px solid #E5E9E5;
+  border-top: 1px solid var(--sf-admin-border);
 }
 
 .back-btn {
-  color: #8A9A90;
+  color: var(--sf-admin-text-muted);
   width: 100%;
   justify-content: flex-start;
   height: 36px;
   border-radius: 8px;
-  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--sf-duration-fast) var(--sf-ease-standard);
 }
 
 .back-btn:hover {
-  color: #1A2820 !important;
-  background: #F0F4F1 !important;
+  color: var(--sf-admin-text-primary) !important;
+  background: var(--sf-admin-bg-hover) !important;
 }
 
 /* ── Main Content ── */
@@ -259,7 +259,7 @@ const goHome = () => {
   flex: 1;
   margin-left: 240px;
   padding: 32px;
-  background: #F5F7F5;
+  background: var(--sf-admin-bg);
   min-height: 100vh;
 }
 
@@ -295,8 +295,8 @@ const goHome = () => {
     align-items: center;
     justify-content: space-between;
     padding: 12px 16px;
-    background: #FFFFFF;
-    border-bottom: 1px solid #E5E9E5;
+    background: var(--sf-admin-bg-card);
+    border-bottom: 1px solid var(--sf-admin-border);
     position: sticky;
     top: 0;
     z-index: 100;
@@ -312,7 +312,7 @@ const goHome = () => {
     width: 30px;
     height: 30px;
     border-radius: 8px;
-    background: linear-gradient(135deg, #2563EB, #3B82F6);
+    background: var(--yt-cta-gradient);
     color: #fff;
     font-weight: 700;
     font-size: 13px;
@@ -322,13 +322,13 @@ const goHome = () => {
   }
 
   .mobile-title {
-    color: #1A2820;
+    color: var(--sf-admin-text-primary);
     font-size: 15px;
     font-weight: 600;
   }
 
   .mobile-back-btn {
-    color: #5A6B62;
+    color: var(--sf-admin-text-secondary);
     font-size: 13px;
   }
 
@@ -339,9 +339,9 @@ const goHome = () => {
     bottom: 0;
     left: 0;
     right: 0;
-    background: #FFFFFF;
+    background: var(--sf-admin-bg-card);
     backdrop-filter: blur(12px);
-    border-top: 1px solid #E5E9E5;
+    border-top: 1px solid var(--sf-admin-border);
     z-index: 100;
     padding: 4px 0;
     padding-bottom: env(safe-area-inset-bottom, 4px);
@@ -354,16 +354,16 @@ const goHome = () => {
     align-items: center;
     gap: 2px;
     padding: 8px 2px;
-    color: #8A9A90;
+    color: var(--sf-admin-text-muted);
     cursor: pointer;
     font-size: 10px;
     font-weight: 500;
-    transition: color 0.18s;
+    transition: color var(--sf-duration-fast);
     min-width: 0;
   }
 
   .mobile-nav-item.active {
-    color: #2563EB;
+    color: var(--color-brand);
   }
 }
 

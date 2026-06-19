@@ -217,15 +217,15 @@
   50% { opacity: 0.7; }
 }
 
-/* ========== 暗色模式覆盖 (Phase 5 — 清新蓝 暗色版本) ========== */
+/* ========== 暗色模式覆盖 (Phase 5 — 清新蓝 暗色版本, P2 优化 #1a1a2e) ========== */
 .dark {
   --color-text-primary: #F1F5F9;
   --color-text-secondary: #94A3B8;
   --color-text-muted: #64748B;
   --color-text-quaternary: #475569;
-  --color-bg-base: #0F172A;          /* 深石板黑 */
-  --color-bg-card: #1E293B;          /* 卡片深蓝灰 */
-  --color-bg-elevated: #334155;
+  --color-bg-base: #1a1a2e;          /* P2: 没那么黑的深石板(原 #0F172A) */
+  --color-bg-card: #252540;          /* P2: 卡片深蓝紫(原 #1E293B) */
+  --color-bg-elevated: #2d2d4a;      /* P2: 高亮层(原 #334155) */
   --color-bg-hover: #3B4B63;
   --color-border: rgba(255, 255, 255, 0.08);
   --color-border-strong: rgba(255, 255, 255, 0.12);
@@ -264,20 +264,20 @@
 
   /* shadcn 暗色变量 */
   --primary: #60A5FA;
-  --primary-foreground: #0F172A;
-  --secondary: #334155;
+  --primary-foreground: #1a1a2e;
+  --secondary: #2d2d4a;
   --secondary-foreground: #E2E8F0;
-  --muted: #334155;
+  --muted: #2d2d4a;
   --muted-foreground: #94A3B8;
   --accent: #FBBF24;
-  --accent-foreground: #0F172A;
+  --accent-foreground: #1a1a2e;
   --destructive: #F87171;
-  --destructive-foreground: #0F172A;
-  --background: #0F172A;
+  --destructive-foreground: #1a1a2e;
+  --background: #1a1a2e;
   --foreground: #E2E8F0;
-  --card: #1E293B;
+  --card: #252540;
   --card-foreground: #E2E8F0;
-  --popover: #1E293B;
+  --popover: #252540;
   --popover-foreground: #E2E8F0;
   --border: rgba(255, 255, 255, 0.08);
   --input: rgba(255, 255, 255, 0.12);
@@ -285,8 +285,8 @@
   --radius: var(--radius-md);
 
   /* Admin 独立暗色主题变量 */
-  --sf-admin-sidebar-bg: #0F172A;
-  --sf-admin-sidebar-active: #1E293B;
+  --sf-admin-sidebar-bg: #1a1a2e;
+  --sf-admin-sidebar-active: #252540;
   --sf-admin-sidebar-text: #94A3B8;
   --sf-admin-sidebar-text-active: #F1F5F9;
   --sf-admin-sidebar-border: rgba(255, 255, 255, 0.08);
@@ -297,20 +297,20 @@
   /* Hover 背景色 */
   --color-hover-fill: rgba(96, 165, 250, 0.08);
 
-  /* 兼容旧 --yt-* 变量（暗色） */
+  /* 兼容旧 --yt-* 变量(暗色) */
   --yt-text-primary: #E2E8F0;
   --yt-text-secondary: #94A3B8;
   --yt-text-tertiary: #64748B;
   --yt-text-quaternary: #475569;
-  --yt-bg: #0F172A;
-  --yt-bg-card: #1E293B;
-  --yt-bg-secondary: #334155;
-  --yt-bg-tertiary: #1E293B;
+  --yt-bg: #1a1a2e;
+  --yt-bg-card: #252540;
+  --yt-bg-secondary: #2d2d4a;
+  --yt-bg-tertiary: #252540;
   --yt-border: rgba(255, 255, 255, 0.08);
   --yt-brand: #60A5FA;
   --yt-brand-light: rgba(96, 165, 250, 0.2);
   --yt-brand-softer: rgba(96, 165, 250, 0.15);
-  --glass-bg: rgba(30, 41, 59, 0.9);
+  --glass-bg: rgba(37, 37, 64, 0.9);
   --glass-blur: blur(12px);
 }
 

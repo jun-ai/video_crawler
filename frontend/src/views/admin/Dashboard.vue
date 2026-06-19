@@ -188,7 +188,7 @@ onMounted(() => {
   margin: 0 0 28px;
   font-size: 22px;
   font-weight: 600;
-  color: #1A2820;
+  color: var(--sf-admin-text-primary);
   letter-spacing: -0.3px;
 }
 
@@ -203,20 +203,20 @@ onMounted(() => {
 .stat-card {
   position: relative;
   overflow: hidden;
-  background: #FFFFFF;
+  background: var(--sf-admin-bg-card);
   border-radius: 14px;
   padding: 22px 20px;
   display: flex;
   align-items: center;
   gap: 16px;
-  border: 1px solid #E5E9E5;
+  border: 1px solid var(--sf-admin-border);
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
               border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .stat-card:hover {
   transform: translateY(-2px);
-  border-color: #DDE2DD;
+  border-color: var(--sf-admin-border-hover);
 }
 
 .stat-icon-wrap {
@@ -239,7 +239,7 @@ onMounted(() => {
 .stat-value {
   font-size: 30px;
   font-weight: 800;
-  color: #1A2820;
+  color: var(--sf-admin-text-primary);
   line-height: 1.1;
   letter-spacing: -0.5px;
   font-variant-numeric: tabular-nums;
@@ -247,7 +247,7 @@ onMounted(() => {
 
 .stat-label {
   font-size: 13px;
-  color: #8A9A90;
+  color: var(--sf-admin-text-muted);
   margin-top: 4px;
   font-weight: 400;
 }
@@ -268,10 +268,10 @@ onMounted(() => {
 }
 
 .info-card {
-  background: #FFFFFF;
+  background: var(--sf-admin-bg-card);
   border-radius: 14px;
   padding: 22px;
-  border: 1px solid #E5E9E5;
+  border: 1px solid var(--sf-admin-border);
 }
 
 .card-header {
@@ -285,7 +285,7 @@ onMounted(() => {
   margin: 0;
   font-size: 15px;
   font-weight: 600;
-  color: #1A2820;
+  color: var(--sf-admin-text-primary);
 }
 
 .test-btn {
@@ -304,19 +304,19 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 10px 14px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--sf-admin-overlay);
   border-radius: 10px;
 }
 
 .storage-label {
   font-size: 13px;
-  color: #5A6B62;
+  color: var(--sf-admin-text-secondary);
 }
 
 .storage-value {
   font-size: 14px;
   font-weight: 600;
-  color: #1A2820;
+  color: var(--sf-admin-text-primary);
 }
 
 /* ── Category Bar Chart ── */
@@ -334,7 +334,7 @@ onMounted(() => {
 
 .cat-name {
   font-size: 13px;
-  color: #5A6B62;
+  color: var(--sf-admin-text-secondary);
   width: 60px;
   flex-shrink: 0;
 }
@@ -342,22 +342,22 @@ onMounted(() => {
 .cat-bar-wrap {
   flex: 1;
   height: 8px;
-  background: #E5E9E5;
+  background: var(--sf-admin-border);
   border-radius: 4px;
   overflow: hidden;
 }
 
 .cat-bar {
   height: 100%;
-  background: linear-gradient(90deg, #2563EB, #2563EB);
+  background: var(--color-brand);
   border-radius: 4px;
-  transition: width 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: width var(--sf-duration-slow) var(--sf-ease-bounce);
 }
 
 .cat-count {
   font-size: 13px;
   font-weight: 600;
-  color: #1A2820;
+  color: var(--sf-admin-text-primary);
   width: 30px;
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -365,7 +365,7 @@ onMounted(() => {
 
 .empty-text {
   font-size: 13px;
-  color: #8A9A90;
+  color: var(--sf-admin-text-muted);
   text-align: center;
   padding: 20px;
 }
@@ -382,19 +382,19 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 10px 14px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--sf-admin-overlay);
   border-radius: 8px;
 }
 
 .dist-type {
   font-size: 13px;
-  color: #5A6B62;
+  color: var(--sf-admin-text-secondary);
 }
 
 .dist-count {
   font-size: 13px;
   font-weight: 500;
-  color: #1A2820;
+  color: var(--sf-admin-text-primary);
 }
 
 /* ── Responsive ── */

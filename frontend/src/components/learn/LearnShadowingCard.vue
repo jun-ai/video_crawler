@@ -141,7 +141,7 @@
           </div>
           <div v-if="pronunciationResult.problems?.length" class="sf-eval-section">
             <div class="sf-eval-section__title">
-              <span class="sf-eval-section__icon">&#127919;</span> 发音问题
+              <Crosshair :size="14" class="sf-eval-section__icon" /> 发音问题
             </div>
             <ul class="sf-eval-section__list">
               <li v-for="(p, i) in pronunciationResult.problems" :key="i">{{ p }}</li>
@@ -149,7 +149,7 @@
           </div>
           <div v-if="pronunciationResult.suggestions?.length" class="sf-eval-section">
             <div class="sf-eval-section__title">
-              <span class="sf-eval-section__icon">&#128161;</span> 改进建议
+              <Lightbulb :size="14" class="sf-eval-section__icon" /> 改进建议
             </div>
             <ul class="sf-eval-section__list">
               <li v-for="(s, i) in pronunciationResult.suggestions" :key="i">{{ s }}</li>
@@ -164,7 +164,8 @@
 <script setup>
 import {
   ArrowLeft, ArrowRight, Mic, Pause, RefreshCw,
-  MessageCircle, BookOpen, BarChart3, FileText, Send, MoreHorizontal
+  MessageCircle, BookOpen, BarChart3, FileText, Send, MoreHorizontal,
+  Crosshair, Lightbulb
 } from 'lucide-vue-next'
 import { ref } from 'vue'
 

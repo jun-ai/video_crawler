@@ -355,7 +355,7 @@ const goBack = () => {
 
 .drop-zone {
   position: relative;
-  border: 2px dashed #DDE2DD;
+  border: 2px dashed var(--sf-admin-border-hover);
   border-radius: var(--radius-lg, 12px);
   padding: 32px 20px;
   cursor: pointer;
