@@ -1047,11 +1047,40 @@ const loadMaterial = async () => {
       // 加载字幕收藏数据
       await loadBookmarks()
     }
+
+    // 3.8 处理 ?start_time=N query: 跳到指定时间, 定位字幕, 滚动高亮
+    applyStartTimeQuery()
   } catch (e) {
     console.error('加载失败', e)
   } finally {
     loading.value = false
   }
+}
+
+// 3.8 时间戳跳转: 读 query.start_time, seek + 定位 + 滚动
+const applyStartTimeQuery = () => {
+  const startTime = Number(route.query.start_time)
+  if (!Number.isFinite(startTime) || startTime < 0) return
+  if (subtitles.value.length === 0) return
+
+  // 找包含该时间点的字幕 (start_time <= t <= end_time)
+  let idx = subtitles.value.findIndex(s =>
+    s.start_time <= startTime && startTime <= s.end_time
+  )
+  // 没找到, 取最接近的下一条
+  if (idx < 0) {
+    idx = subtitles.value.findIndex(s => s.start_time > startTime)
+    if (idx < 0) idx = subtitles.value.length - 1
+  }
+
+  currentIndex.value = idx
+  // seekTo 调用 videoPlayerRef, 字幕已就绪
+  nextTick(() => {
+    seekTo(startTime)
+    scrollToSubtitle(idx)
+    // 高亮提示
+    toast.info(`已跳到 ${formatDuration(startTime)}`)
+  })
 }
 
 // ==================== 收藏功能 ====================

@@ -277,7 +277,10 @@ const loadSubtitleBookmarks = async () => {
 
 const goLearnSubtitle = (item) => {
   if (item.material_id) {
-    router.push(`/learn/${item.material_id}`)
+    // 3.7 带时间戳跳转, 避免用户点收藏后还要手动找
+    const startTime = item.start_time
+    const query = startTime != null ? `?start_time=${encodeURIComponent(startTime)}` : ''
+    router.push(`/learn/${item.material_id}${query}`)
   }
 }
 
