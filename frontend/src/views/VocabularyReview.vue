@@ -2,12 +2,12 @@
   <div class="review-page">
     <!-- 复习统计头部 -->
     <div class="review-header">
-      <SfButton type="ghost" size="sm" @click="$router.back()">
+      <SfButton type="ghost" size="sm" @click="$router.back()" aria-label="返回上一页">
         <ArrowLeft :size="20" />
       </SfButton>
       <div class="header-info">
         <h1>生词复习</h1>
-        <div class="review-stats-bar">
+        <div class="review-stats-bar" role="status" aria-label="复习队列统计">
           <span class="stat-badge due" v-if="stats.total_due > 0">{{ stats.total_due }} 待复习</span>
           <span class="stat-badge learning">{{ stats.total_learning }} 学习中</span>
           <span class="stat-badge mastered">{{ stats.total_mastered }} 已掌握</span>
@@ -16,7 +16,7 @@
     </div>
 
     <!-- 加载状态 -->
-    <div v-if="loading" class="loading-state">
+    <div v-if="loading" class="loading-state" role="status" aria-live="polite">
       <Loader2 :size="32" class="is-loading" />
       <span>加载复习队列...</span>
     </div>
@@ -32,18 +32,26 @@
     <!-- 复习卡片区域 -->
     <div v-else class="review-content">
       <!-- 进度条 -->
-      <div class="progress-bar">
+      <div class="progress-bar" role="progressbar" :aria-valuenow="progressPercent"
+           aria-valuemin="0" aria-valuemax="100"
+           :aria-label="`复习进度 ${reviewedCount} / ${totalCount}`">
         <SfProgress
           :percentage="progressPercent"
           type="brand"
           :show-text="false"
         />
-        <span class="progress-text">{{ reviewedCount }} / {{ totalCount }}</span>
+        <span class="progress-text" aria-hidden="true">{{ reviewedCount }} / {{ totalCount }}</span>
       </div>
 
       <!-- 翻转卡片 -->
       <div class="flashcard-container">
-        <div :class="['flashcard', { flipped: isFlipped }]" @click="isFlipped = !isFlipped">
+        <button
+          type="button"
+          :class="['flashcard', { flipped: isFlipped }]"
+          :aria-pressed="isFlipped"
+          :aria-label="isFlipped ? '点击翻转回英文单词' : '点击翻转查看释义'"
+          @click="isFlipped = !isFlipped"
+        >
           <!-- 正面：英文单词 -->
           <div class="flashcard-front">
             <div class="card-word">{{ currentItem.word }}</div>
@@ -68,32 +76,37 @@
               <span v-if="currentItem.interval_days > 0">间隔 {{ currentItem.interval_days }} 天</span>
             </div>
           </div>
-        </div>
+        </button>
       </div>
 
       <!-- 评分按钮 -->
-      <div class="rating-buttons">
-        <button class="rating-btn btn-forget" @click="rate(0)" :disabled="submitting">
+      <div class="rating-buttons" role="group" aria-label="评分按钮组">
+        <button class="rating-btn btn-forget" @click="rate(0)" :disabled="submitting"
+          aria-label="评 0 分 - 忘记了,1 天后再来">
           <XCircle :size="22" />
           <span class="rating-label">忘记了</span>
           <span class="rating-interval">1天</span>
         </button>
-        <button class="rating-btn btn-vague" @click="rate(2)" :disabled="submitting">
+        <button class="rating-btn btn-vague" @click="rate(2)" :disabled="submitting"
+          aria-label="评 2 分 - 模糊,1 天后再来">
           <HelpCircle :size="22" />
           <span class="rating-label">模糊</span>
           <span class="rating-interval">1天</span>
         </button>
-        <button class="rating-btn btn-recall" @click="rate(3)" :disabled="submitting">
+        <button class="rating-btn btn-recall" @click="rate(3)" :disabled="submitting"
+          :aria-label="`评 3 分 - 想起来了,${intervalFor(3)} 后再来`">
           <Lightbulb :size="22" />
           <span class="rating-label">想起来了</span>
           <span class="rating-interval">{{ intervalFor(3) }}</span>
         </button>
-        <button class="rating-btn btn-easy" @click="rate(4)" :disabled="submitting">
+        <button class="rating-btn btn-easy" @click="rate(4)" :disabled="submitting"
+          :aria-label="`评 4 分 - 容易,${intervalFor(4)} 后再来`">
           <Smile :size="22" />
           <span class="rating-label">容易</span>
           <span class="rating-interval">{{ intervalFor(4) }}</span>
         </button>
-        <button class="rating-btn btn-perfect" @click="rate(5)" :disabled="submitting">
+        <button class="rating-btn btn-perfect" @click="rate(5)" :disabled="submitting"
+          :aria-label="`评 5 分 - 完美,${intervalFor(5)} 后再来`">
           <Target :size="22" />
           <span class="rating-label">完美</span>
           <span class="rating-interval">{{ intervalFor(5) }}</span>
@@ -136,7 +149,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { toast } from '@/composables/useToast'
 import { ArrowLeft, Loader2, PartyPopper, XCircle, HelpCircle, Lightbulb, Smile, Target } from 'lucide-vue-next'
 import SfButton from '@/components/ui/SfButton.vue'
@@ -245,8 +258,39 @@ const startNewSession = async () => {
   await loadQueue()
 }
 
+// 2.4 快捷键: Space/Enter 翻转, 0/2/3/4/5 打分(只在已翻转后允许打分)
+const handleKeydown = (e) => {
+  // 防止在输入框/按钮焦点时误触 (Space 翻页很常见)
+  const tag = (e.target?.tagName || '').toLowerCase()
+  if (tag === 'input' || tag === 'textarea') return
+
+  // Space / Enter: 翻转卡片
+  if (e.key === ' ' || e.key === 'Enter') {
+    e.preventDefault()  // 阻止 Space 滚屏
+    if (!loading.value && queue.value.length > 0 && !showSummary.value) {
+      isFlipped.value = !isFlipped.value
+    }
+    return
+  }
+
+  // 数字键打分: 仅在已翻转 + 队列非空 + 未在提交中时生效
+  const qualityMap = { '0': 0, '2': 2, '3': 3, '4': 4, '5': 5 }
+  const q = qualityMap[e.key]
+  if (q === undefined) return
+  if (!isFlipped.value) return  // 强制先看答案
+  if (loading.value || submitting.value || showSummary.value) return
+  if (queue.value.length === 0) return
+  e.preventDefault()
+  rate(q)
+}
+
 onMounted(() => {
   loadQueue()
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown)
 })
 </script>
 
