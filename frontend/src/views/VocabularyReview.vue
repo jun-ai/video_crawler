@@ -86,17 +86,17 @@
         <button class="rating-btn btn-recall" @click="rate(3)" :disabled="submitting">
           <Lightbulb :size="22" />
           <span class="rating-label">想起来了</span>
-          <span class="rating-interval">{{ nextInterval(3) }}</span>
+          <span class="rating-interval">{{ intervalFor(3) }}</span>
         </button>
         <button class="rating-btn btn-easy" @click="rate(4)" :disabled="submitting">
           <Smile :size="22" />
           <span class="rating-label">容易</span>
-          <span class="rating-interval">{{ nextInterval(4) }}</span>
+          <span class="rating-interval">{{ intervalFor(4) }}</span>
         </button>
         <button class="rating-btn btn-perfect" @click="rate(5)" :disabled="submitting">
           <Target :size="22" />
           <span class="rating-label">完美</span>
-          <span class="rating-interval">{{ nextInterval(5) }}</span>
+          <span class="rating-interval">{{ intervalFor(5) }}</span>
         </button>
       </div>
     </div>
@@ -175,19 +175,13 @@ const progressPercent = computed(() =>
   totalCount.value > 0 ? Math.round((reviewedCount.value / totalCount.value) * 100) : 0
 )
 
-const nextInterval = (quality) => {
+// P0-6: 间隔天数从后端 review-queue 响应里的 next_intervals 字典读,
+// 前端不再重算 SM-2,避免"用户点想起来了 UI 显示 6 天,后端 EF 调整后实际 5 或 7 天"的信任问题
+const intervalFor = (quality) => {
   const item = currentItem.value
-  if (!item) return ''
-  const ef = item.ease_factor || 2.5
-  const interval = item.interval_days || 0
-  const count = item.review_count || 0
-
-  if (quality >= 3) {
-    if (count === 0) return '1天'
-    if (count === 1) return '6天'
-    return `${Math.round(interval * ef)}天`
-  }
-  return '1天'
+  if (!item || !item.next_intervals) return '1天'  // fallback(老数据/错误响应)
+  const days = item.next_intervals[String(quality)]
+  return days ? `${days}天` : '1天'
 }
 
 const loadQueue = async () => {
