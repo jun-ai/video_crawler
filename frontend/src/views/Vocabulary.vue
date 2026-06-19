@@ -143,23 +143,7 @@
 
             <!-- 复习进度可视化 -->
             <div class="vocab-progress-row" v-if="item.review_count > 0">
-              <!-- 掌握度进度环 -->
-              <div class="mastery-ring">
-                <svg viewBox="0 0 36 36" class="mastery-ring-svg">
-                  <path
-                    class="mastery-ring-bg"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                  <path
-                    class="mastery-ring-fill"
-                    :style="{ strokeDasharray: `${Math.min(item.review_count * 15, 100)} ${100 - Math.min(item.review_count * 15, 100)}` }"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                </svg>
-                <span class="mastery-ring-text">{{ Math.min(item.review_count * 15, 100) }}%</span>
-              </div>
-
-              <!-- 复习强度 bar -->
+              <!-- 4-P1-1: 删 mastery-ring (进度环), 保留 review-strength bar (颜色低/中/高更直观) -->
               <div class="review-strength">
                 <div class="review-strength-label">复习强度</div>
                 <div class="review-strength-bar">
@@ -797,49 +781,6 @@ onMounted(() => {
   background: var(--color-bg-elevated);
   border-radius: var(--radius-sm, 8px);
   flex-wrap: wrap;
-}
-
-/* 掌握度进度环 */
-.mastery-ring {
-  position: relative;
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
-}
-
-.mastery-ring-svg {
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-}
-
-.mastery-ring-bg {
-  fill: none;
-  stroke: var(--color-border);
-  stroke-width: 3;
-}
-
-.mastery-ring-fill {
-  fill: none;
-  stroke: var(--color-brand-bright);
-  stroke-width: 3;
-  stroke-linecap: round;
-  transition: stroke-dasharray 0.4s var(--ease-standard);
-}
-
-.vocab-mastered .mastery-ring-fill {
-  stroke: var(--color-success);
-}
-
-.mastery-ring-text {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
 }
 
 /* 复习强度 bar */
