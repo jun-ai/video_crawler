@@ -218,6 +218,7 @@ import {
 } from 'lucide-vue-next'
 import SfDialog from '@/components/ui/SfDialog.vue'
 import { dictationAPI } from '@/api'
+import { buildBlanks } from '@/composables/useDictationExtractor'
 
 const props = defineProps({
   material: Object,
@@ -249,83 +250,18 @@ const currentSubtitle = computed(() => {
   return props.subtitles[props.currentIndex] || null
 })
 
-// 从句子中提取关键词
-const extractKeyWords = (text) => {
-  const simpleWords = [
-    'a', 'an', 'the', 'is', 'am', 'are', 'was', 'were', 'be', 'been',
-    'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them',
-    'my', 'your', 'his', 'her', 'its', 'our', 'their',
-    'this', 'that', 'these', 'those',
-    'and', 'or', 'but', 'so', 'because', 'if', 'when', 'where', 'how',
-    'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'up', 'down',
-    'not', 'no', 'yes', 'do', 'does', 'did', 'have', 'has', 'had',
-    'will', 'would', 'can', 'could', 'shall', 'should', 'may', 'might', 'must',
-    'just', 'very', 'too', 'also', 'only', 'even', 'here', 'there', 'now', 'then'
-  ]
+// 2.5-2.8 抽 composable: 关键词/挖空位置/干扰项统一管理
+// (import 在 script setup 顶部)
 
-  const words = text.toLowerCase().split(/\s+/).map(w => w.replace(/[.,!?;:'"]/g, '')).filter(w => w)
-  const keyWords = words.filter(w => !simpleWords.includes(w) && w.length >= 2)
-  const count = Math.min(4, Math.max(2, Math.ceil(keyWords.length * 0.4)))
-
-  const selectedIndices = []
-  const shuffled = [...keyWords.map((w, i) => i)].sort(() => Math.random() - 0.5)
-  for (let i = 0; i < count && i < shuffled.length; i++) {
-    selectedIndices.push(shuffled[i])
-  }
-
-  return keyWords.filter((w, i) => selectedIndices.includes(i))
-}
-
-// 挖空单词列表
+// 挖空单词列表 (2.7 用 subtitle.id 作 seed → 同句同位置稳定)
 const blankWords = computed(() => {
   if (!currentSubtitle.value) return []
-
-  const text = currentSubtitle.value.text_en
-  const keyWords = extractKeyWords(text)
-  const words = text.split(/\s+/)
-
-  const blanks = []
-  keyWords.forEach(keyWord => {
-    const cleanKeyWord = keyWord.toLowerCase()
-    for (let i = 0; i < words.length; i++) {
-      const cleanWord = words[i].toLowerCase().replace(/[.,!?;:'"]/g, '')
-      if (cleanWord === cleanKeyWord) {
-        const options = generateOptions(keyWord)
-        blanks.push({
-          word: words[i].replace(/[.,!?;:'"]/g, ''),
-          index: i,
-          options: options
-        })
-        break
-      }
-    }
+  return buildBlanks({
+    text: currentSubtitle.value.text_en,
+    seed: currentSubtitle.value.id,
+    optionCount: 4,
   })
-
-  return blanks
 })
-
-// 生成选择题选项
-const generateOptions = (correctWord) => {
-  const options = [correctWord]
-  const distractors = [
-    'make', 'take', 'give', 'have', 'come', 'go', 'see', 'know', 'think', 'find',
-    'want', 'need', 'like', 'love', 'try', 'use', 'work', 'call', 'ask', 'tell',
-    'time', 'year', 'people', 'way', 'day', 'thing', 'man', 'woman', 'child', 'world',
-    'good', 'new', 'first', 'last', 'long', 'great', 'little', 'own', 'other', 'old',
-    'right', 'big', 'high', 'different', 'small', 'large', 'next', 'early', 'young',
-    'important', 'few', 'public', 'bad', 'same', 'able', 'sure', 'free', 'clear',
-    'place', 'case', 'week', 'company', 'system', 'program', 'question', 'work'
-  ]
-
-  const shuffled = distractors.sort(() => Math.random() - 0.5)
-  for (let i = 0; i < 3 && i < shuffled.length; i++) {
-    if (shuffled[i].toLowerCase() !== correctWord.toLowerCase()) {
-      options.push(shuffled[i])
-    }
-  }
-
-  return options.sort(() => Math.random() - 0.5)
-}
 
 // 将句子分割成填空部分
 const sentenceParts = computed(() => {
