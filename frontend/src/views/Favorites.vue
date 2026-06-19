@@ -35,6 +35,52 @@
         </div>
       </div>
 
+      <!-- 4-P1-4: 字幕 Tab 搜索 + 视频筛选 -->
+      <div v-if="activeTab === 'subtitles'" class="fav-filter-bar">
+        <div class="fav-search-wrap">
+          <Search :size="14" class="fav-search-icon" />
+          <input
+            v-model="searchQuery"
+            type="text"
+            class="fav-search-input"
+            placeholder="搜索字幕 (英文/中文)..."
+            aria-label="搜索字幕"
+            @input="onSearchInput"
+          />
+          <button v-if="searchQuery" class="fav-search-clear" @click="clearSearch" aria-label="清空搜索">
+            <X :size="14" />
+          </button>
+        </div>
+        <div class="fav-material-filter">
+          <SfDropdown>
+            <template #trigger>
+              <SfButton type="ghost" size="sm">
+                <Filter :size="14" />
+                {{ filterMaterialTitle || '全部视频' }}
+              </SfButton>
+            </template>
+            <div class="material-filter-menu">
+              <div
+                class="dropdown-item"
+                :class="{ active: filterMaterialId === null }"
+                @click="filterMaterialById(null)"
+              >
+                全部视频
+              </div>
+              <div
+                v-for="m in availableMaterials"
+                :key="m.id"
+                class="dropdown-item"
+                :class="{ active: filterMaterialId === m.id }"
+                @click="filterMaterialById(m.id)"
+              >
+                {{ m.title }}
+              </div>
+            </div>
+          </SfDropdown>
+        </div>
+      </div>
+
       <!-- 字幕收藏 Tab -->
       <div v-show="activeTab === 'subtitles'" class="tab-content">
         <div class="subtitle-fav-list" v-loading="subtitleLoading">
@@ -182,7 +228,11 @@ import {
   RefreshCw,
   MoreHorizontal,
   Trash2,
-  Headphones
+  Headphones,
+  // 4-P1-4: 搜索 + 视频筛选图标
+  Search,
+  X,
+  Filter
 } from 'lucide-vue-next'
 import SfButton from '@/components/ui/SfButton.vue'
 import SfTag from '@/components/ui/SfTag.vue'
@@ -248,12 +298,52 @@ const formatDuration = (ms) => {
 
 // ====== 字幕收藏操作 ======
 
+// 4-P1-4: 搜索 + 视频筛选
+const searchQuery = ref('')
+const filterMaterialId = ref(null)
+let searchDebounce = null
+
+const availableMaterials = computed(() => {
+  // 从已加载的 bookmarks 提取去重的视频列表
+  const map = new Map()
+  for (const item of subtitleBookmarks.value) {
+    if (item.material_id && !map.has(item.material_id)) {
+      map.set(item.material_id, { id: item.material_id, title: item.material_title })
+    }
+  }
+  return Array.from(map.values()).sort((a, b) => a.title.localeCompare(b.title, 'zh'))
+})
+
+const filterMaterialTitle = computed(() => {
+  if (!filterMaterialId.value) return null
+  return availableMaterials.value.find(m => m.id === filterMaterialId.value)?.title || null
+})
+
+const onSearchInput = () => {
+  // 防抖 300ms 避免连续输入狂触发
+  if (searchDebounce) clearTimeout(searchDebounce)
+  searchDebounce = setTimeout(() => loadSubtitleBookmarks(), 300)
+}
+
+const clearSearch = () => {
+  searchQuery.value = ''
+  loadSubtitleBookmarks()
+}
+
+const filterMaterialById = (id) => {
+  filterMaterialId.value = id
+  loadSubtitleBookmarks()
+}
+
 const loadSubtitleBookmarks = async () => {
   if (!userStore.isLoggedIn) return
   subtitleLoading.value = true
   try {
-    // 单次 API 拉全部（join Subtitle），不再 N+1
-    const res = await subtitleBookmarkAPI.getAll()
+    // 4-P1-4: 传 search + material_id 参数
+    const params = {}
+    if (searchQuery.value.trim()) params.search = searchQuery.value.trim()
+    if (filterMaterialId.value) params.material_id = filterMaterialId.value
+    const res = await subtitleBookmarkAPI.getAll(params)
     const items = Array.isArray(res) ? res : (res.items || [])
     // 字段映射：后端 subtitle_text_en → 前端 text_en
     subtitleBookmarks.value = items.map(item => ({

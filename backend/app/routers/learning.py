@@ -1621,20 +1621,39 @@ async def check_bookmarks(
 @router.get("/bookmarks/all", response_model=List[SubtitleBookmarkResponse])
 async def get_all_user_bookmarks(
     current_user: Annotated[User, Depends(get_current_user)],
+    search: str = Query(None, description="4-P1-4: 搜索字幕 text_en/text_cn"),
+    material_id: int = Query(None, description="4-P1-4: 按视频筛选"),
     db: AsyncSession = Depends(get_db)
 ):
     """获取用户所有字幕收藏（join Subtitle + Material, 单次查询解决 N+1）
 
     替代前端循环调用 /bookmarks/{material_id} 的 N+1 模式。
     按 created_at desc 排序，最新收藏在前。
+
+    4-P1-4: 支持搜索 (text_en/text_cn 模糊匹配) + 按视频筛选
     """
-    result = await db.execute(
+    query = (
         select(SubtitleBookmark, Subtitle, Material)
         .join(Subtitle, SubtitleBookmark.subtitle_id == Subtitle.id)
         .join(Material, SubtitleBookmark.material_id == Material.id)
         .where(SubtitleBookmark.user_id == current_user.id)
-        .order_by(SubtitleBookmark.created_at.desc())
     )
+
+    if material_id is not None:
+        query = query.where(SubtitleBookmark.material_id == material_id)
+
+    if search:
+        # 4-P1-4: 模糊搜索字幕英中文 (大小写不敏感)
+        search_pattern = f"%{search.strip()}%"
+        query = query.where(
+            or_(
+                Subtitle.text_en.ilike(search_pattern),
+                Subtitle.text_cn.ilike(search_pattern)
+            )
+        )
+
+    query = query.order_by(SubtitleBookmark.created_at.desc())
+    result = await db.execute(query)
     rows = result.all()
 
     response = []
