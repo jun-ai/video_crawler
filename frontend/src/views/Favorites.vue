@@ -128,6 +128,40 @@
                 <div class="fav-card-content">
                   <div class="fav-card-english">{{ item.text_en }}</div>
                   <div class="fav-card-chinese" v-if="item.text_cn">"{{ item.text_cn }}"</div>
+
+                  <!-- 5-P1-2: 笔记展示 (有 note 时) -->
+                  <div v-if="item.note && !isEditingNote(item.id)" class="fav-card-note">
+                    <StickyNote :size="13" class="note-icon" />
+                    <span class="note-text">{{ item.note }}</span>
+                    <button class="note-edit-btn" @click="startEditNote(item)" aria-label="编辑笔记">
+                      <Edit2 :size="12" />
+                    </button>
+                  </div>
+
+                  <!-- 5-P1-2: 笔记编辑 (textarea) -->
+                  <div v-else-if="isEditingNote(item.id)" class="fav-card-note-edit">
+                    <textarea
+                      v-model="editingNote"
+                      class="note-textarea"
+                      placeholder="记点什么…(比如:这句很扎心, 收藏)"
+                      maxlength="500"
+                      rows="3"
+                    ></textarea>
+                    <div class="note-edit-actions">
+                      <SfButton size="sm" type="ghost" @click="cancelEditNote">取消</SfButton>
+                      <SfButton size="sm" type="primary" :disabled="savingNote" @click="saveEditNote(item)">
+                        {{ savingNote ? '保存中…' : '保存' }}
+                      </SfButton>
+                    </div>
+                  </div>
+
+                  <!-- 5-P1-2: 添加笔记按钮 (无 note 且未编辑) -->
+                  <div v-else class="fav-card-note-add">
+                    <SfButton type="ghost" size="sm" @click="startEditNote(item)">
+                      <Plus :size="13" /> 添加笔记
+                    </SfButton>
+                  </div>
+
                   <div class="fav-card-meta">
                     <span class="fav-card-category">
                       <SfTag size="sm" type="default">{{ item.material_title || '未分类' }}</SfTag>
@@ -324,7 +358,11 @@ import {
   Filter,
   // 5-P1-1: 视频收藏 Tab
   Film,
-  Heart
+  Heart,
+  // 5-P1-2: 笔记
+  StickyNote,
+  Edit2,
+  Plus
 } from 'lucide-vue-next'
 import SfButton from '@/components/ui/SfButton.vue'
 import SfTag from '@/components/ui/SfTag.vue'
@@ -440,6 +478,38 @@ const loadVideoFavorites = async () => {
     videoTotal.value = 0
   } finally {
     videoLoading.value = false
+  }
+}
+
+// 5-P1-2: 笔记编辑
+const editingNoteId = ref(null)
+const editingNote = ref('')
+const savingNote = ref(false)
+
+const isEditingNote = (id) => editingNoteId.value === id
+
+const startEditNote = (item) => {
+  editingNoteId.value = item.id
+  editingNote.value = item.note || ''
+}
+
+const cancelEditNote = () => {
+  editingNoteId.value = null
+  editingNote.value = ''
+}
+
+const saveEditNote = async (item) => {
+  savingNote.value = true
+  try {
+    const res = await subtitleBookmarkAPI.update(item.id, { note: editingNote.value })
+    item.note = res.note
+    cancelEditNote()
+    toast.success('笔记已保存')
+  } catch (e) {
+    console.error('保存笔记失败', e)
+    toast.error('保存失败')
+  } finally {
+    savingNote.value = false
   }
 }
 
@@ -1097,6 +1167,76 @@ onMounted(() => {
 
 :deep(.dropdown-item:hover) {
   background: var(--color-bg-elevated);
+}
+
+/* ====== 5-P1-2: 笔记展示/编辑 ====== */
+.fav-card-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0;
+  padding: 8px 10px;
+  background: rgba(245, 158, 11, 0.08);  /* 琥珀色淡背景, 跟"笔记"语义匹配 */
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--color-text-primary);
+  border-left: 3px solid var(--color-warm, #F59E0B);
+}
+.note-icon {
+  color: var(--color-warm, #F59E0B);
+  flex-shrink: 0;
+}
+.note-text {
+  flex: 1;
+  line-height: 1.5;
+  word-break: break-word;
+}
+.note-edit-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.note-edit-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--color-text-primary);
+}
+
+.fav-card-note-edit {
+  margin: 8px 0;
+}
+.note-textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 60px;
+  box-sizing: border-box;
+}
+.note-textarea:focus {
+  outline: none;
+  border-color: var(--color-brand, #2563EB);
+}
+.note-edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.fav-card-note-add {
+  margin: 4px 0 8px 0;
 }
 
 /* ====== 5-P1-1: 视频收藏 Tab ====== */

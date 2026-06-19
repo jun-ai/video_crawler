@@ -39,6 +39,7 @@ from app.schemas.schemas import (
     SubtitleAnnotationResponse,
     SubtitleAnnotationListResponse,
     SubtitleBookmarkCreate,
+    SubtitleBookmarkUpdate,
     SubtitleBookmarkResponse,
     ReviewSubmitRequest,
     ReviewQueueResponse,
@@ -1546,6 +1547,41 @@ async def add_bookmark(
         subtitle_text_cn=subtitle.text_cn,
         subtitle_start_time=subtitle.start_time
     )
+
+
+@router.patch("/bookmarks/{bookmark_id}", response_model=SubtitleBookmarkResponse)
+async def update_bookmark(
+    bookmark_id: int,
+    data: SubtitleBookmarkUpdate,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db)
+):
+    """5-P1-2: 更新字幕收藏 (编辑笔记)
+
+    接受 partial update, 目前只支持 note
+    权限: 仅能改自己的收藏 (user_id 隔离)
+    """
+    result = await db.execute(
+        select(SubtitleBookmark).where(
+            SubtitleBookmark.id == bookmark_id,
+            SubtitleBookmark.user_id == current_user.id
+        )
+    )
+    bookmark = result.scalar_one_or_none()
+
+    if not bookmark:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="收藏不存在"
+        )
+
+    if data.note is not None:
+        # 5-P1-2: 空字符串视为清除 (前端编辑空笔记发空串)
+        bookmark.note = data.note.strip() if data.note.strip() else None
+    await db.commit()
+    await db.refresh(bookmark)
+
+    return bookmark
 
 
 @router.delete("/bookmarks/{bookmark_id}", response_model=MessageResponse)

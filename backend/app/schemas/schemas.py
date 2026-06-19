@@ -479,6 +479,11 @@ class SubtitleBookmarkCreate(BaseModel):
     note: Optional[str] = None
 
 
+class SubtitleBookmarkUpdate(BaseModel):
+    """5-P1-2: 更新字幕收藏 (目前只支持 note)"""
+    note: Optional[str] = None
+
+
 class SubtitleBookmarkResponse(BaseModel):
     """字幕收藏响应"""
     id: int

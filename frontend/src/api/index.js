@@ -160,7 +160,9 @@ export const subtitleBookmarkAPI = {
   getAll: (params) => api.get('/learning/bookmarks/all', { params }),
   incrementPractice: (bookmarkId) => api.post(`/learning/bookmarks/${bookmarkId}/practice`),
   // 4-P1-5: 批量删除
-  batchDelete: (ids) => api.post('/learning/bookmarks/batch-delete', { ids })
+  batchDelete: (ids) => api.post('/learning/bookmarks/batch-delete', { ids }),
+  // 5-P1-2: 更新笔记
+  update: (id, data) => api.patch(`/learning/bookmarks/${id}`, data)
 }
 
 // ==================== 标签 API ====================
