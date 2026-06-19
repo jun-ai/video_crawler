@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any
 
 
 # ==================== User Schemas ====================
@@ -499,9 +499,33 @@ class SubtitleBookmarkResponse(BaseModel):
     subtitle_start_time: Optional[int] = None
     # 关联的视频信息（/bookmarks/all 端点填充）
     material_title: Optional[str] = None
+    # 5-P1-2: 用户标签 (bookmark 维度)
+    tags: List[Dict[str, Any]] = []
 
     class Config:
         from_attributes = True
+
+
+class UserTagResponse(BaseModel):
+    """5-P1-2: 用户标签响应"""
+    id: int
+    name: str
+    color: str = '#5c6ef5'
+    usage_count: int = 0  # 被多少个 bookmark 使用
+
+    class Config:
+        from_attributes = True
+
+
+class UserTagCreateRequest(BaseModel):
+    """5-P1-2: 创建标签"""
+    name: str
+    color: Optional[str] = None
+
+
+class BookmarkTagsRequest(BaseModel):
+    """5-P1-2: 设置 bookmark 的标签 (按名字, 自动创建不存在的)"""
+    tag_names: List[str]
 
 
 # ==================== 生词复习 Schemas ====================

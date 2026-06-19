@@ -162,6 +162,47 @@
                     </SfButton>
                   </div>
 
+                  <!-- 5-P1-2: 用户标签 chips (可点击移除) + 添加按钮 -->
+                  <div class="fav-card-tags">
+                    <TransitionGroup name="tag-chip">
+                      <span
+                        v-for="tag in (item.tags || [])"
+                        :key="tag.id"
+                        class="user-tag-chip"
+                        :style="{ '--tag-color': tag.color || '#5c6ef5' }"
+                      >
+                        <span class="user-tag-name">{{ tag.name }}</span>
+                        <button
+                          class="user-tag-remove"
+                          @click="removeTagFromBookmark(item, tag.name)"
+                          :aria-label="`移除标签 ${tag.name}`"
+                        >×</button>
+                      </span>
+                    </TransitionGroup>
+                    <button
+                      v-if="!isAddingTag(item.id)"
+                      class="add-tag-btn"
+                      @click="startAddTag(item)"
+                      aria-label="添加标签"
+                    >+ 标签</button>
+                    <div v-else class="add-tag-input-wrap">
+                      <input
+                        :ref="el => tagInputRefs[item.id] = el"
+                        v-model="tagInputValue"
+                        class="add-tag-input"
+                        :list="`tag-suggestions-${item.id}`"
+                        placeholder="标签名, 回车确认"
+                        maxlength="50"
+                        @keydown.enter="confirmAddTag(item)"
+                        @keydown.esc="cancelAddTag"
+                        @keydown="onTagInputKeydown($event, item)"
+                      />
+                      <datalist :id="`tag-suggestions-${item.id}`">
+                        <option v-for="t in allUserTags" :key="t.id" :value="t.name" />
+                      </datalist>
+                    </div>
+                  </div>
+
                   <div class="fav-card-meta">
                     <span class="fav-card-category">
                       <SfTag size="sm" type="default">{{ item.material_title || '未分类' }}</SfTag>
@@ -368,7 +409,7 @@ import SfEmpty from '@/components/ui/SfEmpty.vue'
 import SfDropdown from '@/components/ui/SfDropdown.vue'
 import SfPagination from '@/components/ui/SfPagination.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
-import { favoriteAPI, vocabularyAPI, subtitleBookmarkAPI, materialAPI } from '@/api'
+import { favoriteAPI, vocabularyAPI, subtitleBookmarkAPI, materialAPI, bookmarkTagAPI } from '@/api'
 import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
@@ -510,6 +551,83 @@ const saveEditNote = async (item) => {
   } finally {
     savingNote.value = false
   }
+}
+
+// ==================== 5-P1-2: 用户标签 ====================
+// 用户自有标签 (bookmark 维度), 与全局 Tag (material 维度) 区分
+const allUserTags = ref([])            // 所有标签 (含 usage_count, 用于 datalist 补全)
+const addingTagBookmarkId = ref(null)  // 正在添加标签的 bookmark id
+const tagInputValue = ref('')
+const tagInputRefs = ref({})           // 多个 input 的 ref 收集
+
+// 加载所有用户标签 (onMounted + add/remove 后刷新)
+const loadUserTags = async () => {
+  try {
+    const res = await bookmarkTagAPI.list()
+    allUserTags.value = res || []
+  } catch (e) {
+    console.error('加载标签失败', e)
+  }
+}
+
+const isAddingTag = (id) => addingTagBookmarkId.value === id
+
+const startAddTag = (item) => {
+  addingTagBookmarkId.value = item.id
+  tagInputValue.value = ''
+  // nextTick 聚焦
+  setTimeout(() => {
+    const el = tagInputRefs.value[item.id]
+    if (el && typeof el.focus === 'function') el.focus()
+  }, 50)
+}
+
+const cancelAddTag = () => {
+  addingTagBookmarkId.value = null
+  tagInputValue.value = ''
+}
+
+const confirmAddTag = async (item) => {
+  const name = tagInputValue.value.trim()
+  if (!name) {
+    cancelAddTag()
+    return
+  }
+  // 拼接现有 + 新的, 一次性 setTags (replace-all)
+  const currentNames = (item.tags || []).map(t => t.name)
+  if (currentNames.includes(name)) {
+    toast.info('已有此标签')
+    cancelAddTag()
+    return
+  }
+  const newNames = [...currentNames, name]
+  try {
+    await subtitleBookmarkAPI.setTags(item.id, newNames)
+    // 乐观更新 (无需重新拉 list)
+    item.tags = [...(item.tags || []), { id: Date.now(), name, color: '#5c6ef5' }]
+    await loadUserTags()  // 刷新 allUserTags (usage_count)
+    cancelAddTag()
+  } catch (e) {
+    console.error('添加标签失败', e)
+    toast.error('添加失败')
+  }
+}
+
+const removeTagFromBookmark = async (item, tagName) => {
+  const newNames = (item.tags || []).filter(t => t.name !== tagName).map(t => t.name)
+  try {
+    await subtitleBookmarkAPI.setTags(item.id, newNames)
+    item.tags = (item.tags || []).filter(t => t.name !== tagName)
+    await loadUserTags()
+  } catch (e) {
+    console.error('移除标签失败', e)
+    toast.error('移除失败')
+  }
+}
+
+// datalist 不支持键盘补全确认, 这个是预留扩展点 (目前用原生 datalist)
+const onTagInputKeydown = (e, item) => {
+  // 未来如需自定义补全 dropdown, 在这里处理 ArrowUp/Down/Enter
 }
 
 // 4-P1-5: 批量选择
@@ -705,6 +823,7 @@ onMounted(() => {
   if (userStore.isLoggedIn) {
     loadSubtitleBookmarks()
     loadVocabList()
+    loadUserTags()
   }
 })
 </script>
@@ -1236,6 +1355,100 @@ onMounted(() => {
 
 .fav-card-note-add {
   margin: 4px 0 8px 0;
+}
+
+/* ====== 5-P1-2: 用户标签 chips ====== */
+.fav-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 4px 0 8px 0;
+}
+.user-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 4px 1px 8px;
+  font-size: 11px;
+  line-height: 18px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--tag-color, #5c6ef5) 12%, transparent);
+  color: var(--tag-color, #5c6ef5);
+  border: 1px solid color-mix(in srgb, var(--tag-color, #5c6ef5) 30%, transparent);
+  transition: all 0.15s ease;
+}
+.user-tag-chip:hover {
+  background: color-mix(in srgb, var(--tag-color, #5c6ef5) 18%, transparent);
+}
+.user-tag-name {
+  font-weight: 500;
+}
+.user-tag-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 50%;
+  opacity: 0.5;
+  padding: 0;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+.user-tag-remove:hover {
+  opacity: 1;
+  background: color-mix(in srgb, var(--tag-color, #5c6ef5) 25%, transparent);
+}
+.add-tag-btn {
+  border: 1px dashed var(--color-border, #cbd5e1);
+  background: transparent;
+  color: var(--color-text-secondary, #64748b);
+  font-size: 11px;
+  line-height: 18px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.add-tag-btn:hover {
+  border-color: var(--color-primary, #5c6ef5);
+  color: var(--color-primary, #5c6ef5);
+  background: rgba(92, 110, 245, 0.06);
+}
+.add-tag-input-wrap {
+  display: inline-flex;
+}
+.add-tag-input {
+  border: 1px solid var(--color-primary, #5c6ef5);
+  background: var(--color-bg-card, #fff);
+  color: var(--color-text-primary, #1e293b);
+  font-size: 12px;
+  line-height: 18px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  outline: none;
+  width: 140px;
+}
+.add-tag-input:focus {
+  box-shadow: 0 0 0 2px rgba(92, 110, 245, 0.15);
+}
+/* TransitionGroup for tag chips */
+.tag-chip-enter-active, .tag-chip-leave-active {
+  transition: all 0.2s ease;
+}
+.tag-chip-enter-from {
+  opacity: 0;
+  transform: scale(0.8);
+}
+.tag-chip-leave-to {
+  opacity: 0;
+  transform: scale(0.8);
 }
 
 /* ====== 5-P1-1: 视频收藏 Tab ====== */

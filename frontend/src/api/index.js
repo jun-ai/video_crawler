@@ -176,7 +176,16 @@ export const subtitleBookmarkAPI = {
   // 4-P1-5: 批量删除
   batchDelete: (ids) => api.post('/learning/bookmarks/batch-delete', { ids }),
   // 5-P1-2: 更新笔记
-  update: (id, data) => api.patch(`/learning/bookmarks/${id}`, data)
+  update: (id, data) => api.patch(`/learning/bookmarks/${id}`, data),
+  // 5-P1-2: 设置标签 (replace-all, 按 name)
+  setTags: (id, tagNames) => api.put(`/learning/bookmarks/${id}/tags`, { tag_names: tagNames })
+}
+
+// ==================== 5-P1-2: 用户收藏标签 API ====================
+export const bookmarkTagAPI = {
+  list: () => api.get('/learning/bookmark-tags'),
+  create: (data) => api.post('/learning/bookmark-tags', data),
+  delete: (id) => api.delete(`/learning/bookmark-tags/${id}`)
 }
 
 // ==================== 标签 API ====================

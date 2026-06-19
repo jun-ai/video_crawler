@@ -47,6 +47,7 @@ class User(Base):
     dictation_records = relationship("DictationRecord", back_populates="user", cascade="all, delete-orphan")
     subtitle_annotations = relationship("SubtitleAnnotation", back_populates="user", cascade="all, delete-orphan")
     subtitle_bookmarks = relationship("SubtitleBookmark", back_populates="user", cascade="all, delete-orphan")
+    user_tags = relationship("UserTag", back_populates="user", cascade="all, delete-orphan")
 
 
 class Material(Base):
@@ -296,6 +297,7 @@ class SubtitleBookmark(Base):
     user = relationship("User", back_populates="subtitle_bookmarks")
     subtitle = relationship("Subtitle", back_populates="bookmarks")
     material = relationship("Material")
+    tag_links = relationship("BookmarkTag", back_populates="bookmark", cascade="all, delete-orphan")
 
 
 class ActivationCode(Base):
@@ -312,6 +314,42 @@ class ActivationCode(Base):
     created_by = Column(Integer, nullable=True)
     expires_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class UserTag(Base):
+    """5-P1-2: 用户自有的字幕收藏标签 (与全局 Tag 区分)
+
+    每个用户可以创建自己的标签, 用于分类自己的字幕收藏
+    name 在同一 user_id 内唯一 (跨用户允许同名)
+    """
+    __tablename__ = "user_tags"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(50), nullable=False)
+    color = Column(String(20), default='#5c6ef5')
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # 关联
+    user = relationship("User", back_populates="user_tags")
+    bookmark_links = relationship("BookmarkTag", back_populates="tag", cascade="all, delete-orphan")
+
+
+class BookmarkTag(Base):
+    """5-P1-2: 字幕收藏 - 用户标签 关联表 (多对多)
+
+    一个 bookmark 可以有多个标签
+    一个标签可以被多个 bookmark 使用
+    """
+    __tablename__ = "bookmark_tags"
+
+    bookmark_id = Column(Integer, ForeignKey("subtitle_bookmarks.id", ondelete="CASCADE"), primary_key=True)
+    user_tag_id = Column(Integer, ForeignKey("user_tags.id", ondelete="CASCADE"), primary_key=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # 关联
+    bookmark = relationship("SubtitleBookmark", back_populates="tag_links")
+    tag = relationship("UserTag", back_populates="bookmark_links")
 
 
 class Announcement(Base):

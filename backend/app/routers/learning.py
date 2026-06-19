@@ -14,7 +14,7 @@ import io
 import logging
 
 from app.database import get_db
-from app.models.models import User, LearningRecord, Material, Vocabulary, Subtitle, DictationRecord, SubtitleAnnotation, SubtitleBookmark, VideoInterpretation
+from app.models.models import User, LearningRecord, Material, Vocabulary, Subtitle, DictationRecord, SubtitleAnnotation, SubtitleBookmark, VideoInterpretation, UserTag, BookmarkTag
 from app.schemas.schemas import (
     LearningRecordCreate,
     LearningRecordResponse,
@@ -44,6 +44,9 @@ from app.schemas.schemas import (
     SubtitleBookmarkCreate,
     SubtitleBookmarkUpdate,
     SubtitleBookmarkResponse,
+    UserTagResponse,
+    UserTagCreateRequest,
+    BookmarkTagsRequest,
     ReviewSubmitRequest,
     ReviewQueueResponse,
     ReviewStatsResponse
@@ -2116,6 +2119,182 @@ async def remove_bookmark(
     return MessageResponse(message="已取消收藏", success=True)
 
 
+# ==================== 5-P1-2: 字幕收藏用户标签 ====================
+# 设计: 用户自有的标签 (UserTag), 与全局 Tag (material 维度) 区分
+# 一个 bookmark 可有多个标签, 一个标签可被多个 bookmark 使用 (多对多)
+# API: 按 name 操作 (前端只关心 name), 后端 auto-create 不存在的 name
+
+@router.get("/bookmark-tags", response_model=List[UserTagResponse])
+async def list_user_tags(
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db)
+):
+    """5-P1-2: 列出当前用户所有标签 + 使用次数 (按使用数降序, 再按创建时间)"""
+    # 一次查询 UserTag, 一次查询每个 tag 的使用次数
+    result = await db.execute(
+        select(UserTag)
+        .where(UserTag.user_id == current_user.id)
+        .order_by(UserTag.created_at.desc())
+    )
+    tags = result.scalars().all()
+    if not tags:
+        return []
+
+    tag_ids = [t.id for t in tags]
+    # 统计每个 tag 被 bookmark 使用的次数
+    from sqlalchemy import func
+    count_result = await db.execute(
+        select(BookmarkTag.user_tag_id, func.count().label('cnt'))
+        .where(BookmarkTag.user_tag_id.in_(tag_ids))
+        .group_by(BookmarkTag.user_tag_id)
+    )
+    usage_map = {row.user_tag_id: row.cnt for row in count_result}
+
+    return [
+        UserTagResponse(
+            id=t.id,
+            name=t.name,
+            color=t.color or '#5c6ef5',
+            usage_count=usage_map.get(t.id, 0)
+        )
+        for t in tags
+    ]
+
+
+@router.post("/bookmark-tags", response_model=UserTagResponse, status_code=201)
+async def create_user_tag(
+    data: UserTagCreateRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db)
+):
+    """5-P1-2: 创建新标签 (同 user_id + name 唯一, 重复返回 409)"""
+    name = data.name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="标签名不能为空")
+    if len(name) > 50:
+        raise HTTPException(status_code=400, detail="标签名最多 50 个字符")
+
+    # 检查同名 (同 user_id 内)
+    existing = await db.execute(
+        select(UserTag).where(
+            UserTag.user_id == current_user.id,
+            UserTag.name == name
+        )
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail=f"标签 '{name}' 已存在")
+
+    tag = UserTag(
+        user_id=current_user.id,
+        name=name,
+        color=data.color or '#5c6ef5'
+    )
+    db.add(tag)
+    await db.commit()
+    await db.refresh(tag)
+
+    return UserTagResponse(id=tag.id, name=tag.name, color=tag.color or '#5c6ef5', usage_count=0)
+
+
+@router.delete("/bookmark-tags/{tag_id}", response_model=MessageResponse)
+async def delete_user_tag(
+    tag_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db)
+):
+    """5-P1-2: 删除标签 (级联删除 bookmark_tag 关联)
+
+    ondelete=CASCADE 已配置, 直接删 UserTag 即可
+    """
+    result = await db.execute(
+        select(UserTag).where(
+            UserTag.id == tag_id,
+            UserTag.user_id == current_user.id  # 用户隔离
+        )
+    )
+    tag = result.scalar_one_or_none()
+    if not tag:
+        raise HTTPException(status_code=404, detail="标签不存在")
+
+    await db.delete(tag)
+    await db.commit()
+    return MessageResponse(message=f"已删除标签 '{tag.name}'", success=True)
+
+
+@router.put("/bookmarks/{bookmark_id}/tags", response_model=MessageResponse)
+async def set_bookmark_tags(
+    bookmark_id: int,
+    data: BookmarkTagsRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db)
+):
+    """5-P1-2: 设置 bookmark 的标签 (replace-all 语义, 按名字操作)
+
+    - 接受 tag_names 数组, 自动 auto-create 不存在的 tag
+    - 与当前 bookmark 现有标签 diff, 增量更新 (避免全删全建)
+    - 用户隔离: bookmark 必须属于当前用户
+    """
+    # 1. 校验 bookmark 属于当前用户
+    bm_result = await db.execute(
+        select(SubtitleBookmark).where(
+            SubtitleBookmark.id == bookmark_id,
+            SubtitleBookmark.user_id == current_user.id
+        )
+    )
+    if not bm_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="收藏不存在")
+
+    # 2. 标准化 names (strip + 去重 + 去空)
+    names = list(dict.fromkeys([  # 保留顺序去重
+        n.strip() for n in data.tag_names if n and n.strip()
+    ]))
+    if len(names) > 20:
+        raise HTTPException(status_code=400, detail="单个收藏最多 20 个标签")
+
+    # 3. auto-create 不存在的 tags (按 name 查, 不在则建)
+    existing_result = await db.execute(
+        select(UserTag).where(
+            UserTag.user_id == current_user.id,
+            UserTag.name.in_(names)
+        )
+    )
+    existing_tags = {t.name: t for t in existing_result.scalars()}
+
+    new_tags = []
+    for n in names:
+        if n not in existing_tags:
+            t = UserTag(user_id=current_user.id, name=n, color='#5c6ef5')
+            db.add(t)
+            new_tags.append(t)
+    if new_tags:
+        await db.flush()  # 拿到 id
+        for t in new_tags:
+            existing_tags[t.name] = t
+
+    target_tag_ids = {existing_tags[n].id for n in names}
+
+    # 4. diff: 当前关联 vs 目标, 增量更新
+    current_result = await db.execute(
+        select(BookmarkTag).where(BookmarkTag.bookmark_id == bookmark_id)
+    )
+    current_links = {bt.user_tag_id: bt for bt in current_result.scalars()}
+
+    # 删除: 当前有但目标没有
+    for tid, bt in current_links.items():
+        if tid not in target_tag_ids:
+            await db.delete(bt)
+    # 新增: 目标有但当前没有
+    for tid in target_tag_ids:
+        if tid not in current_links:
+            db.add(BookmarkTag(bookmark_id=bookmark_id, user_tag_id=tid))
+
+    await db.commit()
+    return MessageResponse(
+        message=f"已设置 {len(names)} 个标签",
+        success=True
+    )
+
+
 @router.post("/bookmarks/batch-delete", response_model=MessageResponse)
 async def batch_delete_bookmarks(
     data: BatchIdsRequest,
@@ -2231,8 +2410,29 @@ async def get_all_user_bookmarks(
     result = await db.execute(query)
     rows = result.all()
 
+    # 5-P1-2: 一次性加载当前用户所有 tags + bookmark_tag 关联 (避免 N+1)
+    all_user_tags_result = await db.execute(
+        select(UserTag).where(UserTag.user_id == current_user.id)
+    )
+    user_tag_map = {t.id: t for t in all_user_tags_result.scalars()}
+
+    bookmark_ids = [b.id for b, _, _ in rows]
+    bookmark_tag_map = {}  # bookmark_id -> [tag_id, ...]
+    if bookmark_ids:
+        bt_result = await db.execute(
+            select(BookmarkTag).where(BookmarkTag.bookmark_id.in_(bookmark_ids))
+        )
+        for bt in bt_result.scalars():
+            bookmark_tag_map.setdefault(bt.bookmark_id, []).append(bt.user_tag_id)
+
     response = []
     for bookmark, subtitle, material in rows:
+        tag_ids = bookmark_tag_map.get(bookmark.id, [])
+        tags_data = []
+        for tid in tag_ids:
+            t = user_tag_map.get(tid)
+            if t:
+                tags_data.append({"id": t.id, "name": t.name, "color": t.color or '#5c6ef5'})
         response.append(SubtitleBookmarkResponse(
             id=bookmark.id,
             user_id=bookmark.user_id,
@@ -2245,6 +2445,7 @@ async def get_all_user_bookmarks(
             subtitle_text_cn=subtitle.text_cn,
             subtitle_start_time=subtitle.start_time,
             material_title=material.title,
+            tags=tags_data,
         ))
     return response
 
