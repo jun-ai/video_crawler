@@ -45,21 +45,28 @@
         <!-- 掌握状态筛选 -->
         <div class="filter-chips">
           <FilterChip
-            :model-value="filterMastered"
-            :value="null"
+            :model-value="filterStatus"
+            value="all"
             label="全部"
             @update:model-value="setFilter"
           />
           <FilterChip
-            :model-value="filterMastered"
-            :value="false"
+            :model-value="filterStatus"
+            value="learning"
             label="学习中"
             @update:model-value="setFilter"
           />
           <FilterChip
-            :model-value="filterMastered"
-            :value="true"
+            :model-value="filterStatus"
+            value="mastered"
             label="已掌握"
+            @update:model-value="setFilter"
+          />
+          <!-- 4-P1-3: 新词独立筛选 (review_count=0) -->
+          <FilterChip
+            :model-value="filterStatus"
+            value="new"
+            label="新词"
             @update:model-value="setFilter"
           />
         </div>
@@ -300,7 +307,7 @@ const { speakText, speakWord, preloadVoices } = useTTS()
 const loading = ref(false)
 const vocabularies = ref([])
 const showChinese = ref(true)
-const filterMastered = ref(null)
+const filterStatus = ref('all')  // 4-P1-3: 'all'/'learning'/'mastered'/'new' (原 filterMastered bool 升级为 string)
 const filterMaterialId = ref(null)
 const sortBy = ref('newest')
 const materialsList = ref([])
@@ -334,9 +341,15 @@ const loadVocabularies = async () => {
       page_size: pageSize.value,
       sort_by: sortBy.value
     }
-    if (filterMastered.value !== null) {
-      params.mastered = filterMastered.value
+    if (filterStatus.value === 'mastered') {
+      params.mastered = true
+    } else if (filterStatus.value === 'learning') {
+      params.mastered = false
+    } else if (filterStatus.value === 'new') {
+      // 4-P1-3: 新词 = review_count=0
+      params.is_new = true
     }
+    // 'all' 不加任何 filter
     if (filterMaterialId.value) {
       params.material_id = filterMaterialId.value
     }

@@ -200,6 +200,7 @@ async def get_vocabulary(
     current_user: Annotated[User, Depends(get_current_user)],
     mastered: bool = None,
     material_id: int = None,
+    is_new: bool = Query(None, description="4-P1-3: 仅 review_count=0 的新词"),
     sort_by: str = Query('newest', description="排序方式: newest/oldest/word_asc/word_desc/review_count"),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
@@ -213,6 +214,13 @@ async def get_vocabulary(
 
     if material_id is not None:
         base_query = base_query.where(Vocabulary.material_id == material_id)
+
+    if is_new is not None:
+        # 4-P1-3: 新词 = review_count == 0
+        if is_new:
+            base_query = base_query.where(Vocabulary.review_count == 0)
+        else:
+            base_query = base_query.where(Vocabulary.review_count > 0)
 
     # 统计总数
     count_query = select(func.count()).select_from(base_query.subquery())
@@ -228,6 +236,11 @@ async def get_vocabulary(
         query = query.where(Vocabulary.mastered == mastered)
     if material_id is not None:
         query = query.where(Vocabulary.material_id == material_id)
+    if is_new is not None:
+        if is_new:
+            query = query.where(Vocabulary.review_count == 0)
+        else:
+            query = query.where(Vocabulary.review_count > 0)
 
     # 排序
     order_map = {
