@@ -339,6 +339,11 @@ class LearningRecordListResponse(BaseModel):
     page_size: int
 
 
+class BatchIdsRequest(BaseModel):
+    """4-P1-5: 批量操作通用请求体 (删除/收藏等)"""
+    ids: List[int]
+
+
 class DashboardResponse(BaseModel):
     """LearningCenter 仪表盘合并响应 (3.1)
 

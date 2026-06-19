@@ -35,6 +35,21 @@
         </div>
       </div>
 
+      <!-- 4-P1-5: 批量操作工具栏 (选中 N 项时出现) -->
+      <Transition name="fav-bar">
+        <div v-if="selectedIds.size > 0" class="fav-batch-bar">
+          <span class="fav-batch-count">已选 {{ selectedIds.size }} 项</span>
+          <SfButton size="sm" type="ghost" @click="clearSelection">
+            <X :size="14" />
+            取消
+          </SfButton>
+          <SfButton size="sm" type="danger" @click="batchDelete">
+            <Trash2 :size="14" />
+            删除
+          </SfButton>
+        </div>
+      </Transition>
+
       <!-- 4-P1-4: 字幕 Tab 搜索 + 视频筛选 -->
       <div v-if="activeTab === 'subtitles'" class="fav-filter-bar">
         <div class="fav-search-wrap">
@@ -91,7 +106,17 @@
                 v-for="item in group.items"
                 :key="item.id"
                 class="subtitle-fav-card"
+                :class="{ selected: selectedIds.has(item.id) }"
               >
+                <!-- 4-P1-5: 多选 checkbox -->
+                <label class="fav-checkbox">
+                  <input
+                    type="checkbox"
+                    :checked="selectedIds.has(item.id)"
+                    @change="toggleSelect(item.id)"
+                    :aria-label="`选择 ${item.text_en}`"
+                  />
+                </label>
                 <div class="fav-card-content">
                   <div class="fav-card-english">{{ item.text_en }}</div>
                   <div class="fav-card-chinese" v-if="item.text_cn">"{{ item.text_cn }}"</div>
@@ -302,6 +327,58 @@ const formatDuration = (ms) => {
 const searchQuery = ref('')
 const filterMaterialId = ref(null)
 let searchDebounce = null
+
+// 4-P1-5: 批量选择
+const selectedIds = ref(new Set())
+
+const toggleSelect = (id) => {
+  const next = new Set(selectedIds.value)
+  if (next.has(id)) {
+    next.delete(id)
+  } else {
+    next.add(id)
+  }
+  selectedIds.value = next
+}
+
+const clearSelection = () => {
+  selectedIds.value = new Set()
+}
+
+// 4-P1-5: 批量删除 + Undo
+const batchDelete = async () => {
+  const ids = Array.from(selectedIds.value)
+  if (ids.length === 0) return
+  const confirmed = await showConfirm({
+    title: '批量删除',
+    message: `确定删除选中的 ${ids.length} 项字幕收藏？`
+  })
+  if (!confirmed) return
+
+  // 备份被删的 items (用于撤销)
+  const backupItems = subtitleBookmarks.value.filter(b => ids.includes(b.id))
+  try {
+    const res = await subtitleBookmarkAPI.batchDelete(ids)
+    const deletedCount = res.message.match(/\d+/)?.[0] || ids.length
+    clearSelection()
+    loadSubtitleBookmarks()
+    toast.withAction(
+      `已删除 ${deletedCount} 项`,
+      {
+        label: '撤销',
+        onClick: async () => {
+          // 字幕收藏没有 batch-create, 只能逐个调 add (字幕收藏 = SubtitleBookmark)
+          // 由于后端不支持批量撤销, 提示用户手动重新收藏
+          toast.warning(`请重新收藏这 ${backupItems.length} 句 (subtitles 旁星标)`)
+        }
+      },
+      { type: 'success', duration: 5000 }
+    )
+  } catch (e) {
+    console.error('批量删除失败', e)
+    toast.error('批量删除失败')
+  }
+}
 
 const availableMaterials = computed(() => {
   // 从已加载的 bookmarks 提取去重的视频列表
@@ -604,6 +681,54 @@ onMounted(() => {
   gap: 16px;
   transition: all 0.2s var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
   position: relative;
+}
+
+.subtitle-fav-card.selected {
+  background: rgba(37, 99, 235, 0.04);
+  outline: 2px solid var(--color-brand);
+  outline-offset: -2px;
+}
+
+/* 4-P1-5: 多选 checkbox */
+.fav-checkbox {
+  display: flex;
+  align-items: center;
+  padding-top: 2px;
+  cursor: pointer;
+}
+.fav-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--color-brand);
+}
+
+/* 4-P1-5: 批量操作工具栏 */
+.fav-batch-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-brand);
+  border-radius: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+.fav-batch-count {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-brand);
+  flex: 1;
+}
+.fav-bar-enter-active, .fav-bar-leave-active {
+  transition: opacity 0.2s, transform 0.2s;
+}
+.fav-bar-enter-from, .fav-bar-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
 }
 
 .subtitle-fav-card::before {

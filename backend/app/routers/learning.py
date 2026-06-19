@@ -28,6 +28,7 @@ from app.schemas.schemas import (
     LearningRecordWithMaterialResponse,
     LearningRecordListResponse,
     DashboardResponse,
+    BatchIdsRequest,
     SpeechRecognizeResponse,
     DictationSubmitRequest,
     DictationSubmitResponse,
@@ -1572,6 +1573,39 @@ async def remove_bookmark(
     await db.commit()
 
     return MessageResponse(message="已取消收藏", success=True)
+
+
+@router.post("/bookmarks/batch-delete", response_model=MessageResponse)
+async def batch_delete_bookmarks(
+    data: BatchIdsRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db)
+):
+    """4-P1-5: 批量删除字幕收藏
+
+    接受 ids 数组, 单次删除多个收藏 (减少 N 个 HTTP 请求 → 1 个)
+    权限: 仅删除当前用户自己的收藏 (user_id 隔离)
+    """
+    if not data.ids:
+        return MessageResponse(message="无选中项", success=False)
+
+    result = await db.execute(
+        select(SubtitleBookmark).where(
+            SubtitleBookmark.id.in_(data.ids),
+            SubtitleBookmark.user_id == current_user.id  # 权限隔离
+        )
+    )
+    bookmarks = result.scalars().all()
+    deleted_count = 0
+    for b in bookmarks:
+        await db.delete(b)
+        deleted_count += 1
+    await db.commit()
+
+    return MessageResponse(
+        message=f"已删除 {deleted_count} 项",
+        success=True
+    )
 
 
 @router.post("/bookmarks/{bookmark_id}/practice", response_model=MessageResponse)

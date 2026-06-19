@@ -158,7 +158,9 @@ export const subtitleBookmarkAPI = {
   /** 单次获取所有字幕收藏（join Subtitle），替代循环 N+1
  *  4-P1-4: 支持 search + material_id 参数 */
   getAll: (params) => api.get('/learning/bookmarks/all', { params }),
-  incrementPractice: (bookmarkId) => api.post(`/learning/bookmarks/${bookmarkId}/practice`)
+  incrementPractice: (bookmarkId) => api.post(`/learning/bookmarks/${bookmarkId}/practice`),
+  // 4-P1-5: 批量删除
+  batchDelete: (ids) => api.post('/learning/bookmarks/batch-delete', { ids })
 }
 
 // ==================== 标签 API ====================
