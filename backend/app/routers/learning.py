@@ -2,12 +2,15 @@
 学习记录路由
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Query, File, UploadFile, Form
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_, case
 from sqlalchemy.orm import joinedload
 from typing import Annotated, List, Optional
 from datetime import datetime, timedelta, timezone, date
 import json
+import csv
+import io
 import logging
 
 from app.database import get_db
@@ -275,12 +278,18 @@ async def get_vocabulary(
                 (Vocabulary.next_review_at > now)
             )
 
-    # 排序
+    # 排序 (5-P1-7 优化: review_count -> next_review_asc/desc, 复习场景更相关)
+    from sqlalchemy.sql.expression import nulls_last, nulls_first
     order_map = {
         'newest': Vocabulary.created_at.desc(),
         'oldest': Vocabulary.created_at.asc(),
         'word_asc': Vocabulary.word.asc(),
         'word_desc': Vocabulary.word.desc(),
+        # "最该复习": next_review_at 最早的在前, NULL (未复习过) 排最后
+        'next_review_asc': nulls_last(Vocabulary.next_review_at.asc()),
+        # "最不急": next_review_at 最远的在前, NULL 排最后
+        'next_review_desc': nulls_last(Vocabulary.next_review_at.desc()),
+        # 保留兼容: 复习次数 (老 P1-7 选项)
         'review_count': Vocabulary.review_count.desc(),
     }
     query = query.order_by(order_map.get(sort_by, Vocabulary.created_at.desc()))
@@ -504,6 +513,128 @@ async def batch_delete_vocabulary(
         msg += f" (跳过 {skipped} 条: 不存在或非本人)"
 
     return MessageResponse(message=msg, success=True)
+
+
+# ==================== 5-P1-4: 词汇导出 ====================
+@router.get("/vocabulary/export")
+async def export_vocabulary(
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db),
+    format: str = Query("json", description="导出格式: json | csv"),
+    is_new: Optional[bool] = Query(None, description="仅新词 (review_count=0)"),
+    is_due: Optional[bool] = Query(None, description="仅待复习"),
+    keyword: Optional[str] = Query(None, description="单词模糊搜索"),
+    material_id: Optional[int] = Query(None, description="按语料筛选"),
+):
+    """5-P1-4: 导出用户生词本 (备份/迁移/Anki)
+
+    支持格式:
+    - json: 完整结构 (含 SM-2 元数据), 适合备份
+    - csv:  表格 (word, phonetic, translation, context, material_title, mastered, review_count, next_review_at), 适合 Anki
+
+    与 /vocabulary 共享 filter 参数 (is_new / is_due / keyword / material_id)
+    只导出当前用户自己的生词 (user_id 隔离)
+    """
+    # 基础查询 (复用 get_vocabulary 的过滤逻辑)
+    base_query = select(Vocabulary).where(Vocabulary.user_id == current_user.id)
+
+    if material_id is not None:
+        base_query = base_query.where(Vocabulary.material_id == material_id)
+    if is_new is True:
+        base_query = base_query.where(Vocabulary.review_count == 0)
+    elif is_new is False:
+        base_query = base_query.where(Vocabulary.review_count > 0)
+    if is_due is True:
+        now = datetime.now(timezone.utc)
+        base_query = base_query.where(
+            Vocabulary.next_review_at.isnot(None),
+            Vocabulary.next_review_at <= now,
+            Vocabulary.mastered == False  # noqa: E712
+        )
+    if keyword:
+        kw = keyword.strip()
+        if kw:
+            base_query = base_query.where(Vocabulary.word.ilike(f"%{kw}%"))
+
+    # join Material 拿 title
+    query = (
+        base_query
+        .options(joinedload(Vocabulary.material))
+        .order_by(Vocabulary.created_at.desc())
+    )
+
+    result = await db.execute(query)
+    vocabularies = result.scalars().unique().all()
+
+    # 时间戳用于文件名
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+
+    if format == "csv":
+        # CSV (UTF-8 BOM, Excel/Anki 友好)
+        buf = io.StringIO()
+        # 写 BOM 让 Excel 不乱码
+        buf.write("\ufeff")
+        writer = csv.writer(buf)
+        writer.writerow([
+            "word", "phonetic", "translation", "context",
+            "material_title", "mastered", "review_count",
+            "next_review_at", "created_at"
+        ])
+        for v in vocabularies:
+            writer.writerow([
+                v.word,
+                "",  # phonetic 来自 lookup cache, 不存在 Vocab 表
+                "",  # translation 同上
+                v.context or "",
+                v.material.title if v.material else "",
+                "true" if v.mastered else "false",
+                v.review_count,
+                v.next_review_at.isoformat() if v.next_review_at else "",
+                v.created_at.isoformat() if v.created_at else ""
+            ])
+        buf.seek(0)
+        return StreamingResponse(
+            iter([buf.getvalue()]),
+            media_type="text/csv; charset=utf-8",
+            headers={
+                "Content-Disposition": f"attachment; filename=vocabulary-{timestamp}.csv"
+            }
+        )
+
+    # 默认 JSON
+    items = []
+    for v in vocabularies:
+        items.append({
+            "id": v.id,
+            "word": v.word,
+            "context": v.context,
+            "material_id": v.material_id,
+            "material_title": v.material.title if v.material else None,
+            "subtitle_id": v.subtitle_id,
+            "mastered": v.mastered,
+            "review_count": v.review_count,
+            "ease_factor": v.ease_factor,
+            "interval_days": v.interval_days,
+            "next_review_at": v.next_review_at.isoformat() if v.next_review_at else None,
+            "last_reviewed_at": v.last_reviewed_at.isoformat() if v.last_reviewed_at else None,
+            "created_at": v.created_at.isoformat() if v.created_at else None,
+        })
+
+    payload = {
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+        "user_id": current_user.id,
+        "total": len(items),
+        "items": items
+    }
+    content = json.dumps(payload, ensure_ascii=False, indent=2)
+
+    return StreamingResponse(
+        iter([content]),
+        media_type="application/json; charset=utf-8",
+        headers={
+            "Content-Disposition": f"attachment; filename=vocabulary-{timestamp}.json"
+        }
+    )
 
 
 # ==================== 单词查询缓存 ====================

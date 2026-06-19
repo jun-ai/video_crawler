@@ -99,6 +99,8 @@ export const vocabularyAPI = {
   batchMaster: (ids) => api.post('/learning/vocabulary/batch-master', { ids }),
   batchUnmaster: (ids) => api.post('/learning/vocabulary/batch-unmaster', { ids }),
   batchDelete: (ids) => api.post('/learning/vocabulary/batch-delete', { ids }),
+  // 5-P1-4: 导出 (后端返回文件流, 前端用 blob 下载)
+  export: (params) => api.get('/learning/vocabulary/export', { params, responseType: 'blob' }),
   lookup: (word) => api.get(`/learning/vocabulary/lookup?word=${encodeURIComponent(word)}`, { timeout: 30000 }),
   // 复习相关
   getReviewQueue: (limit = 20) => api.get(`/learning/vocabulary/review-queue?limit=${limit}`),

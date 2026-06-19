@@ -3,6 +3,34 @@
     <!-- 页面标题 -->
     <PageHeader title="生词本">
       <template #actions>
+        <!-- 5-P1-4: 导出按钮 (下拉 JSON / CSV) -->
+        <SfDropdown v-if="total > 0">
+          <template #trigger>
+            <SfButton type="ghost" size="sm">
+              <Download :size="14" /> 导出
+            </SfButton>
+          </template>
+          <div class="vocab-dropdown-item" @click="exportVocabulary('json')">
+            <FileJson :size="14" /> JSON (完整备份)
+          </div>
+          <div class="vocab-dropdown-item" @click="exportVocabulary('csv')">
+            <FileText :size="14" /> CSV (Anki/Excel)
+          </div>
+        </SfDropdown>
+
+        <!-- 5-P1-5: 视图切换 (列表/卡片) -->
+        <SfButton
+          v-if="total > 0"
+          :type="viewMode === 'list' ? 'primary' : 'ghost'"
+          size="sm"
+          @click="toggleViewMode"
+          :title="viewMode === 'list' ? '切换到卡片模式' : '切换到列表模式 (密度高)'"
+        >
+          <LayoutGrid v-if="viewMode === 'list'" :size="14" />
+          <Rows3 v-else :size="14" />
+          {{ viewMode === 'list' ? '卡片' : '列表' }}
+        </SfButton>
+
         <!-- 5-P0-4: 批量操作模式开关 -->
         <SfButton
           v-if="total > 0"
@@ -14,6 +42,7 @@
           <Square v-else :size="14" />
           {{ batchMode ? '退出批量' : '批量操作' }}
         </SfButton>
+
         <!-- 5-P0-6: 显示中文开关加 label + localStorage 持久化 -->
         <SfSwitch
           v-model="showChinese"
@@ -82,6 +111,8 @@
               { value: 'oldest', label: '最早添加' },
               { value: 'word_asc', label: 'A → Z' },
               { value: 'word_desc', label: 'Z → A' },
+              { value: 'next_review_asc', label: '🔥 最该复习' },
+              { value: 'next_review_desc', label: '最不急' },
               { value: 'review_count', label: '复习最多' }
             ]" />
           </div>
@@ -150,7 +181,7 @@
         </div>
       </transition>
 
-      <div class="vocab-list" v-loading="loading">
+      <div :class="['vocab-list', { 'vocab-list-list-mode': viewMode === 'list' }]" v-loading="loading">
         <div
           v-for="item in vocabularies"
           :key="item.id"
@@ -362,10 +393,11 @@ import { useRouter } from 'vue-router'
 import { toast } from '@/composables/useToast'
 import { useTTS } from '@/composables/useTTS'
 import { showConfirm } from '@/composables/useConfirm'
-import { Headphones, Play, Flame, Search, X, CheckSquare, Square, CheckCheck, Check, RotateCcw, Trash2 } from 'lucide-vue-next'
+import { Headphones, Play, Flame, Search, X, CheckSquare, Square, CheckCheck, Check, RotateCcw, Trash2, Download, FileJson, FileText, LayoutGrid, Rows3 } from 'lucide-vue-next'
 import SfSwitch from '@/components/ui/SfSwitch.vue'
 import SfSelect from '@/components/ui/SfSelect.vue'
 import SfInput from '@/components/ui/SfInput.vue'
+import SfDropdown from '@/components/ui/SfDropdown.vue'
 import SfEmpty from '@/components/ui/SfEmpty.vue'
 import SfButton from '@/components/ui/SfButton.vue'
 import SfTag from '@/components/ui/SfTag.vue'
@@ -392,6 +424,20 @@ try {
 watch(showChinese, (val) => {
   try { localStorage.setItem('vocab-show-chinese', String(val)) } catch (e) { /* ignore */ }
 })
+
+// 5-P1-5: 视图模式 ('card' | 'list'), 列表模式隐藏翻译/进度/语境, 提升密度
+const viewMode = ref('card')
+try {
+  const stored = localStorage.getItem('vocab-view-mode')
+  if (stored === 'list' || stored === 'card') viewMode.value = stored
+} catch (e) { /* ignore */ }
+watch(viewMode, (val) => {
+  try { localStorage.setItem('vocab-view-mode', val) } catch (e) { /* ignore */ }
+})
+const toggleViewMode = () => {
+  viewMode.value = viewMode.value === 'card' ? 'list' : 'card'
+}
+
 const filterStatus = ref('all')  // 4-P1-3: 'all'/'learning'/'mastered'/'new' (原 filterMastered bool 升级为 string)
 
 // 5-P0-4: 批量操作状态
@@ -750,6 +796,49 @@ const batchDelete = async () => {
   } catch (e) {
     console.error('批量删除失败', e)
     toast.error('批量删除失败')
+  }
+}
+
+// ==================== 5-P1-4: 词汇导出 ====================
+const exportVocabulary = async (format) => {
+  // 共享当前 filter (与 /vocabulary 列表一致: 搜索/语料/掌握状态都带上)
+  const params = { format }
+  if (filterMaterialId.value) {
+    params.material_id = filterMaterialId.value
+  }
+  if (filterStatus.value === 'mastered') {
+    params.mastered = true
+  } else if (filterStatus.value === 'learning') {
+    params.mastered = false
+  } else if (filterStatus.value === 'new') {
+    params.is_new = true
+  } else if (filterStatus.value === 'due') {
+    params.is_due = true
+  }
+  const kw = searchKeyword.value.trim()
+  if (kw) params.keyword = kw
+
+  try {
+    const blob = await vocabularyAPI.export(params)
+    // 从 Content-Disposition 拿后端给的文件名
+    const disposition = blob.headers?.['content-disposition'] || ''
+    const match = disposition.match(/filename="?([^";]+)"?/)
+    const filename = match?.[1] || `vocabulary.${format}`
+
+    // 触发浏览器下载
+    const url = URL.createObjectURL(blob.data)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+
+    toast.success(`已导出 ${vocabularies.value.length} 词为 ${format.toUpperCase()}`)
+  } catch (e) {
+    console.error('导出失败', e)
+    toast.error('导出失败')
   }
 }
 
@@ -1531,5 +1620,107 @@ onMounted(() => {
 .vocab-batch-bar-leave-to {
   opacity: 0;
   transform: translateY(-4px);
+}
+
+/* ==================== 5-P1-5: 列表模式 (高密度) ==================== */
+.vocab-list-list-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;  /* 卡片间距缩小 */
+}
+/* 列表模式: 卡片水平布局, 紧凑 */
+.vocab-list-list-mode .vocab-card {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  min-height: 56px;
+}
+.vocab-list-list-mode .vocab-status-bar {
+  position: relative;  /* 列表模式改为左侧窄条 (不再 absolute) */
+  width: 4px;
+  height: 100%;
+  align-self: stretch;
+  border-radius: 0;
+}
+.vocab-list-list-mode .vocab-card-inner {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
+}
+/* 列表模式: 单词区占主体 */
+.vocab-list-list-mode .vocab-card-top {
+  flex: 1;
+  min-width: 0;  /* 允许 truncation */
+}
+.vocab-list-list-mode .vocab-word-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.vocab-list-list-mode .vocab-word-row {
+  margin: 0;
+}
+.vocab-list-list-mode .vocab-word {
+  font-size: 18px;
+}
+.vocab-list-list-mode .vocab-phonetic {
+  font-size: 12px;
+  color: var(--color-text-tertiary, #94a3b8);
+}
+.vocab-list-list-mode .vocab-phonetic::before {
+  content: '/';
+}
+.vocab-list-list-mode .vocab-phonetic::after {
+  content: '/';
+}
+/* 列表模式: 隐藏详情区 (翻译/进度/语境/来源) */
+.vocab-list-list-mode .vocab-translation,
+.vocab-list-list-mode .vocab-progress-row,
+.vocab-list-list-mode .vocab-context-area,
+.vocab-list-list-mode .vocab-card-footer,
+.vocab-list-list-mode .tts-btn {
+  display: none;
+}
+/* 列表模式: 状态标签紧凑 */
+.vocab-list-list-mode .vocab-status-group {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+/* 列表模式: 操作按钮行, 不换行 */
+.vocab-list-list-mode .vocab-actions {
+  flex-direction: row;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.vocab-list-list-mode .vocab-actions :deep(.sf-btn) {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+/* 列表模式 checkbox 不需要让出位置 */
+.vocab-list-list-mode .vocab-card:has(.vocab-checkbox) .vocab-card-inner {
+  padding-left: 50px;
+}
+
+/* ==================== 5-P1-4: 导出下拉菜单样式 ==================== */
+.vocab-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--color-text-primary, #1e293b);
+  transition: background var(--sf-duration-fast) var(--sf-ease-standard);
+  white-space: nowrap;
+}
+.vocab-dropdown-item:hover {
+  background: var(--color-bg-hover, rgba(37, 99, 235, 0.06));
+}
+.vocab-dropdown-item :deep(svg) {
+  flex-shrink: 0;
+  color: var(--color-text-secondary, #475569);
 }
 </style>
