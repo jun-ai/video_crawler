@@ -57,15 +57,19 @@
         <!-- 学习趋势图表 -->
         <div class="trend-chart-section" v-if="trendData.dates && trendData.dates.length > 0">
           <div class="trend-chart-header">
-            <span class="trend-chart-title">近 7 天学习趋势</span>
+            <span class="trend-chart-title" id="trend-chart-title">近 7 天学习趋势</span>
           </div>
           <div class="trend-chart">
-            <svg viewBox="0 0 100 50" preserveAspectRatio="none" class="chart-svg">
-              <!-- 区域填充 -->
-              <path :d="getAreaPath()" fill="rgba(37, 99, 235, 0.08)" />
-              <!-- 折线 -->
-              <path :d="getChartPath()" fill="none" stroke="var(--color-brand-bright)" stroke-width="0.6" stroke-linejoin="round" />
-              <!-- 数据点 -->
+            <!-- 3.4 SVG 无障碍: role + aria-labelledby + title + desc + aria-hidden 装饰元素 -->
+            <svg viewBox="0 0 100 50" preserveAspectRatio="none" class="chart-svg"
+                 role="img" aria-labelledby="trend-chart-title trend-chart-desc">
+              <title id="trend-chart-title">近 7 天学习趋势</title>
+              <desc id="trend-chart-desc">{{ getChartDesc() }}</desc>
+              <!-- 区域填充 (装饰, 屏幕阅读器跳过) -->
+              <path :d="getAreaPath()" fill="rgba(37, 99, 235, 0.08)" aria-hidden="true" />
+              <!-- 折线 (装饰) -->
+              <path :d="getChartPath()" fill="none" stroke="var(--color-brand-bright)" stroke-width="0.6" stroke-linejoin="round" aria-hidden="true" />
+              <!-- 数据点 (装饰) -->
               <circle
                 v-for="(dot, i) in getChartDots()"
                 :key="i"
@@ -73,6 +77,7 @@
                 :cy="dot.y"
                 r="0.8"
                 fill="var(--color-brand-bright)"
+                aria-hidden="true"
               />
             </svg>
             <div class="chart-labels">
@@ -395,6 +400,20 @@ const getChartDots = () => {
     const y = h - (v / max) * h
     return { x, y, v, label: dates[i] }
   })
+}
+
+// 3.4 SVG 无障碍: 屏幕阅读器朗读, 包含数据摘要 + 每日明细
+const getChartDesc = () => {
+  const { dates, counts } = trendData.value
+  if (!dates || dates.length === 0) return '暂无学习数据'
+  const total = counts.reduce((a, b) => a + b, 0)
+  const max = Math.max(...counts)
+  const maxIdx = counts.indexOf(max)
+  const summary = total === 0
+    ? `近 7 天未学习`
+    : `近 7 天共学习 ${total} 个材料, 最多 ${max} 个 (${dates[maxIdx]})`
+  const detail = dates.map((d, i) => `${d}: ${counts[i]} 个`).join(', ')
+  return `${summary}。每日明细: ${detail}`
 }
 
 // 加载学习记录 (翻页/过滤时调, 首屏数据由 dashboard 提供)
