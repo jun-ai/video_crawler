@@ -10,7 +10,7 @@
         <SfButton type="ghost" size="sm" class="fav-back-btn" @click="$router.back()">
           <ArrowLeft :size="18" />
         </SfButton>
-        <h1 class="fav-page-title">收藏本</h1>
+        <h1 class="fav-page-title">我的收藏</h1>
         <SfButton type="ghost" class="fav-manage-btn" @click="refreshData" :loading="refreshing">
           <RefreshCw :size="14" />
           刷新
