@@ -492,6 +492,7 @@ class SubtitleBookmarkResponse(BaseModel):
     subtitle_id: int
     note: Optional[str] = None
     practice_count: int = 0
+    last_practiced_at: Optional[datetime] = None
     created_at: datetime
     # 关联的字幕信息
     subtitle_text_en: Optional[str] = None
@@ -499,6 +500,7 @@ class SubtitleBookmarkResponse(BaseModel):
     subtitle_start_time: Optional[int] = None
     # 关联的视频信息（/bookmarks/all 端点填充）
     material_title: Optional[str] = None
+    material_cover: Optional[str] = None
     # 5-P1-2: 用户标签 (bookmark 维度)
     tags: List[Dict[str, Any]] = []
 

@@ -106,10 +106,10 @@ async def get_favorites(
     db: AsyncSession = Depends(get_db)
 ):
     """获取收藏列表（按时间倒序）"""
-    # 查询总数
-    count_query = select(Favorite).where(Favorite.user_id == current_user.id)
-    result = await db.execute(count_query)
-    total = len(result.scalars().all())
+    # P2-9: 用 func.count 替代 len(result.scalars().all()) 避免 O(n) 内存
+    from sqlalchemy import func
+    count_query = select(func.count(Favorite.id)).where(Favorite.user_id == current_user.id)
+    total = (await db.execute(count_query)).scalar_one()
 
     # 分页查询收藏列表
     offset = (page - 1) * page_size

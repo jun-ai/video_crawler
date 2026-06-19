@@ -11,36 +11,38 @@
           <ArrowLeft :size="18" />
         </SfButton>
         <h1 class="fav-page-title">我的收藏</h1>
-        <SfButton type="ghost" class="fav-manage-btn" @click="refreshData" :loading="refreshing">
-          <RefreshCw :size="14" />
-          刷新
-        </SfButton>
       </div>
 
       <!-- Tab 导航 - 绿色下划线风格 -->
-      <div class="fav-tabs">
-        <div
-          :class="['fav-tab', { active: activeTab === 'subtitles' }]"
-          @click="activeTab = 'subtitles'"
-        >
-          <span>字幕</span>
-          <span class="tab-count" v-if="subtitleTotal">{{ subtitleTotal }}</span>
+      <div class="fav-tabs-row">
+        <div class="fav-tabs">
+          <div
+            :class="['fav-tab', { active: activeTab === 'subtitles' }]"
+            @click="activeTab = 'subtitles'"
+          >
+            <span>字幕</span>
+            <span class="tab-count" v-if="subtitleTotal">{{ subtitleTotal }}</span>
+          </div>
+          <!-- 5-P1-1: 视频收藏 Tab -->
+          <div
+            :class="['fav-tab', { active: activeTab === 'videos' }]"
+            @click="activeTab = 'videos'"
+          >
+            <span>视频</span>
+            <span class="tab-count" v-if="videoTotal">{{ videoTotal }}</span>
+          </div>
+          <div
+            :class="['fav-tab', { active: activeTab === 'vocabulary' }]"
+            @click="activeTab = 'vocabulary'"
+          >
+            <span>单词/短语</span>
+            <span class="tab-count" v-if="vocabTotal">{{ vocabTotal }}</span>
+          </div>
         </div>
-        <!-- 5-P1-1: 视频收藏 Tab -->
-        <div
-          :class="['fav-tab', { active: activeTab === 'videos' }]"
-          @click="activeTab = 'videos'"
-        >
-          <span>视频</span>
-          <span class="tab-count" v-if="videoTotal">{{ videoTotal }}</span>
-        </div>
-        <div
-          :class="['fav-tab', { active: activeTab === 'vocabulary' }]"
-          @click="activeTab = 'vocabulary'"
-        >
-          <span>单词/短语</span>
-          <span class="tab-count" v-if="vocabTotal">{{ vocabTotal }}</span>
-        </div>
+        <!-- P2-5: 刷新按钮移到 Tab 行右侧 -->
+        <SfButton type="ghost" size="sm" class="fav-refresh-btn" @click="refreshData" :loading="refreshing">
+          <RefreshCw :size="14" />
+        </SfButton>
       </div>
 
       <!-- 4-P1-5: 批量操作工具栏 (选中 N 项时出现) -->
@@ -106,7 +108,15 @@
 
       <!-- 字幕收藏 Tab -->
       <div v-show="activeTab === 'subtitles'" class="tab-content">
-        <div class="subtitle-fav-list" v-loading="subtitleLoading">
+        <div class="subtitle-fav-list">
+          <!-- P2-2: 骨架屏 -->
+          <template v-if="subtitleLoading">
+            <div v-for="i in 4" :key="`sk-${i}`" class="skeleton-fav-card">
+              <div class="sk-line sk-title"></div>
+              <div class="sk-line sk-sub"></div>
+              <div class="sk-line sk-meta"></div>
+            </div>
+          </template>
           <div v-for="group in groupedSubtitles" :key="group.label" class="date-group">
             <div class="date-label">{{ group.label }}</div>
             <div class="subtitle-cards">
@@ -125,6 +135,10 @@
                     :aria-label="`选择 ${item.text_en}`"
                   />
                 </label>
+                <!-- P2-3: 视频封面缩略图 (懒加载) -->
+                <div class="fav-card-thumb" v-if="item.material_cover" @click="goMaterial(item.material_id)">
+                  <img :src="item.material_cover" :alt="item.material_title || ''" loading="lazy" />
+                </div>
                 <div class="fav-card-content">
                   <div class="fav-card-english">{{ item.text_en }}</div>
                   <div class="fav-card-chinese" v-if="item.text_cn">"{{ item.text_cn }}"</div>
@@ -211,8 +225,9 @@
                       {{ item.start_time ? formatDuration(item.start_time) : '' }}
                     </span>
                     <span v-if="item.practice_count > 0" class="fav-practice-count" :title="'已练习 ' + item.practice_count + ' 次'">
-                      练习 {{ item.practice_count }} 次
+                      练习 {{ item.practice_count }} 次{{ formatLastPracticed(item.last_practiced_at) }}
                     </span>
+                    <span v-else class="fav-practice-count fav-practice-zero">未练习</span>
                   </div>
                 </div>
                 <div class="fav-card-actions">
@@ -220,11 +235,25 @@
                     <template #trigger>
                       <MoreHorizontal :size="16" class="fav-more-icon" />
                     </template>
+                    <!-- P2-1: 复制原句 -->
+                    <div class="dropdown-item" @click="copySubtitleText(item)">
+                      <Copy :size="14" />
+                      复制原句
+                    </div>
                     <div class="dropdown-item" @click="handleSubtitleCommand('remove', item)">
                       <Trash2 :size="14" />
                       取消收藏
                     </div>
                   </SfDropdown>
+                  <SfButton
+                    type="ghost"
+                    size="sm"
+                    @click="quickPractice(item)"
+                    class="fav-quick-practice-btn"
+                    :title="'练习 (当前 ' + (item.practice_count || 0) + ' 次)'"
+                  >
+                    <RotateCcw :size="14" />
+                  </SfButton>
                   <SfButton
                     type="primary"
                     size="sm"
@@ -263,7 +292,15 @@
 
       <!-- 词汇收藏 Tab -->
       <div v-show="activeTab === 'vocabulary'" class="tab-content">
-        <div class="vocab-list" v-loading="vocabLoading">
+        <div class="vocab-list">
+          <!-- P2-2: 骨架屏 -->
+          <template v-if="vocabLoading">
+            <div v-for="i in 4" :key="`vsk-${i}`" class="skeleton-fav-card">
+              <div class="sk-line sk-title"></div>
+              <div class="sk-line sk-sub"></div>
+              <div class="sk-line sk-meta"></div>
+            </div>
+          </template>
           <div v-for="item in vocabList" :key="item.id" class="vocab-card">
             <div class="vocab-main">
               <div class="vocab-content">
@@ -401,7 +438,10 @@ import {
   // 5-P1-2: 笔记
   StickyNote,
   Edit2,
-  Plus
+  Plus,
+  // P2-1/P2-4: 复制原句 + 快速复习
+  Copy,
+  RotateCcw
 } from 'lucide-vue-next'
 import SfButton from '@/components/ui/SfButton.vue'
 import SfTag from '@/components/ui/SfTag.vue'
@@ -430,7 +470,9 @@ const subtitleTotal = ref(0)
 
 // 按日期分组
 const groupedSubtitles = computed(() => {
+  // P2-8: 最近 7 天用语义化标签 (今天/昨天/N天前), 超过 7 天用真实日期 (MM-DD)
   const groups = {}
+  const order = []
   subtitleBookmarks.value.forEach(item => {
     const date = item.created_at ? new Date(item.created_at) : new Date()
     const now = new Date()
@@ -440,15 +482,22 @@ const groupedSubtitles = computed(() => {
     let label
     if (days === 0) label = '今天'
     else if (days === 1) label = '昨天'
-    else if (days < 7) label = '近一周'
-    else label = '更早'
+    else if (days < 7) label = `${days} 天前`
+    else {
+      const m = String(date.getMonth() + 1).padStart(2, '0')
+      const d = String(date.getDate()).padStart(2, '0')
+      label = `${date.getFullYear()}-${m}-${d}`
+    }
 
-    if (!groups[label]) groups[label] = { label, items: [] }
+    if (!groups[label]) {
+      groups[label] = { label, items: [], _sortKey: date.getTime() }
+      order.push(label)
+    }
     groups[label].items.push(item)
   })
 
-  const order = ['今天', '昨天', '近一周', '更早']
-  return order.filter(l => groups[l]).map(l => groups[l])
+  // 按时间倒序 (最新的组在前)
+  return Object.values(groups).sort((a, b) => b._sortKey - a._sortKey)
 })
 
 // ====== 词汇收藏 ======
@@ -460,10 +509,49 @@ const vocabTotal = ref(0)
 
 const formatDuration = (ms) => {
   if (!ms && ms !== 0) return ''
-  const seconds = Math.floor(ms / 1000)
-  const mins = Math.floor(seconds / 60)
-  const secs = seconds % 60
-  return `${mins}:${secs.toString().padStart(2, '0')}`
+  const totalSec = Math.floor(ms / 1000)
+  const min = Math.floor(totalSec / 60)
+  const sec = totalSec % 60
+  return `${min}:${String(sec).padStart(2, '0')}`
+}
+
+// P2-4: 格式化"最后练习时间" (相对时间)
+const formatLastPracticed = (isoStr) => {
+  if (!isoStr) return ''
+  const date = new Date(isoStr)
+  const now = new Date()
+  const diffMs = now - date
+  const diffMin = Math.floor(diffMs / 60000)
+  const diffHr = Math.floor(diffMs / 3600000)
+  const diffDay = Math.floor(diffMs / 86400000)
+  if (diffMin < 1) return ' · 刚刚'
+  if (diffMin < 60) return ` · ${diffMin} 分钟前`
+  if (diffHr < 24) return ` · ${diffHr} 小时前`
+  if (diffDay < 30) return ` · ${diffDay} 天前`
+  return ` · ${date.getMonth() + 1}/${date.getDate()}`
+}
+
+// P2-1: 复制原句到剪贴板
+const copySubtitleText = async (item) => {
+  const text = item.text_cn ? `${item.text_en}\n"${item.text_cn}"` : item.text_en
+  try {
+    await navigator.clipboard.writeText(text)
+    toast.success('已复制')
+  } catch {
+    toast.error('复制失败')
+  }
+}
+
+// P2-4: 快速复习 (increment practice_count)
+const quickPractice = async (item) => {
+  try {
+    await subtitleBookmarkAPI.incrementPractice(item.id)
+    item.practice_count = (item.practice_count || 0) + 1
+    item.last_practiced_at = new Date().toISOString()
+  } catch (e) {
+    console.error('练习失败', e)
+    toast.error('练习失败')
+  }
 }
 
 // ====== 字幕收藏操作 ======
@@ -1684,5 +1772,168 @@ onMounted(() => {
   .vocab-context {
     font-size: 11px;
   }
+}
+
+/* ================================================
+   P2 增量 — Favorites 微迭代样式
+   P2-5: 刷新按钮移到 Tab 行右侧
+   P2-3: 视频封面缩略图 (懒加载)
+   P2-2: 骨架屏
+   P2-4: 最后练习时间 + 快速复习按钮
+   ================================================ */
+
+/* P2-5: Tabs + Refresh 同排 */
+.fav-tabs-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 2px solid var(--color-border);
+  margin-bottom: 28px;
+}
+
+.fav-tabs-row .fav-tabs {
+  border-bottom: none;  /* row 已统一管理下划线 */
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.fav-refresh-btn {
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-bottom: 6px;  /* 跟 tab 基线对齐 */
+  transition: all var(--sf-duration-normal, 220ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.fav-refresh-btn:hover {
+  color: var(--color-brand-bright);
+  border-color: var(--color-brand-bright);
+  background: var(--color-brand-subtle);
+}
+
+.fav-refresh-btn svg {
+  animation: fav-refresh-spin 0.6s linear;
+}
+
+.fav-refresh-btn.is-loading svg {
+  animation: fav-refresh-spin 1s linear infinite;
+}
+
+@keyframes fav-refresh-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* P2-3: 视频封面缩略图 (懒加载, 圆形柔和, hover scale) */
+.fav-card-thumb {
+  width: 96px;
+  height: 64px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+  cursor: pointer;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  transition: transform var(--sf-duration-normal, 220ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+              border-color var(--sf-duration-normal, 220ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.fav-card-thumb:hover {
+  transform: scale(1.04);
+  border-color: var(--color-brand-bright);
+}
+
+.fav-card-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* P2-2: 骨架屏 (loading 占位) */
+.skeleton-fav-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg, 16px);
+  margin-bottom: 10px;
+}
+
+.sk-line {
+  height: 12px;
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-elevated) 0%,
+    rgba(0, 0, 0, 0.06) 50%,
+    var(--color-bg-elevated) 100%
+  );
+  background-size: 200% 100%;
+  border-radius: 6px;
+  animation: sk-shimmer 1.4s ease-in-out infinite;
+}
+
+.sk-title {
+  width: 70%;
+  height: 16px;
+}
+
+.sk-sub {
+  width: 85%;
+  height: 12px;
+}
+
+.sk-meta {
+  width: 40%;
+  height: 10px;
+  margin-top: 4px;
+}
+
+@keyframes sk-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* P2-4: 快速复习按钮 (旋转图标, ghost 风格) */
+.fav-quick-practice-btn {
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  background: transparent;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: all var(--sf-duration-normal, 220ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.fav-quick-practice-btn:hover {
+  color: var(--color-brand-bright);
+  border-color: var(--color-brand-bright);
+  background: var(--color-brand-subtle);
+  transform: rotate(-90deg);
+}
+
+.fav-quick-practice-btn:active {
+  transform: rotate(-180deg) scale(0.92);
+}
+
+/* P2-4: "未练习" 灰色标签 */
+.fav-practice-zero {
+  background: transparent !important;
+  color: var(--color-text-muted) !important;
+  border: 1px dashed var(--color-border);
+  padding: 2px 10px;
+  cursor: default;
 }
 </style>

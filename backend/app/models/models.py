@@ -291,6 +291,7 @@ class SubtitleBookmark(Base):
     subtitle_id = Column(Integer, ForeignKey("subtitles.id"), nullable=False, index=True)
     note = Column(Text, nullable=True)                   # 用户备注
     practice_count = Column(Integer, default=0)          # 跟读练习次数
+    last_practiced_at = Column(DateTime(timezone=True), nullable=True)  # P2-4: 最后练习时间
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # 关联

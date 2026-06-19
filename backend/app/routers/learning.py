@@ -2350,6 +2350,8 @@ async def increment_bookmark_practice(
         )
 
     bookmark.practice_count = (bookmark.practice_count or 0) + 1
+    from datetime import datetime, timezone
+    bookmark.last_practiced_at = datetime.now(timezone.utc)
     await db.commit()
 
     return MessageResponse(message=f"练习次数已更新为 {bookmark.practice_count}", success=True)
@@ -2440,11 +2442,13 @@ async def get_all_user_bookmarks(
             subtitle_id=bookmark.subtitle_id,
             note=bookmark.note,
             practice_count=bookmark.practice_count or 0,
+            last_practiced_at=bookmark.last_practiced_at,
             created_at=bookmark.created_at,
             subtitle_text_en=subtitle.text_en,
             subtitle_text_cn=subtitle.text_cn,
             subtitle_start_time=subtitle.start_time,
             material_title=material.title,
+            material_cover=get_file_url(material.cover_path) if material else None,
             tags=tags_data,
         ))
     return response
