@@ -1508,8 +1508,18 @@ async def get_review_queue(
     total_learning = learning_result.scalar() or 0
 
     # 构建响应
+    from app.services.spaced_repetition import compute_next_intervals
     items = []
     for vocab in vocabularies:
+        # 计算 6 档 quality 对应的下次复习天数,前端只展示不重算
+        intervals = compute_next_intervals(
+            ease_factor=vocab.ease_factor or 2.5,
+            interval_days=vocab.interval_days or 0,
+            review_count=vocab.review_count or 0,
+        )
+        # JSON 不允许 int key,转成字符串 key
+        intervals_str = {str(q): days for q, days in intervals.items()}
+
         items.append(VocabularyResponse(
             id=vocab.id,
             user_id=vocab.user_id,
@@ -1525,7 +1535,8 @@ async def get_review_queue(
             last_reviewed_at=vocab.last_reviewed_at,
             ease_factor=vocab.ease_factor,
             interval_days=vocab.interval_days,
-            created_at=vocab.created_at
+            created_at=vocab.created_at,
+            next_intervals=intervals_str,
         ))
 
     return ReviewQueueResponse(items=items, total_due=total_due, total_learning=total_learning)

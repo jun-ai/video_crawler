@@ -167,6 +167,9 @@ class VocabularyResponse(VocabularyBase):
     ease_factor: float = 2.5
     interval_days: int = 0
     created_at: datetime
+    # 6 档 quality 对应的下次复习天数 (review-queue 填,其他端点可空)
+    # key 是 quality (0-5), value 是天数。前端只展示不重算。
+    next_intervals: Optional[Dict[str, int]] = None
 
     class Config:
         from_attributes = True

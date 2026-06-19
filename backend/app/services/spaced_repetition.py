@@ -3,6 +3,7 @@ SM-2 间隔重复算法
 
 用于生词本复习调度
 """
+from typing import Dict
 
 
 def sm2_algorithm(quality: int, ease_factor: float, interval_days: int, review_count: int):
@@ -45,3 +46,33 @@ def sm2_algorithm(quality: int, ease_factor: float, interval_days: int, review_c
     )
 
     return new_ease_factor, new_interval, new_review_count
+
+
+def compute_next_intervals(
+    ease_factor: float, interval_days: int, review_count: int
+) -> Dict[int, int]:
+    """
+    计算 6 档 quality 对应的下次复习间隔天数
+
+    用于 review-queue API 一次下发,前端只展示不重算。
+    解决 VR.vue nextInterval() 与后端 SM-2 公式不一致的 P0-6 信任问题。
+
+    Args:
+        ease_factor: 当前易度因子 (默认 2.5)
+        interval_days: 当前间隔天数
+        review_count: 当前复习次数
+
+    Returns:
+        {quality(0-5): 下次间隔天数}, 所有值 >= 1
+    """
+    result: Dict[int, int] = {}
+    for q in range(6):
+        _, new_interval, _ = sm2_algorithm(
+            quality=q,
+            ease_factor=ease_factor,
+            interval_days=interval_days,
+            review_count=review_count,
+        )
+        # SM-2 返回可能 < 1 (防御性兜底)
+        result[q] = max(1, new_interval)
+    return result
