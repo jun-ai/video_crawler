@@ -92,7 +92,7 @@ async def test_export_csv_with_bom(client, auth_headers, export_setup):
 
     # 验证表头
     expected_headers = {"word", "phonetic", "translation", "context",
-                        "material_title", "mastered", "review_count",
+                        "material_title", "mastered", "starred", "review_count",
                         "next_review_at", "created_at"}
     assert set(reader.fieldnames) == expected_headers
 

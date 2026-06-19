@@ -131,6 +131,9 @@ class Vocabulary(Base):
     word = Column(String(100), nullable=False, index=True)
     context = Column(Text, nullable=True)      # 上下文句子
     mastered = Column(Boolean, default=False)
+    # 5-P2-5: 重点词标记 (用户主动 star 的词, 与 mastered 是两个维度)
+    # mastered = 客观算法判定已掌握, starred = 用户主观标记重点
+    starred = Column(Boolean, default=False, index=True)
     # SM-2 间隔重复字段
     next_review_at = Column(DateTime(timezone=True), nullable=True)  # 下次复习时间
     review_count = Column(Integer, default=0)                        # 复习次数

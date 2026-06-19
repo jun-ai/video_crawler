@@ -355,6 +355,7 @@ async def get_vocabulary(
             )
 
     # 排序 (5-P1-7 优化: review_count -> next_review_asc/desc, 复习场景更相关)
+    # 5-P2-5: starred_first 把 starred=True 的词排前面
     from sqlalchemy.sql.expression import nulls_last, nulls_first
     order_map = {
         'newest': Vocabulary.created_at.desc(),
@@ -365,6 +366,8 @@ async def get_vocabulary(
         'next_review_asc': nulls_last(Vocabulary.next_review_at.asc()),
         # "最不急": next_review_at 最远的在前, NULL 排最后
         'next_review_desc': nulls_last(Vocabulary.next_review_at.desc()),
+        # 5-P2-5: starred 优先 (starred=True 排最前, 然后按 created_at 倒序)
+        'starred_first': Vocabulary.starred.desc(),
         # 保留兼容: 复习次数 (老 P1-7 选项)
         'review_count': Vocabulary.review_count.desc(),
     }
@@ -388,6 +391,7 @@ async def get_vocabulary(
             "material_title": vocab.material.title if vocab.material else None,
             "subtitle_id": vocab.subtitle_id,
             "mastered": vocab.mastered,
+            "starred": getattr(vocab, 'starred', False),  # 5-P2-5
             "context_cn": vocab.subtitle.text_cn if vocab.subtitle else None,
             "created_at": vocab.created_at
         }
@@ -454,6 +458,66 @@ async def unmark_vocabulary_mastered(
     await db.commit()
 
     return MessageResponse(message="已取消掌握", success=True)
+
+
+# ==================== 5-P2-5: 词汇星标 ====================
+@router.put("/vocabulary/{vocabulary_id}/star", response_model=MessageResponse)
+async def star_vocabulary(
+    vocabulary_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db)
+):
+    """5-P2-5: 标记生词为重点 (starred=True)
+
+    与 mastered 是两个维度:
+    - mastered: 客观算法判定 (SM-2 评分高)
+    - starred: 用户主观标记 (重要但不熟, 或特殊语境想保留)
+    """
+    result = await db.execute(
+        select(Vocabulary).where(
+            Vocabulary.id == vocabulary_id,
+            Vocabulary.user_id == current_user.id
+        )
+    )
+    vocabulary = result.scalar_one_or_none()
+
+    if not vocabulary:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="生词不存在"
+        )
+
+    vocabulary.starred = True
+    await db.commit()
+
+    return MessageResponse(message="已标记重点", success=True)
+
+
+@router.put("/vocabulary/{vocabulary_id}/unstar", response_model=MessageResponse)
+async def unstar_vocabulary(
+    vocabulary_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db)
+):
+    """5-P2-5: 取消生词的重点标记 (starred=False)"""
+    result = await db.execute(
+        select(Vocabulary).where(
+            Vocabulary.id == vocabulary_id,
+            Vocabulary.user_id == current_user.id
+        )
+    )
+    vocabulary = result.scalar_one_or_none()
+
+    if not vocabulary:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="生词不存在"
+        )
+
+    vocabulary.starred = False
+    await db.commit()
+
+    return MessageResponse(message="已取消重点", success=True)
 
 
 @router.delete("/vocabulary/{vocabulary_id}", response_model=MessageResponse)
@@ -591,6 +655,71 @@ async def batch_delete_vocabulary(
     return MessageResponse(message=msg, success=True)
 
 
+@router.post("/vocabulary/batch-star", response_model=MessageResponse)
+async def batch_star_vocabulary(
+    data: BatchIdsRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db)
+):
+    """5-P2-5: 批量标记生词为重点 (starred=True)
+
+    与 batch-master 互不影响 (重点 vs 掌握是两个维度)
+    """
+    if not data.ids:
+        return MessageResponse(message="无选中项", success=False)
+
+    result = await db.execute(
+        select(Vocabulary).where(
+            Vocabulary.id.in_(data.ids),
+            Vocabulary.user_id == current_user.id
+        )
+    )
+    vocabularies = result.scalars().all()
+    updated_count = 0
+    for v in vocabularies:
+        v.starred = True
+        updated_count += 1
+    await db.commit()
+
+    skipped = len(data.ids) - updated_count
+    msg = f"已标记 {updated_count} 词为重点"
+    if skipped > 0:
+        msg += f" (跳过 {skipped} 条: 不存在或非本人)"
+
+    return MessageResponse(message=msg, success=True)
+
+
+@router.post("/vocabulary/batch-unstar", response_model=MessageResponse)
+async def batch_unstar_vocabulary(
+    data: BatchIdsRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db)
+):
+    """5-P2-5: 批量取消生词的重点标记 (starred=False)"""
+    if not data.ids:
+        return MessageResponse(message="无选中项", success=False)
+
+    result = await db.execute(
+        select(Vocabulary).where(
+            Vocabulary.id.in_(data.ids),
+            Vocabulary.user_id == current_user.id
+        )
+    )
+    vocabularies = result.scalars().all()
+    updated_count = 0
+    for v in vocabularies:
+        v.starred = False
+        updated_count += 1
+    await db.commit()
+
+    skipped = len(data.ids) - updated_count
+    msg = f"已取消 {updated_count} 词的重点"
+    if skipped > 0:
+        msg += f" (跳过 {skipped} 条: 不存在或非本人)"
+
+    return MessageResponse(message=msg, success=True)
+
+
 # ==================== 5-P1-4: 词汇导出 ====================
 @router.get("/vocabulary/export")
 async def export_vocabulary(
@@ -653,7 +782,7 @@ async def export_vocabulary(
         writer = csv.writer(buf)
         writer.writerow([
             "word", "phonetic", "translation", "context",
-            "material_title", "mastered", "review_count",
+            "material_title", "mastered", "starred", "review_count",
             "next_review_at", "created_at"
         ])
         for v in vocabularies:
@@ -664,6 +793,7 @@ async def export_vocabulary(
                 v.context or "",
                 v.material.title if v.material else "",
                 "true" if v.mastered else "false",
+                "true" if getattr(v, 'starred', False) else "false",  # 5-P2-5
                 v.review_count,
                 v.next_review_at.isoformat() if v.next_review_at else "",
                 v.created_at.isoformat() if v.created_at else ""
@@ -688,6 +818,7 @@ async def export_vocabulary(
             "material_title": v.material.title if v.material else None,
             "subtitle_id": v.subtitle_id,
             "mastered": v.mastered,
+            "starred": getattr(v, 'starred', False),  # 5-P2-5
             "review_count": v.review_count,
             "ease_factor": v.ease_factor,
             "interval_days": v.interval_days,

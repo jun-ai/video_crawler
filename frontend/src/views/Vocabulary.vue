@@ -107,11 +107,12 @@
           <div class="filter-section">
             <span class="filter-label">排序：</span>
             <SfSelect v-model="sortBy" :options="[
+              { value: 'starred_first', label: '⭐ 星标优先' },
+              { value: 'next_review_asc', label: '🔥 最该复习' },
               { value: 'newest', label: '最近添加' },
               { value: 'oldest', label: '最早添加' },
               { value: 'word_asc', label: 'A → Z' },
               { value: 'word_desc', label: 'Z → A' },
-              { value: 'next_review_asc', label: '🔥 最该复习' },
               { value: 'next_review_desc', label: '最不急' },
               { value: 'review_count', label: '复习最多' }
             ]" />
@@ -174,6 +175,12 @@
           </SfButton>
           <SfButton size="sm" type="warning" @click="batchUnmaster">
             <RotateCcw :size="14" /> 取消掌握
+          </SfButton>
+          <SfButton size="sm" type="primary" @click="batchStar">
+            <Star :size="14" /> 标记重点
+          </SfButton>
+          <SfButton size="sm" type="ghost" @click="batchUnstar">
+            <Star :size="14" /> 取消重点
           </SfButton>
           <SfButton size="sm" type="danger" @click="batchDelete">
             <Trash2 :size="14" /> 删除
@@ -330,6 +337,15 @@
 
             <!-- 操作按钮 -->
             <div class="vocab-actions">
+              <!-- 5-P2-5: 星标按钮 (amber-gold 实心/空心) -->
+              <button
+                :class="['star-btn', { 'starred': item.starred }]"
+                @click.stop="toggleStar(item)"
+                :title="item.starred ? '取消重点' : '标记重点'"
+                :aria-label="item.starred ? `取消 ${item.word} 的重点标记` : `将 ${item.word} 标记为重点`"
+              >
+                <Star :size="16" :fill="item.starred ? 'currentColor' : 'none'" />
+              </button>
               <!-- 5-P0-2: 单词点击查释义 (替代 '查询发音' 按钮) -->
               <SfButton
                 type="primary"
@@ -423,7 +439,7 @@ import { useRouter } from 'vue-router'
 import { toast } from '@/composables/useToast'
 import { useTTS } from '@/composables/useTTS'
 import { showConfirm } from '@/composables/useConfirm'
-import { Headphones, Play, Flame, Search, X, CheckSquare, Square, CheckCheck, Check, RotateCcw, Trash2, Download, FileJson, FileText, LayoutGrid, Rows3 } from 'lucide-vue-next'
+import { Headphones, Play, Flame, Search, X, CheckSquare, Square, CheckCheck, Check, RotateCcw, Trash2, Download, FileJson, FileText, LayoutGrid, Rows3, Star } from 'lucide-vue-next'
 import SfSwitch from '@/components/ui/SfSwitch.vue'
 import SfSelect from '@/components/ui/SfSelect.vue'
 import SfInput from '@/components/ui/SfInput.vue'
@@ -731,6 +747,25 @@ const unmarkVocab = async (id) => {
   }
 }
 
+// ==================== 5-P2-5: 词汇星标 ====================
+const toggleStar = async (item) => {
+  try {
+    if (item.starred) {
+      await vocabularyAPI.unstar(item.id)
+      item.starred = false
+      // toast.success('已取消重点')
+    } else {
+      await vocabularyAPI.star(item.id)
+      item.starred = true
+      // toast.success('已标记重点')
+    }
+    // 不调 toast, 避免频繁点击时弹窗爆炸; UI 已即时反馈 (图标实心/空心)
+  } catch (e) {
+    console.error('星标操作失败', e)
+    toast.error('星标操作失败')
+  }
+}
+
 const deleteVocab = async (item) => {
   const confirmed = await showConfirm({ title: '确认删除', message: '确定要删除该生词吗？' })
   if (confirmed) {
@@ -828,6 +863,35 @@ const batchUnmaster = async () => {
   } catch (e) {
     console.error('批量取消失败', e)
     toast.error('批量取消失败')
+  }
+}
+
+// 5-P2-5: 批量星标 / 取消星标
+const batchStar = async () => {
+  const ids = Array.from(selectedIds.value)
+  if (ids.length === 0) return
+  try {
+    const res = await vocabularyAPI.batchStar(ids)
+    toast.success(res.message || `已标记 ${ids.length} 词为重点`)
+    clearSelection()
+    loadVocabularies()
+  } catch (e) {
+    console.error('批量星标失败', e)
+    toast.error('批量星标失败')
+  }
+}
+
+const batchUnstar = async () => {
+  const ids = Array.from(selectedIds.value)
+  if (ids.length === 0) return
+  try {
+    const res = await vocabularyAPI.batchUnstar(ids)
+    toast.success(res.message || `已取消 ${ids.length} 词的重点`)
+    clearSelection()
+    loadVocabularies()
+  } catch (e) {
+    console.error('批量取消星标失败', e)
+    toast.error('批量取消星标失败')
   }
 }
 
@@ -1966,5 +2030,42 @@ onUnmounted(() => {
   font-size: 10px;
   font-weight: 600;
   color: var(--color-text-primary, #1e293b);
+}
+
+/* ==================== 5-P2-5: 星标按钮 ==================== */
+.star-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--color-text-tertiary, #94a3b8);
+  cursor: pointer;
+  transition: all var(--sf-duration-fast) var(--sf-ease-standard);
+}
+.star-btn:hover {
+  background: rgba(245, 158, 11, 0.08);
+  color: #F59E0B;  /* amber-gold */
+  transform: scale(1.08);
+}
+.star-btn:active {
+  transform: scale(0.95);
+}
+/* 已星标: amber-gold 实心 */
+.star-btn.starred {
+  color: #F59E0B;
+  background: rgba(245, 158, 11, 0.06);
+}
+.star-btn.starred:hover {
+  background: rgba(245, 158, 11, 0.14);
+}
+/* 列表模式: 缩小尺寸 */
+.vocab-list-list-mode .star-btn {
+  width: 28px;
+  height: 28px;
 }
 </style>

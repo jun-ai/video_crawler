@@ -94,10 +94,15 @@ export const vocabularyAPI = {
   getList: (params) => api.get('/learning/vocabulary', { params }),
   markMastered: (id) => api.put(`/learning/vocabulary/${id}/master`),
   unmarkMastered: (id) => api.put(`/learning/vocabulary/${id}/unmaster`), // 5-P0-1
+  // 5-P2-5: 星标
+  star: (id) => api.put(`/learning/vocabulary/${id}/star`),
+  unstar: (id) => api.put(`/learning/vocabulary/${id}/unstar`),
   delete: (id) => api.delete(`/learning/vocabulary/${id}`),
   // 5-P0-4: 批量操作 (3 个端点共用 BatchIdsRequest)
   batchMaster: (ids) => api.post('/learning/vocabulary/batch-master', { ids }),
   batchUnmaster: (ids) => api.post('/learning/vocabulary/batch-unmaster', { ids }),
+  batchStar: (ids) => api.post('/learning/vocabulary/batch-star', { ids }),     // 5-P2-5
+  batchUnstar: (ids) => api.post('/learning/vocabulary/batch-unstar', { ids }), // 5-P2-5
   batchDelete: (ids) => api.post('/learning/vocabulary/batch-delete', { ids }),
   // 5-P1-4: 导出 (后端返回文件流, 前端用 blob 下载)
   export: (params) => api.get('/learning/vocabulary/export', { params, responseType: 'blob' }),
