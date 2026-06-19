@@ -57,6 +57,12 @@ const routes = [
     name: 'Register',
     component: () => import('@/views/Register.vue')
   },
+  // P3 组件展示页(开发环境,生产可保留)
+  {
+    path: '/_showcase',
+    name: 'Showcase',
+    component: () => import('@/views/Showcase.vue')
+  },
   // 管理员路由
   {
     path: '/admin',
