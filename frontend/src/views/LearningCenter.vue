@@ -336,26 +336,22 @@ const setFilter = (value) => {
   loadRecords()
 }
 
-// 加载统计数据
-const loadStatistics = async () => {
+// 3.2 加载仪表盘: 一次 HTTP 拿 5 个视图 (stats + trend + recent + completed + records-首页)
+const loadDashboard = async () => {
   statsLoading.value = true
   try {
-    const res = await learningStatsAPI.getStatistics()
-    stats.value = res
+    const data = await learningStatsAPI.getDashboard()
+    stats.value = data.statistics
+    trendData.value = data.trend
+    recentList.value = data.recent
+    completedList.value = data.completed
+    records.value = data.records.items
+    recordsTotal.value = data.records.total
   } catch (e) {
-    console.error('加载统计数据失败', e)
+    console.error('加载仪表盘失败', e)
+    toast.error('加载失败, 请重试')
   } finally {
     statsLoading.value = false
-  }
-}
-
-// 加载学习趋势
-const loadTrend = async () => {
-  try {
-    const res = await learningStatsAPI.getTrend(7)
-    trendData.value = res
-  } catch (e) {
-    console.error('加载学习趋势失败', e)
   }
 }
 
@@ -401,33 +397,7 @@ const getChartDots = () => {
   })
 }
 
-// 加载最近学习
-const loadRecent = async () => {
-  recentLoading.value = true
-  try {
-    const res = await learningStatsAPI.getRecent(10)
-    recentList.value = res
-  } catch (e) {
-    console.error('加载最近学习失败', e)
-  } finally {
-    recentLoading.value = false
-  }
-}
-
-// 加载已完成
-const loadCompleted = async () => {
-  completedLoading.value = true
-  try {
-    const res = await learningStatsAPI.getCompleted(10)
-    completedList.value = res
-  } catch (e) {
-    console.error('加载已完成失败', e)
-  } finally {
-    completedLoading.value = false
-  }
-}
-
-// 加载学习记录
+// 加载学习记录 (翻页/过滤时调, 首屏数据由 dashboard 提供)
 const loadRecords = async () => {
   recordsLoading.value = true
   try {
@@ -450,11 +420,8 @@ const loadRecords = async () => {
 
 onMounted(() => {
   if (userStore.isLoggedIn) {
-    loadStatistics()
-    loadRecent()
-    loadCompleted()
-    loadRecords()
-    loadTrend()
+    // 3.2 一次拿全: stats + trend + recent + completed + records 首屏
+    loadDashboard()
   }
 })
 </script>

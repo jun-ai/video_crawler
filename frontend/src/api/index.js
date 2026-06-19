@@ -114,7 +114,9 @@ export const learningStatsAPI = {
   getCompleted: (limit = 10) => api.get(`/learning/completed?limit=${limit}`),
   getRecords: (params) => api.get('/learning/records', { params }),
   getCalendar: (year, month) => api.get('/learning/calendar', { params: { year, month } }),
-  getTrend: (days = 7) => api.get(`/learning/trend?days=${days}`)
+  getTrend: (days = 7) => api.get(`/learning/trend?days=${days}`),
+  // 3.1 合并端点: 一次拿 5 个视图数据 (stats + trend + recent + completed + records-首页)
+  getDashboard: () => api.get('/learning/dashboard'),
 }
 
 // ==================== 语音识别 API ====================
