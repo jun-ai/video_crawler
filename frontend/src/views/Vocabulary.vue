@@ -101,6 +101,24 @@
                 <SfTag :type="item.mastered ? 'success' : 'warning'" size="sm">
                   {{ item.mastered ? '已掌握' : '学习中' }}
                 </SfTag>
+                <!-- 4-P1-2: 下次复习时间徽标 (SM-2 算法产出) -->
+                <SfTag
+                  v-if="!item.mastered && getNextReviewInfo(item.next_review_at)"
+                  size="sm"
+                  :type="getNextReviewInfo(item.next_review_at).type"
+                  :aria-label="`下次复习: ${getNextReviewInfo(item.next_review_at).label}`"
+                >
+                  {{ getNextReviewInfo(item.next_review_at).label }}
+                </SfTag>
+                <!-- 4-P1-2: 复习难度星标 (ease_factor 2.5 -> 3 星) -->
+                <span
+                  v-if="item.review_count > 0 && item.ease_factor !== undefined"
+                  class="vocab-difficulty"
+                  :title="`难度 ${item.ease_factor.toFixed(2)} (越高越简单)`"
+                  :aria-label="`难度 ${item.ease_factor.toFixed(2)}`"
+                >
+                  <span class="vocab-difficulty-stars">{{ getDifficultyStars(item.ease_factor) }}</span>
+                </span>
                 <SfTag
                   v-if="item.review_count > 0"
                   size="sm"
@@ -387,12 +405,53 @@ const formatRelativeTime = (dateStr) => {
   const now = new Date()
   const diff = now - date
   const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+
   if (days === 0) return '今天'
   if (days === 1) return '昨天'
-  if (days < 7) return `${days}天前`
-  if (days < 30) return `${Math.floor(days / 7)}周前`
-  if (days < 365) return `${Math.floor(days / 30)}月前`
-  return `${Math.floor(days / 365)}年前`
+  if (days < 7) return `${days} 天前`
+  if (days < 30) return `${Math.floor(days / 7)} 周前`
+  return `${Math.floor(days / 30)} 个月前`
+}
+
+// 4-P1-2: 下次复习时间显示 (SM-2 算法产出 next_review_at)
+// 返回 {label, type, daysDiff}, type 用于徽标颜色:
+// - danger: 已过期 N 天 (红色, 立即复习)
+// - warning: 今天到期 (橙色, 紧迫)
+// - normal: 未来 X 天 (灰色, 计划)
+// - null: 不显示 (已掌握或未复习过)
+const getNextReviewInfo = (nextReviewAt) => {
+  if (!nextReviewAt) return null
+  const due = new Date(nextReviewAt)
+  due.setHours(0, 0, 0, 0)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const diffMs = due.getTime() - today.getTime()
+  const daysDiff = Math.round(diffMs / (1000 * 60 * 60 * 24))
+
+  if (daysDiff < 0) {
+    return { label: `已过期 ${-daysDiff} 天`, type: 'danger', daysDiff }
+  }
+  if (daysDiff === 0) {
+    return { label: '今天复习', type: 'warning', daysDiff }
+  }
+  if (daysDiff === 1) {
+    return { label: '明天复习', type: 'normal', daysDiff }
+  }
+  if (daysDiff <= 7) {
+    return { label: `${daysDiff} 天后`, type: 'normal', daysDiff }
+  }
+  return { label: `${daysDiff} 天后`, type: 'normal', daysDiff }
+}
+
+// 4-P1-2: 难度星标 (ease_factor 1.3-3.0 映射到 1-5 星)
+// SM-2: ease_factor < 1.5 = 困难, 1.5-2.0 = 较难, 2.0-2.5 = 一般, > 2.5 = 简单
+const getDifficultyStars = (easeFactor) => {
+  const ef = Number(easeFactor) || 2.5
+  if (ef < 1.5) return '★☆☆☆☆'
+  if (ef < 2.0) return '★★☆☆☆'
+  if (ef < 2.5) return '★★★☆☆'
+  if (ef < 3.0) return '★★★★☆'
+  return '★★★★★'
 }
 
 // 跳转到语料学习页
@@ -659,9 +718,22 @@ onMounted(() => {
 .vocab-status-group {
   display: flex;
   gap: 6px;
-  flex-shrink: 0;
   align-items: center;
   flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+/* 4-P1-2: SM-2 难度星标 (ease_factor) */
+.vocab-difficulty {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  line-height: 1;
+  letter-spacing: 1px;
+}
+.vocab-difficulty-stars {
+  color: var(--color-brand-warm, #F59E0B);
+  font-size: 12px;
 }
 
 /* ---- 翻译 ---- */
