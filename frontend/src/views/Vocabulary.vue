@@ -38,6 +38,20 @@
 
       <!-- 筛选栏 -->
       <div class="filter-bar">
+        <!-- 5-P0-3: 搜索框 (行内, 单词模糊搜索) -->
+        <div class="filter-search">
+          <SfInput
+            v-model="searchKeyword"
+            placeholder="搜索单词 (例: run)"
+            clearable
+            :maxlength="50"
+          >
+            <template #prefix>
+              <Search :size="16" />
+            </template>
+          </SfInput>
+        </div>
+
         <div class="filter-row">
           <!-- 语料筛选 -->
           <div class="filter-section">
@@ -302,9 +316,10 @@ import { useRouter } from 'vue-router'
 import { toast } from '@/composables/useToast'
 import { useTTS } from '@/composables/useTTS'
 import { showConfirm } from '@/composables/useConfirm'
-import { Headphones, Play, Flame } from 'lucide-vue-next'
+import { Headphones, Play, Flame, Search, X } from 'lucide-vue-next'
 import SfSwitch from '@/components/ui/SfSwitch.vue'
 import SfSelect from '@/components/ui/SfSelect.vue'
+import SfInput from '@/components/ui/SfInput.vue'
 import SfEmpty from '@/components/ui/SfEmpty.vue'
 import SfButton from '@/components/ui/SfButton.vue'
 import SfTag from '@/components/ui/SfTag.vue'
@@ -338,6 +353,9 @@ const materialsList = ref([])
 const currentPage = ref(1)
 const pageSize = ref(20)
 const total = ref(0)
+
+// 5-P0-3: 单词模糊搜索 (前端 debounce 300ms, 推送给后端 ?keyword=)
+const searchKeyword = ref('')
 
 // 5-P0-5: 复习统计 (banner + 待复习 chip 都用)
 const reviewStats = ref({ total_due: 0, total_learning: 0, total_mastered: 0 })
@@ -382,6 +400,11 @@ const loadVocabularies = async () => {
     // 'all' 不加任何 filter
     if (filterMaterialId.value) {
       params.material_id = filterMaterialId.value
+    }
+    // 5-P0-3: 单词模糊搜索
+    const kw = searchKeyword.value.trim()
+    if (kw) {
+      params.keyword = kw
     }
     const res = await vocabularyAPI.getList(params)
     vocabularies.value = res.items || []
@@ -463,6 +486,16 @@ const onPageSizeChange = () => {
   currentPage.value = 1
   loadVocabularies()
 }
+
+// 5-P0-3: 搜索框 debounce 300ms (输入停止 300ms 后再请求, 避免每按一键打一次 API)
+let searchDebounceTimer = null
+watch(searchKeyword, () => {
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer)
+  searchDebounceTimer = setTimeout(() => {
+    currentPage.value = 1
+    loadVocabularies()
+  }, 300)
+})
 
 // 格式化相对时间
 const formatRelativeTime = (dateStr) => {
@@ -701,6 +734,16 @@ onMounted(() => {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg, 16px);
   box-shadow: var(--shadow-sm);
+}
+
+/* 5-P0-3: 搜索框 - 上方独立行, 移动端宽度自适应 */
+.filter-search {
+  display: flex;
+  width: 100%;
+  max-width: 360px;
+}
+.filter-search :deep(.sf-input) {
+  width: 100%;
 }
 
 .filter-row {

@@ -204,6 +204,8 @@ async def get_vocabulary(
     material_id: int = None,
     is_new: bool = Query(None, description="5-P1-3: True=review_count=0, False=已复习过"),
     is_due: bool = Query(None, description="5-P1-3: True=next_review_at <= now (待复习), False=未到期"),
+    # 5-P0-3: 单词模糊搜索 (case-insensitive LIKE)
+    keyword: str = Query(None, description="5-P0-3: 单词模糊搜索 (case-insensitive)"),
     sort_by: str = Query('newest', description="排序方式: newest/oldest/word_asc/word_desc/review_count"),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
@@ -225,6 +227,12 @@ async def get_vocabulary(
         else:
             base_query = base_query.where(Vocabulary.review_count > 0)
 
+    if keyword:
+        # 5-P0-3: 单词模糊搜索 (case-insensitive, 去空格)
+        kw = keyword.strip()
+        if kw:
+            base_query = base_query.where(Vocabulary.word.ilike(f"%{kw}%"))
+
     # 统计总数
     count_query = select(func.count()).select_from(base_query.subquery())
     total = (await db.execute(count_query)).scalar()
@@ -244,6 +252,11 @@ async def get_vocabulary(
             query = query.where(Vocabulary.review_count == 0)
         else:
             query = query.where(Vocabulary.review_count > 0)
+    if keyword:
+        # 5-P0-3: 单词模糊搜索 (case-insensitive, 去空格)
+        kw = keyword.strip()
+        if kw:
+            query = query.where(Vocabulary.word.ilike(f"%{kw}%"))
     if is_due is not None:
         # 5-P1-3: 待复习 (next_review_at 不为空且 <= now)
         # 排除 mastered (已掌握的词不参与待复习)
