@@ -14,6 +14,26 @@
     </SfEmpty>
 
     <template v-else>
+      <!-- 5-P0-5: 复习入口 banner (amber-gold 强调, 待复习>0 才显示) -->
+      <div
+        v-if="reviewStats.total_due > 0"
+        class="vocab-review-banner"
+        @click="goReview"
+        role="button"
+        tabindex="0"
+        @keydown.enter="goReview"
+        :aria-label="`今日待复习 ${reviewStats.total_due} 词, 点击开始复习`"
+      >
+        <div class="banner-icon-wrap">
+          <Flame :size="22" :stroke-width="2.5" />
+        </div>
+        <div class="banner-content">
+          <div class="banner-title">今日待复习 {{ reviewStats.total_due }} 词</div>
+          <div class="banner-desc">开始复习，巩固记忆</div>
+        </div>
+        <div class="banner-arrow">→</div>
+      </div>
+
       <!-- 筛选栏 -->
       <div class="filter-bar">
         <div class="filter-row">
@@ -67,6 +87,13 @@
             :model-value="filterStatus"
             value="new"
             label="新词"
+            @update:model-value="setFilter"
+          />
+          <!-- 5-P0-5: 待复习 chip (next_review_at <= now, 未 mastered) -->
+          <FilterChip
+            :model-value="filterStatus"
+            value="due"
+            :label="`待复习 (${reviewStats.total_due})`"
             @update:model-value="setFilter"
           />
         </div>
@@ -270,7 +297,7 @@ import { useRouter } from 'vue-router'
 import { toast } from '@/composables/useToast'
 import { useTTS } from '@/composables/useTTS'
 import { showConfirm } from '@/composables/useConfirm'
-import { Headphones, Play } from 'lucide-vue-next'
+import { Headphones, Play, Flame } from 'lucide-vue-next'
 import SfSwitch from '@/components/ui/SfSwitch.vue'
 import SfSelect from '@/components/ui/SfSelect.vue'
 import SfEmpty from '@/components/ui/SfEmpty.vue'
@@ -297,6 +324,9 @@ const materialsList = ref([])
 const currentPage = ref(1)
 const pageSize = ref(20)
 const total = ref(0)
+
+// 5-P0-5: 复习统计 (banner + 待复习 chip 都用)
+const reviewStats = ref({ total_due: 0, total_learning: 0, total_mastered: 0 })
 
 // 单词查询缓存
 const wordInfoCache = reactive({})
@@ -331,6 +361,9 @@ const loadVocabularies = async () => {
     } else if (filterStatus.value === 'new') {
       // 4-P1-3: 新词 = review_count=0
       params.is_new = true
+    } else if (filterStatus.value === 'due') {
+      // 5-P0-5: 待复习 (next_review_at <= now, 未 mastered)
+      params.is_due = true
     }
     // 'all' 不加任何 filter
     if (filterMaterialId.value) {
@@ -340,12 +373,35 @@ const loadVocabularies = async () => {
     vocabularies.value = res.items || []
     total.value = res.total || 0
 
+    // 5-P0-5: 列表刷新后, 顺手刷新复习统计 (banner + chip 同步)
+    await loadReviewStats()
+
     // 不再批量预查 10 个词，改为用户点击时才查（省 API 调用）
   } catch (e) {
     console.error('加载失败', e)
   } finally {
     loading.value = false
   }
+}
+
+// 5-P0-5: 加载复习统计 (banner + 待复习 chip 用)
+const loadReviewStats = async () => {
+  if (!userStore.isLoggedIn) return
+  try {
+    const result = await vocabularyAPI.getReviewStats()
+    reviewStats.value = {
+      total_due: result.total_due || 0,
+      total_learning: result.total_learning || 0,
+      total_mastered: result.total_mastered || 0
+    }
+  } catch (e) {
+    console.error('加载复习统计失败', e)
+  }
+}
+
+// 5-P0-5: 跳转到复习页
+const goReview = () => {
+  router.push('/vocabulary-review')
 }
 
 // 静默查询单词（不显示 loading）
@@ -537,6 +593,89 @@ onMounted(() => {
 .yt-vocabulary {
   max-width: 960px;
   margin: 0 auto;
+}
+
+/* ---- 5-P0-5: 复习入口 banner (amber-gold 强调卡) ---- */
+.vocab-review-banner {
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: var(--radius-lg, 16px);
+  cursor: pointer;
+  transition: transform var(--sf-duration-fast) var(--sf-ease-standard),
+              box-shadow var(--sf-duration-fast) var(--sf-ease-standard);
+  box-shadow: 0 1px 2px rgba(245, 158, 11, 0.08);
+}
+.vocab-review-banner:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+}
+.vocab-review-banner:focus-visible {
+  outline: 2px solid var(--color-accent, #F59E0B);
+  outline-offset: 2px;
+}
+.vocab-review-banner:active {
+  transform: translateY(0);
+}
+
+.banner-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.35);
+}
+
+.banner-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.banner-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #92400E;
+  margin-bottom: 2px;
+}
+
+.banner-desc {
+  font-size: 13px;
+  color: #B45309;
+  font-weight: 500;
+}
+
+.banner-arrow {
+  font-size: 22px;
+  color: #D97706;
+  flex-shrink: 0;
+  transition: transform var(--sf-duration-fast) var(--sf-ease-standard);
+}
+.vocab-review-banner:hover .banner-arrow {
+  transform: translateX(4px);
+}
+
+/* 暗色模式适配 */
+:global(.dark) .vocab-review-banner {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.18) 0%, rgba(217, 119, 6, 0.22) 100%);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+:global(.dark) .banner-title {
+  color: #FCD34D;
+}
+:global(.dark) .banner-desc {
+  color: #FBBF24;
+}
+:global(.dark) .banner-arrow {
+  color: #FCD34D;
 }
 
 /* ---- 筛选条 ---- */
