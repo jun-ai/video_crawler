@@ -166,11 +166,11 @@
               </div>
             </div>
 
-            <!-- 语境 -->
+            <!-- 5-P1-7: 原句 (引文) - 左 border 引用条样式 -->
             <div class="vocab-context-area" v-if="item.context">
               <div class="vocab-context" @click="speakText(item.context)">
-                <span class="context-label">语境</span>
-                <span class="context-text">{{ item.context }}</span>
+                <span class="context-label">原句</span>
+                <span class="context-text">「{{ item.context }}」</span>
                 <Headphones :size="14" class="speak-icon-small" />
               </div>
               <div class="vocab-context-cn" v-if="showChinese && item.context_cn">
@@ -836,7 +836,7 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-/* ---- 语境 ---- */
+/* ---- 5-P1-7: 原句 (引用条) ---- */
 .vocab-context-area {
   margin-bottom: 14px;
 }
@@ -849,6 +849,7 @@ onMounted(() => {
   padding: 10px 14px;
   background: var(--color-bg-elevated);
   border-radius: var(--radius-sm, 8px);
+  border-left: 3px solid var(--color-brand);  /* 5-P1-7: 引用条样式 */
   display: flex;
   align-items: flex-start;
   gap: 8px;
