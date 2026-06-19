@@ -31,6 +31,19 @@
           {{ viewMode === 'list' ? '卡片' : '列表' }}
         </SfButton>
 
+        <!-- 5-P2-7: 分页/无限滚动切换 -->
+        <SfButton
+          v-if="total > 0"
+          :type="infiniteScrollMode ? 'primary' : 'ghost'"
+          size="sm"
+          @click="infiniteScrollMode = !infiniteScrollMode"
+          :title="infiniteScrollMode ? '切换到分页模式' : '切换到无限滚动 (滚到底自动加载)'"
+        >
+          <InfinityIcon v-if="!infiniteScrollMode" :size="14" />
+          <ListOrdered v-else :size="14" />
+          {{ infiniteScrollMode ? '无限滚动' : '分页' }}
+        </SfButton>
+
         <!-- 5-P0-4: 批量操作模式开关 -->
         <SfButton
           v-if="total > 0"
@@ -398,8 +411,8 @@
         </TransitionGroup>
       </div>
 
-      <!-- 分页 -->
-      <div class="pagination" v-if="total > 0">
+      <!-- 分页 (5-P2-7: 无限滚动模式时隐藏) -->
+      <div class="pagination" v-if="total > 0 && !infiniteScrollMode">
         <div class="pagination-left">
           <span class="pagination-total">共 {{ total }} 条</span>
           <div class="page-size-select">
@@ -418,6 +431,19 @@
           :total="total"
           @change="loadVocabularies"
         />
+      </div>
+
+      <!-- 5-P2-7: 无限滚动 sentinel + 加载状态 (滚到底时 observer 触发 loadMore) -->
+      <div v-if="infiniteScrollMode" ref="loadMoreSentinel" class="vocab-load-more-sentinel">
+        <div v-if="loading && vocabularies.length > 0" class="vocab-loading-more">
+          <SfSpinner :size="20" /> 加载中…
+        </div>
+        <div v-else-if="vocabularies.length >= total" class="vocab-all-loaded">
+          ✓ 已加载全部 {{ total }} 词
+        </div>
+        <div v-else class="vocab-scroll-hint">
+          ↓ 继续滚动加载更多
+        </div>
       </div>
 
       <!-- 5-P2-6: 键盘快捷键提示 (右下角悬浮) -->
@@ -439,7 +465,7 @@ import { useRouter } from 'vue-router'
 import { toast } from '@/composables/useToast'
 import { useTTS } from '@/composables/useTTS'
 import { showConfirm } from '@/composables/useConfirm'
-import { Headphones, Play, Flame, Search, X, CheckSquare, Square, CheckCheck, Check, RotateCcw, Trash2, Download, FileJson, FileText, LayoutGrid, Rows3, Star } from 'lucide-vue-next'
+import { Headphones, Play, Flame, Search, X, CheckSquare, Square, CheckCheck, Check, RotateCcw, Trash2, Download, FileJson, FileText, LayoutGrid, Rows3, Star, Infinity as InfinityIcon, ListOrdered } from 'lucide-vue-next'
 import SfSwitch from '@/components/ui/SfSwitch.vue'
 import SfSelect from '@/components/ui/SfSelect.vue'
 import SfInput from '@/components/ui/SfInput.vue'
@@ -448,6 +474,7 @@ import SfEmpty from '@/components/ui/SfEmpty.vue'
 import SfButton from '@/components/ui/SfButton.vue'
 import SfTag from '@/components/ui/SfTag.vue'
 import SfPagination from '@/components/ui/SfPagination.vue'
+import SfSpinner from '@/components/ui/SfSpinner.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import FilterChip from '@/components/common/FilterChip.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
@@ -486,6 +513,19 @@ const toggleViewMode = () => {
 
 const filterStatus = ref('all')  // 4-P1-3: 'all'/'learning'/'mastered'/'new' (原 filterMastered bool 升级为 string)
 
+// 5-P2-7: 无限滚动模式 (与分页互斥, 默认分页)
+const infiniteScrollMode = ref(false)
+try {
+  const stored = localStorage.getItem('vocab-infinite-scroll')
+  if (stored !== null) infiniteScrollMode.value = stored === 'true'
+} catch (e) { /* ignore */ }
+watch(infiniteScrollMode, (val) => {
+  try { localStorage.setItem('vocab-infinite-scroll', String(val)) } catch (e) { /* ignore */ }
+  // 切换模式时重置页码并刷新
+  currentPage.value = 1
+  loadVocabularies()
+})
+
 // 5-P0-4: 批量操作状态
 const batchMode = ref(false)
 const selectedIds = ref(new Set())
@@ -493,6 +533,10 @@ const selectedIds = ref(new Set())
 // 5-P2-6: 键盘快捷键焦点索引 (j/k 上下移动)
 // batchMode=false 时单个聚焦, batchMode=true 时多选切换
 const focusedIndex = ref(-1)
+
+// 5-P2-7: 无限滚动 sentinel ref + IntersectionObserver
+const loadMoreSentinel = ref(null)
+let loadMoreObserver = null
 const filterMaterialId = ref(null)
 const sortBy = ref('newest')
 const materialsList = ref([])
@@ -535,7 +579,7 @@ const loadMaterialsList = async () => {
   }
 }
 
-const loadVocabularies = async () => {
+const loadVocabularies = async ({ append = false } = {}) => {
   if (!userStore.isLoggedIn) return
   loading.value = true
   try {
@@ -565,7 +609,12 @@ const loadVocabularies = async () => {
       params.keyword = kw
     }
     const res = await vocabularyAPI.getList(params)
-    vocabularies.value = res.items || []
+    // 5-P2-7: append=true 时拼接到现有列表 (无限滚动), 否则替换
+    if (append) {
+      vocabularies.value = [...vocabularies.value, ...(res.items || [])]
+    } else {
+      vocabularies.value = res.items || []
+    }
     total.value = res.total || 0
 
     // 5-P0-5: 列表刷新后, 顺手刷新复习统计 (banner + chip 同步)
@@ -577,6 +626,15 @@ const loadVocabularies = async () => {
   } finally {
     loading.value = false
   }
+}
+
+// 5-P2-7: 无限滚动加载下一页
+const loadMore = async () => {
+  if (!infiniteScrollMode.value) return
+  if (vocabularies.value.length >= total.value) return  // 已加载完
+  if (loading.value) return  // 防并发
+  currentPage.value += 1
+  await loadVocabularies({ append: true })
 }
 
 // 5-P0-5: 加载复习统计 (banner + 待复习 chip 用)
@@ -1038,6 +1096,26 @@ watch(focusedIndex, () => {
   }, 50)
 })
 
+// 5-P2-7: 监听 sentinel DOM 变化 (模式切换 / 首次加载)
+// onMounted 时 observer 还不存在, 用 watch 配合 nextTick
+watch(loadMoreSentinel, (el) => {
+  if (loadMoreObserver) {
+    loadMoreObserver.disconnect()
+    loadMoreObserver = null
+  }
+  if (el && infiniteScrollMode.value) {
+    loadMoreObserver = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && infiniteScrollMode.value) {
+          loadMore()
+        }
+      },
+      { rootMargin: '300px' }  // 提前 300px 触发, 体验更顺滑
+    )
+    loadMoreObserver.observe(el)
+  }
+})
+
 onMounted(() => {
   preloadVoices()
   loadMaterialsList()
@@ -1047,6 +1125,10 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyboard)
+  if (loadMoreObserver) {
+    loadMoreObserver.disconnect()
+    loadMoreObserver = null
+  }
 })
 </script>
 
@@ -2063,9 +2145,39 @@ onUnmounted(() => {
 .star-btn.starred:hover {
   background: rgba(245, 158, 11, 0.14);
 }
-/* 列表模式: 缩小尺寸 */
+/* 列表模式: star-btn 缩小尺寸 */
 .vocab-list-list-mode .star-btn {
   width: 28px;
   height: 28px;
+}
+
+/* ==================== 5-P2-7: 无限滚动 sentinel ==================== */
+.vocab-load-more-sentinel {
+  padding: 24px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60px;
+}
+.vocab-loading-more {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-secondary, #475569);
+  font-size: 13px;
+}
+.vocab-all-loaded {
+  color: var(--color-text-tertiary, #94a3b8);
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+.vocab-scroll-hint {
+  color: var(--color-text-tertiary, #94a3b8);
+  font-size: 12px;
+  animation: vocab-scroll-hint-pulse 2s ease-in-out infinite;
+}
+@keyframes vocab-scroll-hint-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
 }
 </style>
