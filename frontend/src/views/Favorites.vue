@@ -26,6 +26,14 @@
           <span>字幕</span>
           <span class="tab-count" v-if="subtitleTotal">{{ subtitleTotal }}</span>
         </div>
+        <!-- 5-P1-1: 视频收藏 Tab -->
+        <div
+          :class="['fav-tab', { active: activeTab === 'videos' }]"
+          @click="activeTab = 'videos'"
+        >
+          <span>视频</span>
+          <span class="tab-count" v-if="videoTotal">{{ videoTotal }}</span>
+        </div>
         <div
           :class="['fav-tab', { active: activeTab === 'vocabulary' }]"
           @click="activeTab = 'vocabulary'"
@@ -237,6 +245,62 @@
           />
         </div>
       </div>
+
+      <!-- 5-P1-1: 视频收藏 Tab -->
+      <div v-show="activeTab === 'videos'" class="tab-content fav-videos-tab">
+        <div v-if="videoLoading" class="video-skeleton-list">
+          <div v-for="i in 3" :key="i" class="video-skeleton-card"></div>
+        </div>
+        <div v-else-if="videoFavorites.length > 0" class="video-fav-grid">
+          <div
+            v-for="video in videoFavorites"
+            :key="video.id"
+            class="video-fav-card"
+            @click="goMaterial(video.id)"
+          >
+            <div class="video-cover">
+              <img
+                v-if="video.cover_path"
+                :src="video.cover_path"
+                :alt="video.title"
+                loading="lazy"
+              />
+              <div v-else class="video-cover-placeholder">
+                <Film :size="32" />
+              </div>
+              <div v-if="video.duration" class="video-duration">
+                {{ formatVideoDuration(video.duration) }}
+              </div>
+            </div>
+            <div class="video-info">
+              <div class="video-title" :title="video.title">{{ video.title }}</div>
+              <div class="video-meta">
+                <span v-if="video.difficulty">难度 {{ video.difficulty }}</span>
+                <span v-if="video.favorited_at" class="video-fav-time">
+                  <Heart :size="12" />
+                  {{ formatRelativeTime(video.favorited_at) }}收藏
+                </span>
+              </div>
+            </div>
+            <button
+              class="video-remove-btn"
+              @click.stop="removeVideoFav(video)"
+              aria-label="取消收藏"
+            >
+              <Trash2 :size="14" />
+            </button>
+          </div>
+        </div>
+        <EmptyState
+          v-else
+          title="还没有收藏视频"
+          description="在视频详情页点星标即可收藏"
+        >
+          <template #actions>
+            <SfButton type="primary" @click="$router.push('/materials')">去看看</SfButton>
+          </template>
+        </EmptyState>
+      </div>
     </template>
   </div>
 </template>
@@ -257,7 +321,10 @@ import {
   // 4-P1-4: 搜索 + 视频筛选图标
   Search,
   X,
-  Filter
+  Filter,
+  // 5-P1-1: 视频收藏 Tab
+  Film,
+  Heart
 } from 'lucide-vue-next'
 import SfButton from '@/components/ui/SfButton.vue'
 import SfTag from '@/components/ui/SfTag.vue'
@@ -327,6 +394,54 @@ const formatDuration = (ms) => {
 const searchQuery = ref('')
 const filterMaterialId = ref(null)
 let searchDebounce = null
+
+// 5-P1-1: 视频收藏 (Favorite material 级别)
+const videoFavorites = ref([])
+const videoLoading = ref(false)
+const videoTotal = ref(0)
+
+const goMaterial = (id) => {
+  router.push(`/materials/${id}`)
+}
+
+const removeVideoFav = async (video) => {
+  const confirmed = await showConfirm({
+    title: '取消收藏',
+    message: `确定要取消收藏视频「${video.title}」吗？`
+  })
+  if (!confirmed) return
+  try {
+    await favoriteAPI.remove(video.id)
+    toast.success('已取消收藏')
+    await loadVideoFavorites()
+  } catch (e) {
+    console.error('取消收藏失败', e)
+    toast.error('取消收藏失败')
+  }
+}
+
+const formatVideoDuration = (seconds) => {
+  if (!seconds || seconds < 0) return ''
+  const m = Math.floor(seconds / 60)
+  const s = Math.floor(seconds % 60)
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+const loadVideoFavorites = async () => {
+  if (!userStore.isLoggedIn) return
+  videoLoading.value = true
+  try {
+    const res = await favoriteAPI.getList({ page: 1, page_size: 50 })
+    videoFavorites.value = res.items || []
+    videoTotal.value = res.total || 0
+  } catch (e) {
+    console.error('加载视频收藏失败', e)
+    videoFavorites.value = []
+    videoTotal.value = 0
+  } finally {
+    videoLoading.value = false
+  }
+}
 
 // 4-P1-5: 批量选择
 const selectedIds = ref(new Set())
@@ -506,7 +621,11 @@ const handleVocabCommand = async (command, vocabId) => {
 const refreshData = async () => {
   refreshing.value = true
   try {
-    await Promise.all([loadSubtitleBookmarks(), loadVocabList()])
+    await Promise.all([
+    loadSubtitleBookmarks(),
+    loadVocabList(),
+    loadVideoFavorites()  // 5-P1-1
+  ])
   } finally {
     refreshing.value = false
   }
@@ -978,6 +1097,133 @@ onMounted(() => {
 
 :deep(.dropdown-item:hover) {
   background: var(--color-bg-elevated);
+}
+
+/* ====== 5-P1-1: 视频收藏 Tab ====== */
+.fav-videos-tab {
+  padding: 4px 0;
+}
+
+.video-fav-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+.video-fav-card {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg, 16px);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+.video-fav-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.video-cover {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: var(--color-bg-elevated);
+  position: relative;
+  overflow: hidden;
+}
+.video-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.video-cover-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+}
+.video-duration {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.video-info {
+  padding: 12px;
+}
+.video-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
+}
+.video-meta {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+.video-fav-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.video-remove-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, background 0.2s;
+}
+.video-fav-card:hover .video-remove-btn {
+  opacity: 1;
+}
+.video-remove-btn:hover {
+  background: var(--color-danger, #ef4444);
+}
+
+/* 5-P1-1: 视频骨架屏 (复用 P2-2 通用骨架样式) */
+.video-skeleton-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 18px;
+}
+.video-skeleton-card {
+  aspect-ratio: 16/9;
+  background: linear-gradient(90deg, var(--color-bg-elevated) 25%, #e5e7eb 50%, var(--color-bg-elevated) 75%);
+  background-size: 200% 100%;
+  border-radius: var(--radius-lg, 16px);
+  animation: skeleton-shimmer 1.5s infinite;
+}
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* ====== Mobile responsive ====== */
