@@ -252,7 +252,7 @@ onMounted(() => {
   border: 1px solid var(--sf-admin-sidebar-border);
   border-radius: var(--radius-md, 12px);
   padding: 16px 18px;
-  transition: all 0.2s;
+  transition: all var(--sf-duration-normal);
   position: relative;
 }
 
@@ -305,7 +305,7 @@ onMounted(() => {
   display: flex;
   gap: 4px;
   opacity: 0;
-  transition: opacity 0.15s;
+  transition: opacity var(--sf-duration-fast);
 }
 
 .tag-card:hover .tag-card-actions {
@@ -323,7 +323,7 @@ onMounted(() => {
   background: var(--sf-admin-sidebar-active);
   color: var(--color-text-muted);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all var(--sf-duration-fast);
 }
 
 .edit-btn:hover {

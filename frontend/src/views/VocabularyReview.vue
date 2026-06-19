@@ -406,7 +406,7 @@ onUnmounted(() => {
   position: relative;
   cursor: pointer;
   transform-style: preserve-3d;
-  transition: transform 0.5s ease;
+  transition: transform var(--sf-duration-slower) ease;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
@@ -518,7 +518,7 @@ onUnmounted(() => {
   border: 1.5px solid var(--color-border);
   background: var(--color-bg-base);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--sf-duration-normal);
   min-width: 80px;
 }
 

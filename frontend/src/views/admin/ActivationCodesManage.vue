@@ -317,7 +317,7 @@ onMounted(() => {
   background: var(--sf-admin-bg-hover);
   border-radius: 10px;
   border: 1px solid #EDF0ED;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background var(--sf-duration-fast), border-color var(--sf-duration-fast);
 }
 
 .code-item:hover {

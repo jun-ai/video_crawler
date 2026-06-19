@@ -303,7 +303,7 @@ onMounted(() => {
   border-radius: 14px;
   padding: 18px 22px;
   border: 1px solid var(--sf-admin-border);
-  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  transition: background var(--sf-duration-normal), border-color var(--sf-duration-normal), box-shadow var(--sf-duration-normal);
 }
 
 .announcement-card:hover {
@@ -407,7 +407,7 @@ onMounted(() => {
   cursor: pointer;
   font-size: 13px;
   color: var(--sf-admin-text-secondary);
-  transition: all 0.15s;
+  transition: all var(--sf-duration-fast);
   border-right: 1px solid var(--sf-admin-border);
   font-weight: 500;
 }

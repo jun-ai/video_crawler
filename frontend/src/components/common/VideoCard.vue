@@ -137,7 +137,7 @@ const handleClick = () => {
   background: var(--color-bg-card);
   border-radius: 16px;
   overflow: hidden;
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+  transition: transform var(--sf-duration-slow) cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow var(--sf-duration-slow) ease, border-color var(--sf-duration-slow) ease;
   border: 1.5px solid var(--color-border);
   box-shadow: var(--shadow-sm);
   position: relative;
@@ -152,7 +152,7 @@ const handleClick = () => {
   width: 3px;
   background: linear-gradient(180deg, var(--color-brand) 0%, var(--color-accent) 100%);
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity var(--sf-duration-slow) ease;
   border-radius: 3px 0 0 3px;
   z-index: 4;
 }
@@ -181,7 +181,7 @@ const handleClick = () => {
   position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0);
-  transition: background 0.3s ease;
+  transition: background var(--sf-duration-slow) ease;
   pointer-events: none;
   z-index: 1;
 }
@@ -197,7 +197,7 @@ const handleClick = () => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform var(--sf-duration-slower) cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .video-card:hover .thumbnail img {
@@ -213,7 +213,7 @@ const handleClick = () => {
   justify-content: center;
   background: rgba(0, 0, 0, 0.3);
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity var(--sf-duration-normal);
   z-index: 2;
   color: white;
 }
@@ -254,7 +254,7 @@ const handleClick = () => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background 0.15s, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: background var(--sf-duration-fast), transform var(--sf-duration-normal) cubic-bezier(0.34, 1.56, 0.64, 1);
   color: white;
 }
 
@@ -312,7 +312,7 @@ const handleClick = () => {
 .progress-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--color-brand) 0%, var(--color-accent) 100%);
-  transition: width 0.3s ease;
+  transition: width var(--sf-duration-slow) ease;
 }
 
 /* ====== 视频信息 ====== */

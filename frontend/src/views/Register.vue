@@ -312,7 +312,7 @@ const handleRegister = async () => {
   border-radius: var(--radius-full, 9999px);
   width: 100%;
   box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+  transition: transform var(--sf-duration-normal) cubic-bezier(0.34, 1.56, 0.64, 1),
               box-shadow 0.25s ease;
 }
 
@@ -337,7 +337,7 @@ const handleRegister = async () => {
   font-weight: 600;
   color: var(--color-brand);
   text-decoration: none;
-  transition: color 0.2s;
+  transition: color var(--sf-duration-normal);
 }
 
 .register-link:hover {

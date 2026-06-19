@@ -490,7 +490,7 @@ onMounted(() => {
   background: var(--color-bg-elevated);
   border-radius: 14px;
   border: 1px solid transparent;
-  transition: border-color 0.2s, transform 0.2s;
+  transition: border-color var(--sf-duration-normal), transform var(--sf-duration-normal);
 }
 
 .stat-card:hover {
@@ -663,7 +663,7 @@ onMounted(() => {
   border-radius: 18px;
   background: var(--color-bg-elevated);
   border: 1px solid transparent;
-  transition: all 0.2s;
+  transition: all var(--sf-duration-normal);
   white-space: nowrap;
 }
 

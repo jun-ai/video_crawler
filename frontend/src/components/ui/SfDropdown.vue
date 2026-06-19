@@ -83,7 +83,7 @@ defineExpose({ close })
 
 .sf-dropdown-enter-active,
 .sf-dropdown-leave-active {
-  transition: all 0.15s;
+  transition: all var(--sf-duration-fast);
 }
 .sf-dropdown-enter-from,
 .sf-dropdown-leave-to {

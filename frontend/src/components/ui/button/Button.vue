@@ -29,7 +29,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 <style scoped>
 .btn-press {
-  transition: transform 0.1s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  transition: transform var(--sf-duration-fast) ease, box-shadow var(--sf-duration-fast) ease, opacity var(--sf-duration-fast) ease;
 }
 .btn-press:active:not(:disabled) {
   transform: scale(0.97);

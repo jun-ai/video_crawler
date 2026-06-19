@@ -122,6 +122,7 @@
   --sf-duration-fast: var(--duration-fast);
   --sf-duration-normal: var(--duration-normal);
   --sf-duration-slow: var(--duration-slow);
+  --sf-duration-slower: 500ms; /* 慢动作: 卡片翻牌/SVG 绘制/进度条填充 */
 
   /* ========== z-index 映射 ========== */
   --sf-z-dropdown: var(--z-dropdown);

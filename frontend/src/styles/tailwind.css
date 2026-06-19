@@ -354,15 +354,54 @@ body {
 
 /* 按钮点击反馈 */
 .btn-press {
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  transition: transform var(--sf-duration-fast) ease, box-shadow var(--sf-duration-fast) ease;
 }
 .btn-press:active {
   transform: scale(0.97);
 }
 
+/* ========== P1 Hover 通用类 ========== */
+
+/* 背景加深: 文字按钮/图标按钮/关闭按钮用 */
+.sf-hover-tint {
+  transition: background-color var(--sf-duration-fast) var(--sf-ease-standard),
+              color var(--sf-duration-fast) var(--sf-ease-standard);
+}
+.sf-hover-tint:hover {
+  background-color: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+/* 透明度淡入: 标签关闭按钮/隐藏的工具按钮 hover 显现 */
+.sf-hover-fade {
+  transition: opacity var(--sf-duration-normal) var(--sf-ease-standard);
+}
+.sf-hover-fade:hover {
+  opacity: 0.75;
+}
+
+/* 边框高亮: 链接/可点击文字 */
+.sf-hover-underline {
+  transition: color var(--sf-duration-fast) var(--sf-ease-standard);
+}
+.sf-hover-underline:hover {
+  color: var(--color-brand);
+}
+
+/* 缩放反馈: 图标按钮 */
+.sf-hover-scale {
+  transition: transform var(--sf-duration-fast) var(--sf-ease-standard);
+}
+.sf-hover-scale:hover {
+  transform: scale(1.08);
+}
+.sf-hover-scale:active {
+  transform: scale(0.95);
+}
+
 /* 卡片悬浮效果 */
 .card-hover {
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  transition: transform var(--sf-duration-normal) ease, box-shadow var(--sf-duration-normal) ease, border-color var(--sf-duration-normal) ease;
 }
 .card-hover:hover {
   transform: translateY(-4px);
@@ -393,7 +432,7 @@ body {
 /* 页面过渡 */
 .page-enter-active,
 .page-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity var(--sf-duration-normal) ease, transform var(--sf-duration-normal) ease;
 }
 .page-enter-from {
   opacity: 0;

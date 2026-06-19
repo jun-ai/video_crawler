@@ -81,7 +81,7 @@ import { confirmState } from '@/composables/useConfirm'
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all var(--sf-duration-fast);
 }
 
 .sf-confirm-btn--cancel {
@@ -106,7 +106,7 @@ import { confirmState } from '@/composables/useConfirm'
 
 .sf-confirm-enter-active,
 .sf-confirm-leave-active {
-  transition: opacity 0.2s;
+  transition: opacity var(--sf-duration-normal);
 }
 .sf-confirm-enter-from,
 .sf-confirm-leave-to {

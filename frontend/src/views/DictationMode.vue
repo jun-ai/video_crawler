@@ -600,7 +600,7 @@ watch(() => props.currentIndex, () => {
   height: 100%;
   background: var(--yt-brand-gradient);
   border-radius: inherit;
-  transition: width 0.4s var(--ease-bounce, cubic-bezier(0.34, 1.56, 0.64, 1));
+  transition: width var(--sf-duration-slower) var(--ease-bounce, cubic-bezier(0.34, 1.56, 0.64, 1));
 }
 
 .sf-dictation-progress__percent {
@@ -640,7 +640,7 @@ watch(() => props.currentIndex, () => {
   box-shadow:
     0 6px 20px rgba(37, 99, 235, 0.3),
     0 2px 6px rgba(37, 99, 235, 0.15);
-  transition: transform 0.25s var(--ease-bounce, cubic-bezier(0.34, 1.56, 0.64, 1));
+  transition: transform var(--sf-duration-normal) var(--ease-bounce, cubic-bezier(0.34, 1.56, 0.64, 1));
 }
 
 .sf-dictation-audio__icon.playing {
@@ -708,7 +708,7 @@ watch(() => props.currentIndex, () => {
   margin-bottom: 20px;
   word-break: break-word;
   border: 1px solid transparent;
-  transition: border-color 0.2s var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: border-color var(--sf-duration-normal) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 .sf-dictation-sentence:focus-within {
@@ -726,7 +726,7 @@ watch(() => props.currentIndex, () => {
   max-width: 160px;
   border-bottom: 2px solid var(--color-brand-light);
   margin: 0 4px;
-  transition: border-color 0.2s var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: border-color var(--sf-duration-normal) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 .sf-dictation-blank:focus-within {
@@ -813,7 +813,7 @@ watch(() => props.currentIndex, () => {
   font-size: var(--text-sm, 14px);
   color: var(--color-text-primary);
   cursor: pointer;
-  transition: all 0.18s var(--ease-bounce, cubic-bezier(0.34, 1.56, 0.64, 1));
+  transition: all var(--sf-duration-fast) var(--ease-bounce, cubic-bezier(0.34, 1.56, 0.64, 1));
   font-family: inherit;
   font-weight: 500;
   min-height: 44px;

@@ -831,7 +831,7 @@ onMounted(async () => {
   border-radius: 999px;
   cursor: pointer;
   box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+  transition: transform var(--sf-duration-normal) cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow var(--sf-duration-normal) ease;
   min-height: 48px;
 }
 
@@ -846,7 +846,7 @@ onMounted(async () => {
 
 .hero-cta-arrow {
   display: inline-block;
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform var(--sf-duration-normal) cubic-bezier(0.34, 1.56, 0.64, 1);
   font-size: 18px;
   line-height: 1;
 }
@@ -868,7 +868,7 @@ onMounted(async () => {
   cursor: pointer;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  transition: all 0.25s ease;
+  transition: all var(--sf-duration-normal) ease;
   min-height: 48px;
 }
 
@@ -1439,7 +1439,7 @@ onMounted(async () => {
   color: var(--color-text-secondary);
   border: 1.5px solid var(--color-border);
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all var(--sf-duration-normal) cubic-bezier(0.34, 1.56, 0.64, 1);
   white-space: nowrap;
   flex-shrink: 0;
   user-select: none;
@@ -1521,7 +1521,7 @@ onMounted(async () => {
   border-radius: 18px;
   border: 1px solid var(--color-border);
   text-align: center;
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+  transition: transform var(--sf-duration-slow) cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow var(--sf-duration-slow) ease;
 }
 
 .core-feature-card:hover {
@@ -1594,7 +1594,7 @@ onMounted(async () => {
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--sf-duration-normal) ease;
 }
 .features-toggle:hover {
   border-color: var(--color-brand-bright);
@@ -1602,7 +1602,7 @@ onMounted(async () => {
 }
 .features-toggle .rotated {
   transform: rotate(180deg);
-  transition: transform 0.2s ease;
+  transition: transform var(--sf-duration-normal) ease;
 }
 
 /* 视频网格 — Bento 化 */
@@ -1678,7 +1678,7 @@ onMounted(async () => {
   overflow: hidden;
   cursor: pointer;
   border: 1px solid var(--color-border);
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+  transition: transform var(--sf-duration-slow) cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow var(--sf-duration-slow) ease, border-color var(--sf-duration-slow) ease;
   scroll-snap-align: start;
 }
 .continue-learn-card:hover {
@@ -1697,7 +1697,7 @@ onMounted(async () => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.4s ease;
+  transition: transform var(--sf-duration-slower) ease;
 }
 .continue-learn-card:hover .cl-card-cover img {
   transform: scale(1.05);
@@ -1744,7 +1744,7 @@ onMounted(async () => {
 .cl-progress-fill {
   height: 100%;
   background: linear-gradient(90deg, #60A5FA 0%, #7DD3FC 100%);
-  transition: width 0.3s ease;
+  transition: width var(--sf-duration-slow) ease;
   border-radius: 0 2px 2px 0;
 }
 .cl-card-info {
@@ -1764,7 +1764,7 @@ onMounted(async () => {
   font-size: 12px;
   font-weight: 500;
   color: var(--color-text-muted);
-  transition: color 0.2s ease, transform 0.2s ease;
+  transition: color var(--sf-duration-normal) ease, transform var(--sf-duration-normal) ease;
 }
 .continue-learn-card:hover .cl-continue-btn {
   color: var(--color-brand-bright);

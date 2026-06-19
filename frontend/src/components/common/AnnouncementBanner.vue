@@ -168,7 +168,7 @@ onMounted(() => {
   cursor: pointer;
   padding: 4px 8px;
   border-radius: 6px;
-  transition: all 0.2s;
+  transition: all var(--sf-duration-normal);
   white-space: nowrap;
 }
 
@@ -186,7 +186,7 @@ onMounted(() => {
   cursor: pointer;
   padding: 2px 6px;
   border-radius: 4px;
-  transition: all 0.2s;
+  transition: all var(--sf-duration-normal);
   line-height: 1;
 }
 
@@ -197,7 +197,7 @@ onMounted(() => {
 
 .banner-slide-enter-active,
 .banner-slide-leave-active {
-  transition: all 0.3s ease;
+  transition: all var(--sf-duration-slow) ease;
 }
 
 .banner-slide-enter-from,

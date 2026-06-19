@@ -38,7 +38,7 @@ defineProps({
 .sf-progress-fill {
   height: 100%;
   border-radius: 9999px;
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width var(--sf-duration-slow) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sf-progress-fill--brand {

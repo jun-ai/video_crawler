@@ -62,7 +62,7 @@ function hide() {
 
 .sf-tooltip-enter-active,
 .sf-tooltip-leave-active {
-  transition: opacity 0.15s;
+  transition: opacity var(--sf-duration-fast);
 }
 .sf-tooltip-enter-from,
 .sf-tooltip-leave-to {

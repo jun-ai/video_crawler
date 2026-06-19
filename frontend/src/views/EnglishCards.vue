@@ -491,7 +491,7 @@ onMounted(() => {
   color: var(--color-text-primary);
   background: var(--color-bg-base);
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color var(--sf-duration-normal), box-shadow var(--sf-duration-normal);
   box-sizing: border-box;
 }
 
@@ -529,7 +529,7 @@ onMounted(() => {
   padding: 10px 12px;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.15s;
+  transition: background var(--sf-duration-normal), border-color var(--sf-duration-fast);
   position: relative;
   margin-bottom: 2px;
   border-left: 3px solid transparent;
@@ -649,7 +649,7 @@ onMounted(() => {
   border-radius: 20px;
   background: var(--color-bg-elevated);
   border: 1px solid transparent;
-  transition: all 0.2s;
+  transition: all var(--sf-duration-normal);
   white-space: nowrap;
   user-select: none;
 }
@@ -725,7 +725,7 @@ onMounted(() => {
   border-radius: 10px;
   padding: 16px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--sf-duration-normal) ease;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -778,7 +778,7 @@ onMounted(() => {
   font-style: italic;
   color: var(--color-text-muted);
   cursor: pointer;
-  transition: color 0.2s;
+  transition: color var(--sf-duration-normal);
 }
 
 .ec-card-phonetic:hover {
@@ -797,7 +797,7 @@ onMounted(() => {
   border-radius: 50%;
   cursor: pointer;
   color: var(--color-text-muted);
-  transition: all 0.2s;
+  transition: all var(--sf-duration-normal);
   flex-shrink: 0;
   margin-left: 4px;
 }
@@ -809,7 +809,7 @@ onMounted(() => {
 
 .ec-card-word {
   cursor: pointer;
-  transition: color 0.2s;
+  transition: color var(--sf-duration-normal);
 }
 
 .ec-card-word:hover {
@@ -887,7 +887,7 @@ onMounted(() => {
   border: 1.5px solid var(--color-border);
   background: var(--color-bg-base);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--sf-duration-normal);
   color: var(--color-text-muted);
 }
 
@@ -1014,7 +1014,7 @@ onMounted(() => {
   border: none;
   border-radius: 14px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--sf-duration-normal);
 }
 
 .ec-jump-btn:hover {
@@ -1031,7 +1031,7 @@ onMounted(() => {
 .ec-card-expand-indicator .el-icon {
   font-size: 14px;
   color: var(--color-text-muted);
-  transition: transform 0.3s ease;
+  transition: transform var(--sf-duration-slow) ease;
 }
 
 .ec-card-expand-indicator .el-icon.rotated {
@@ -1042,7 +1042,7 @@ onMounted(() => {
 /* ==================== Transitions ==================== */
 .ec-expand-enter-active,
 .ec-expand-leave-active {
-  transition: all 0.25s ease;
+  transition: all var(--sf-duration-normal) ease;
   overflow: hidden;
 }
 

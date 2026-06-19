@@ -95,7 +95,7 @@ onBeforeUnmount(() => {
   border-radius: 8px;
   color: var(--muted-foreground);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all var(--sf-duration-fast);
 }
 .sf-dialog-close:hover {
   background: var(--accent);

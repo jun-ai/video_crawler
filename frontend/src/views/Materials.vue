@@ -672,7 +672,7 @@ onMounted(() => {
   color: var(--color-text-muted);
   border-radius: var(--radius-sm, 8px);
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--sf-duration-normal) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .toggle-btn:hover {
@@ -698,7 +698,7 @@ onMounted(() => {
   font-size: 14px;
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--sf-duration-normal);
   position: relative;
 }
 
@@ -781,7 +781,7 @@ onMounted(() => {
   font-weight: 600;
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all var(--sf-duration-fast);
   white-space: nowrap;
 }
 .filter-toggle-btn.desktop:hover {
@@ -810,7 +810,7 @@ onMounted(() => {
 .active-chip svg {
   cursor: pointer;
   opacity: 0.6;
-  transition: opacity 0.15s;
+  transition: opacity var(--sf-duration-fast);
 }
 .active-chip svg:hover {
   opacity: 1;
@@ -828,7 +828,7 @@ onMounted(() => {
   font-weight: 500;
   cursor: pointer;
   border-radius: 8px;
-  transition: all 0.15s;
+  transition: all var(--sf-duration-fast);
   flex-shrink: 0;
 }
 .filter-collapse-btn:hover {
@@ -855,7 +855,7 @@ onMounted(() => {
   font-weight: 600;
   color: var(--color-accent);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all var(--sf-duration-fast);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -900,7 +900,7 @@ onMounted(() => {
   font-weight: 500;
   border-radius: var(--radius-full, 9999px);
   cursor: pointer;
-  transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all var(--sf-duration-fast) cubic-bezier(0.34, 1.56, 0.64, 1);
   white-space: nowrap;
 }
 
@@ -956,7 +956,7 @@ onMounted(() => {
   font-size: 14px;
   border-radius: var(--radius-sm, 8px);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all var(--sf-duration-fast);
   text-align: left;
   width: 100%;
 }
@@ -994,7 +994,7 @@ onMounted(() => {
   font-weight: 500;
   border: 1px solid;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--sf-duration-normal) cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
 }
 
@@ -1076,7 +1076,7 @@ onMounted(() => {
   font-size: 13px;
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all var(--sf-duration-normal) cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .mobile-chip:hover {

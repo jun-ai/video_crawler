@@ -53,7 +53,7 @@ function handleUpdate(value) {
   border: none;
   border-radius: 0;
   cursor: pointer;
-  transition: color 0.2s;
+  transition: color var(--sf-duration-normal);
   white-space: nowrap;
 }
 

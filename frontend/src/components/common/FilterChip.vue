@@ -61,7 +61,7 @@ const handleClick = () => {
   font-weight: 500;
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all var(--sf-duration-normal) cubic-bezier(0.34, 1.56, 0.64, 1);
   user-select: none;
   white-space: nowrap;
   font-family: inherit;
@@ -71,7 +71,7 @@ const handleClick = () => {
 .chip-icon {
   flex-shrink: 0;
   opacity: 0.7;
-  transition: opacity 0.2s;
+  transition: opacity var(--sf-duration-normal);
 }
 
 .sf-filter-chip:hover {

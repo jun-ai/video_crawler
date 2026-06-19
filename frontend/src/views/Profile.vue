@@ -291,7 +291,7 @@ onMounted(() => {
   border: 1px solid rgba(255, 255, 255, 0.4) !important;
   color: #fff !important;
   border-radius: var(--radius-md);
-  transition: background 0.2s, border-color 0.2s;
+  transition: background var(--sf-duration-normal), border-color var(--sf-duration-normal);
   white-space: nowrap;
 }
 
@@ -323,7 +323,7 @@ onMounted(() => {
   background: var(--color-bg-elevated);
   border-radius: var(--radius-md);
   border: 1px solid transparent;
-  transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+  transition: border-color var(--sf-duration-normal) cubic-bezier(0.4, 0, 0.2, 1),
               transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -372,7 +372,7 @@ onMounted(() => {
   align-items: center;
   padding: 16px 20px;
   cursor: pointer;
-  transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+  transition: background var(--sf-duration-normal) cubic-bezier(0.4, 0, 0.2, 1),
               padding-left 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   border-bottom: 1px solid var(--color-border);
   gap: 16px;
@@ -418,7 +418,7 @@ onMounted(() => {
   background: var(--color-accent) !important;
   border: none;
   border-radius: var(--radius-md);
-  transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background var(--sf-duration-normal) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .logout-btn:hover {

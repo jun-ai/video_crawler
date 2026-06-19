@@ -86,7 +86,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside))
   border: none;
   cursor: pointer;
   font-weight: 500;
-  transition: all 0.15s;
+  transition: all var(--sf-duration-fast);
 }
 
 .sf-popconfirm-btn--cancel {
@@ -107,7 +107,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onClickOutside))
 
 .sf-popconfirm-enter-active,
 .sf-popconfirm-leave-active {
-  transition: all 0.15s;
+  transition: all var(--sf-duration-fast);
 }
 .sf-popconfirm-enter-from,
 .sf-popconfirm-leave-to {

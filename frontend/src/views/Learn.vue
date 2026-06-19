@@ -2542,7 +2542,7 @@ onUnmounted(() => {
     border-left: 1px solid var(--color-border);
     box-shadow: -8px 0 32px rgba(0, 0, 0, 0.08);
     transform: translateX(100%);
-    transition: transform 0.3s var(--sf-easing-standard);
+    transition: transform var(--sf-duration-slow) var(--sf-easing-standard);
     padding: 48px 16px 16px;
     overflow-y: auto;
     display: block !important;
@@ -2570,7 +2570,7 @@ onUnmounted(() => {
   justify-content: center;
   cursor: pointer;
   z-index: 1;
-  transition: all 0.15s;
+  transition: all var(--sf-duration-fast);
 }
 .sf-drawer-close:hover {
   color: var(--color-text-primary);

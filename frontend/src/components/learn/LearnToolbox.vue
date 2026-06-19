@@ -162,7 +162,7 @@ const dashOffset = computed(() => {
 }
 .sf-progress-ring__fill {
   stroke: var(--color-brand-bright, #3B82F6);
-  transition: stroke-dashoffset 0.5s ease;
+  transition: stroke-dashoffset var(--sf-duration-slower) ease;
 }
 .sf-progress-ring__text {
   position: absolute;
@@ -204,7 +204,7 @@ const dashOffset = computed(() => {
   border: 1px solid var(--color-border, rgba(0,0,0,0.06));
   border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--sf-duration-normal);
   text-align: left;
   width: 100%;
   font-family: inherit;
@@ -277,7 +277,7 @@ const dashOffset = computed(() => {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--sf-duration-normal);
   font-family: inherit;
   box-shadow: 0 2px 12px rgba(37, 99, 235, 0.2);
 }

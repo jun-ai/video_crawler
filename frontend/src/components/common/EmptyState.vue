@@ -138,7 +138,7 @@ const displayDescription = computed(() => {
   width: 140px;
   height: 100px;
   opacity: 0.7;
-  transition: opacity 0.3s;
+  transition: opacity var(--sf-duration-slow);
 }
 
 .illustration-icon svg {

@@ -682,7 +682,7 @@ onMounted(() => {
   gap: 8px;
   cursor: pointer;
   padding: 4px 0;
-  transition: opacity 0.2s;
+  transition: opacity var(--sf-duration-normal);
 }
 
 .vocab-word-row:hover {
@@ -806,7 +806,7 @@ onMounted(() => {
 .review-strength-fill {
   height: 100%;
   border-radius: 3px;
-  transition: width 0.4s var(--ease-standard);
+  transition: width var(--sf-duration-slower) var(--ease-standard);
 }
 
 .strength-low {
@@ -852,7 +852,7 @@ onMounted(() => {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  transition: background 0.2s;
+  transition: background var(--sf-duration-normal);
 }
 
 .vocab-context:hover {
@@ -883,7 +883,7 @@ onMounted(() => {
   font-size: 14px;
   color: var(--color-text-muted);
   opacity: 0;
-  transition: all 0.2s;
+  transition: all var(--sf-duration-normal);
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -917,7 +917,7 @@ onMounted(() => {
   padding: 5px 12px;
   background: var(--color-bg-elevated);
   border-radius: var(--radius-full, 9999px);
-  transition: all 0.2s var(--ease-standard);
+  transition: all var(--sf-duration-normal) var(--ease-standard);
   border: 1px solid transparent;
 }
 
@@ -987,19 +987,7 @@ onMounted(() => {
   white-space: nowrap;
 }
 
-/* ---- Loading skeleton ---- */
-.vocab-list :deep(.el-loading-mask) {
-  background: rgba(250, 250, 247, 0.85);
-  border-radius: var(--radius-lg, 16px);
-}
 
-.vocab-list :deep(.el-loading-spinner .path) {
-  stroke: var(--color-brand, #2563EB);
-}
-
-.vocab-list :deep(.el-loading-spinner .el-loading-text) {
-  color: var(--color-brand, #2563EB);
-}
 
 /* ---- 空状态 ---- */
 .vocab-list :deep(.empty-state) {

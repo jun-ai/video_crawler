@@ -104,7 +104,7 @@ const onAction = (t) => {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--sf-duration-fast);
   flex-shrink: 0;
 }
 .sf-toast-action:hover {
@@ -127,10 +127,10 @@ const onAction = (t) => {
 }
 
 .sf-toast-enter-active {
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all var(--sf-duration-slow) cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .sf-toast-leave-active {
-  transition: all 0.2s;
+  transition: all var(--sf-duration-normal);
 }
 .sf-toast-enter-from {
   opacity: 0;

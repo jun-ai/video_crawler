@@ -735,7 +735,7 @@ onMounted(() => {
   height: 44px;
   border-radius: 50%;
   border: 1px solid var(--color-border);
-  transition: all 0.2s var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: all var(--sf-duration-normal) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 .fav-back-btn:hover {
@@ -759,7 +759,7 @@ onMounted(() => {
   border-color: var(--color-border);
   background: var(--color-bg-card);
   min-height: 44px;
-  transition: all 0.2s var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: all var(--sf-duration-normal) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 .fav-manage-btn:hover {
@@ -787,7 +787,7 @@ onMounted(() => {
   color: var(--color-text-secondary);
   cursor: pointer;
   position: relative;
-  transition: color 0.2s var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: color var(--sf-duration-normal) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
   min-height: 44px;
 }
 
@@ -867,7 +867,7 @@ onMounted(() => {
   border: 1px solid var(--color-border);
   padding: 20px;
   gap: 16px;
-  transition: all 0.2s var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: all var(--sf-duration-normal) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
   position: relative;
 }
 
@@ -912,7 +912,7 @@ onMounted(() => {
   flex: 1;
 }
 .fav-bar-enter-active, .fav-bar-leave-active {
-  transition: opacity 0.2s, transform 0.2s;
+  transition: opacity var(--sf-duration-normal), transform var(--sf-duration-normal);
 }
 .fav-bar-enter-from, .fav-bar-leave-to {
   opacity: 0;
@@ -929,7 +929,7 @@ onMounted(() => {
   border-radius: 0 3px 3px 0;
   background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   opacity: 0;
-  transition: opacity 0.2s var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: opacity var(--sf-duration-normal) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 .subtitle-fav-card:hover {
@@ -1002,7 +1002,7 @@ onMounted(() => {
   cursor: pointer;
   padding: 10px;
   border-radius: var(--radius-md, 12px);
-  transition: all 0.2s var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: all var(--sf-duration-normal) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
   min-width: 44px;
   min-height: 44px;
   display: inline-flex;
@@ -1043,7 +1043,7 @@ onMounted(() => {
   border-radius: var(--radius-lg, 16px);
   border: 1px solid var(--color-border);
   padding: 20px;
-  transition: all 0.2s var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: all var(--sf-duration-normal) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
   position: relative;
 }
 
@@ -1057,7 +1057,7 @@ onMounted(() => {
   border-radius: 0 3px 3px 0;
   background: var(--color-accent);
   opacity: 0;
-  transition: opacity 0.2s var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: opacity var(--sf-duration-normal) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 .vocab-card:hover {
@@ -1160,7 +1160,7 @@ onMounted(() => {
   color: var(--color-text-primary);
   cursor: pointer;
   border-radius: var(--radius-sm, 8px);
-  transition: background 0.15s;
+  transition: background var(--sf-duration-fast);
   min-height: 44px;
 }
 
@@ -1255,7 +1255,7 @@ onMounted(() => {
   border: 1px solid var(--color-border);
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform var(--sf-duration-normal), box-shadow var(--sf-duration-normal);
   position: relative;
 }
 .video-fav-card:hover {
@@ -1338,7 +1338,7 @@ onMounted(() => {
   justify-content: center;
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.2s, background 0.2s;
+  transition: opacity var(--sf-duration-normal), background var(--sf-duration-normal);
 }
 .video-fav-card:hover .video-remove-btn {
   opacity: 1;

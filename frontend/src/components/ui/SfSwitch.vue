@@ -46,7 +46,7 @@ function toggle() {
   height: 24px;
   background: var(--color-border-strong);
   border-radius: 9999px;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition: background var(--sf-duration-normal), box-shadow var(--sf-duration-normal);
 }
 
 .sf-switch:focus-visible {
@@ -71,7 +71,7 @@ function toggle() {
   height: 20px;
   background: #fff;
   border-radius: 50%;
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--sf-duration-normal) cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 

@@ -236,7 +236,7 @@ const logout = () => {
 
 .page-slide-enter-active,
 .page-slide-leave-active {
-  transition: opacity 0.15s ease;
+  transition: opacity var(--sf-duration-fast) ease;
 }
 .page-slide-enter-from,
 .page-slide-leave-to {
@@ -303,7 +303,7 @@ const logout = () => {
   font-size: 13px;
   color: var(--color-text-secondary);
   text-decoration: none;
-  transition: color 0.2s ease;
+  transition: color var(--sf-duration-normal) ease;
 }
 
 .app-footer-col a:hover {

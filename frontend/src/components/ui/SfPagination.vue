@@ -79,7 +79,7 @@ function change(page) {
   border-radius: 8px;
   cursor: pointer;
   color: var(--color-text-secondary);
-  transition: all 0.15s;
+  transition: all var(--sf-duration-fast);
   font-size: 14px;
 }
 

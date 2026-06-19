@@ -85,7 +85,7 @@ defineExpose({ focus })
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: 10px;
-  transition: all 0.2s;
+  transition: all var(--sf-duration-normal);
   overflow: hidden;
 }
 

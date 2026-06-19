@@ -330,7 +330,7 @@ const goBack = () => {
   cursor: pointer;
   color: rgba(0, 0, 0, 0.15);
   padding: 2px;
-  transition: color 0.15s, transform 0.15s;
+  transition: color var(--sf-duration-fast), transform var(--sf-duration-fast);
 }
 
 .star-btn:hover {
@@ -359,7 +359,7 @@ const goBack = () => {
   border-radius: var(--radius-lg, 12px);
   padding: 32px 20px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--sf-duration-normal);
   background: rgba(255, 255, 255, 0.02);
   margin-bottom: 16px;
   display: flex;
@@ -391,7 +391,7 @@ const goBack = () => {
   width: 36px;
   height: 36px;
   color: var(--color-text-muted);
-  transition: color 0.2s;
+  transition: color var(--sf-duration-normal);
 }
 
 .drop-zone:hover .drop-icon {
@@ -443,7 +443,7 @@ const goBack = () => {
   width: 28px;
   height: 28px;
   color: var(--color-text-muted);
-  transition: color 0.2s;
+  transition: color var(--sf-duration-normal);
 }
 
 .drop-zone:hover .drop-icon-sm {
