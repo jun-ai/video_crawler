@@ -19,6 +19,14 @@
             <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
           </span>
           <span class="sf-toast-msg">{{ t.message }}</span>
+          <!-- 4-P1-6: 可选 action 按钮 (撤销等) -->
+          <button
+            v-if="t.action"
+            class="sf-toast-action"
+            @click="onAction(t)"
+          >
+            {{ t.action.label }}
+          </button>
           <button v-if="t.showClose" class="sf-toast-close" @click="removeToast(t.id)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
           </button>
@@ -30,6 +38,17 @@
 
 <script setup>
 import { toasts, removeToast } from '@/composables/useToast'
+
+const onAction = (t) => {
+  if (t.action && typeof t.action.onClick === 'function') {
+    try {
+      t.action.onClick()
+    } catch (e) {
+      console.error('toast action failed:', e)
+    }
+  }
+  removeToast(t.id)
+}
 </script>
 
 <style scoped>
@@ -73,6 +92,24 @@ import { toasts, removeToast } from '@/composables/useToast'
 .sf-toast-msg {
   flex: 1;
   line-height: 1.4;
+}
+
+/* 4-P1-6: action 按钮 (撤销等) */
+.sf-toast-action {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-brand);
+  border: 1px solid var(--color-brand);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.sf-toast-action:hover {
+  background: var(--color-brand);
+  color: #fff;
 }
 
 .sf-toast-close {

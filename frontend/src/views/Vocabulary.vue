@@ -228,7 +228,7 @@
                 v-if="!item.mastered"
                 type="danger"
                 size="sm"
-                @click="deleteVocab(item.id)"
+                @click="deleteVocab(item)"
               >
                 删除
               </SfButton>
@@ -486,15 +486,41 @@ const removeFromBook = async (id) => {
   }
 }
 
-const deleteVocab = async (id) => {
+const deleteVocab = async (item) => {
   const confirmed = await showConfirm({ title: '确认删除', message: '确定要删除该生词吗？' })
   if (confirmed) {
+    // 4-P1-6: Undo 撤销 (保存原数据, 5s 内可点撤销按钮恢复)
+    const backup = { ...item }
     try {
-      await vocabularyAPI.delete(id)
-      toast.success('已删除')
+      await vocabularyAPI.delete(item.id)
+      // 刷新列表前, 先弹撤销 toast
+      toast.withAction(
+        '已删除',
+        {
+          label: '撤销',
+          onClick: async () => {
+            try {
+              // 重新创建 (material/subtitle 关联恢复; SM-2 + translation 字段丢失 - 用户刚加的词影响极小)
+              await vocabularyAPI.add({
+                word: backup.word,
+                context: backup.context,
+                material_id: backup.material_id,
+                subtitle_id: backup.subtitle_id
+              })
+              toast.success('已恢复')
+            } catch (e) {
+              toast.error('恢复失败, 请重新添加')
+              console.error('undo delete failed:', e)
+            }
+            loadVocabularies()
+          }
+        },
+        { type: 'success', duration: 5000 }
+      )
       loadVocabularies()
     } catch (e) {
       console.error('删除失败', e)
+      toast.error('删除失败')
     }
   }
 }
