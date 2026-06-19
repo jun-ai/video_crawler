@@ -202,7 +202,8 @@ async def get_vocabulary(
     current_user: Annotated[User, Depends(get_current_user)],
     mastered: bool = None,
     material_id: int = None,
-    is_new: bool = Query(None, description="4-P1-3: 仅 review_count=0 的新词"),
+    is_new: bool = Query(None, description="5-P1-3: True=review_count=0, False=已复习过"),
+    is_due: bool = Query(None, description="5-P1-3: True=next_review_at <= now (待复习), False=未到期"),
     sort_by: str = Query('newest', description="排序方式: newest/oldest/word_asc/word_desc/review_count"),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
@@ -243,6 +244,23 @@ async def get_vocabulary(
             query = query.where(Vocabulary.review_count == 0)
         else:
             query = query.where(Vocabulary.review_count > 0)
+    if is_due is not None:
+        # 5-P1-3: 待复习 (next_review_at 不为空且 <= now)
+        # 排除 mastered (已掌握的词不参与待复习)
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc)
+        if is_due:
+            query = query.where(
+                Vocabulary.next_review_at.isnot(None),
+                Vocabulary.next_review_at <= now,
+                Vocabulary.mastered == False  # noqa: E712
+            )
+        else:
+            # 未到期: 已复习过 + next_review_at 为空 或 > now
+            query = query.where(
+                (Vocabulary.next_review_at.is_(None)) |
+                (Vocabulary.next_review_at > now)
+            )
 
     # 排序
     order_map = {
