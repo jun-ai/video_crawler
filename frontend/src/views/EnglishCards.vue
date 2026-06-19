@@ -128,272 +128,52 @@
 
         <!-- Card grid -->
         <div class="ec-card-grid" v-loading="interpretationLoading">
-          <!-- Words cards -->
-          <template v-if="activeTab === 'words'">
-            <div
-              v-for="item in filteredItems"
-              :key="item.id"
-              class="ec-vocab-card"
-              :class="{
-                'ec-card-selected': selectedCardId === item.id,
-                'ec-card-known': learningStatus[item.id] === 'known',
-                'ec-card-unknown': learningStatus[item.id] === 'unknown'
-              }"
-              @click="selectedCardId = selectedCardId === item.id ? null : item.id"
-            >
-              <!-- Row 1: Word + Phonetic + POS tag -->
-              <div class="ec-card-header">
-                <div class="ec-card-word-row">
-                  <span class="ec-card-word" @click.stop="speakWord(item.content_en)">{{ item.content_en }}</span>
-                  <span class="ec-card-phonetic" v-if="item.phonetic" @click.stop="speakWord(item.content_en)">{{ item.phonetic }}</span>
-                  <span class="ec-card-pos" v-if="item.part_of_speech">{{ item.part_of_speech }}</span>
-                  <button class="ec-speak-btn" @click.stop="speakWord(item.content_en)" title="播放发音">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-                  </button>
-                </div>
-              </div>
+          <!-- 2.9 抽 CardItem 子组件: word/phrase/grammar 三类共用一个组件 -->
+          <EnglishCardItem
+            v-if="activeTab === 'words'"
+            v-for="item in filteredItems"
+            :key="item.id"
+            :item="item"
+            type="word"
+            :status="learningStatus[item.id] || ''"
+            :selected="selectedCardId === item.id"
+            :hide-chinese="hideChinese"
+            @toggle-select="onToggleSelect"
+            @set-status="onSetStatus"
+            @speak="speakWord"
+          />
 
-              <!-- Row 2: Chinese meaning + English definition -->
-              <div class="ec-card-meanings">
-                <div class="ec-card-cn" v-if="!hideChinese && item.content_cn">{{ item.content_cn }}</div>
-                <div class="ec-card-en-def" v-if="item.english_definition">{{ item.english_definition }}</div>
-              </div>
+          <EnglishCardItem
+            v-if="activeTab === 'phrases'"
+            v-for="item in filteredItems"
+            :key="item.id"
+            :item="item"
+            type="phrase"
+            :status="learningStatus[item.id] || ''"
+            :selected="selectedCardId === item.id"
+            :hide-chinese="hideChinese"
+            @toggle-select="onToggleSelect"
+            @set-status="onSetStatus"
+            @speak="speakWord"
+          />
 
-              <!-- Row 3: Example sentence -->
-              <div class="ec-card-example" v-if="item.example_sentence">
-                <div class="ec-example-label">例句</div>
-                <div class="ec-example-text">{{ item.example_sentence }}</div>
-              </div>
-
-              <!-- Quick action buttons -->
-              <div class="ec-card-actions">
-                <SfTooltip content="认识" placement="top">
-                  <button
-                    class="ec-circle-btn ec-btn-known"
-                    :class="{ active: learningStatus[item.id] === 'known' }"
-                    @click.stop="setStatus(item.id, 'known')"
-                  >
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-                  </button>
-                </SfTooltip>
-                <SfTooltip content="不认识" placement="top">
-                  <button
-                    class="ec-circle-btn ec-btn-unknown"
-                    :class="{ active: learningStatus[item.id] === 'unknown' }"
-                    @click.stop="setStatus(item.id, 'unknown')"
-                  >
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-                  </button>
-                </SfTooltip>
-              </div>
-
-              <!-- Expand section -->
-              <transition name="ec-expand">
-                <div class="ec-card-expand" v-if="selectedCardId === item.id">
-                  <div class="ec-expand-section" v-if="item.context_sentence">
-                    <div class="ec-expand-label">语境</div>
-                    <div class="ec-expand-text">{{ item.context_sentence }}</div>
-                  </div>
-                  <div class="ec-expand-section" v-if="!hideChinese && item.context_translation">
-                    <div class="ec-expand-label">译文</div>
-                    <div class="ec-expand-text">{{ item.context_translation }}</div>
-                  </div>
-                  <div class="ec-expand-section" v-if="item.other_pos_definitions && parseList(item.other_pos_definitions).length > 0">
-                    <div class="ec-expand-label">其他释义</div>
-                    <div class="ec-expand-text" v-for="(def, idx) in parseList(item.other_pos_definitions)" :key="idx">
-                      {{ def }}
-                    </div>
-                  </div>
-                </div>
-              </transition>
-
-              <!-- Expand arrow indicator -->
-              <div class="ec-card-expand-indicator" v-if="hasExpandContent(item, 'word')">
-                <ArrowRight :size="14" :class="{ rotated: selectedCardId === item.id }" />
-              </div>
-            </div>
-          </template>
-
-          <!-- Phrases cards -->
-          <template v-if="activeTab === 'phrases'">
-            <div
-              v-for="item in filteredItems"
-              :key="item.id"
-              class="ec-vocab-card"
-              :class="{
-                'ec-card-selected': selectedCardId === item.id,
-                'ec-card-known': learningStatus[item.id] === 'known',
-                'ec-card-unknown': learningStatus[item.id] === 'unknown'
-              }"
-              @click="selectedCardId = selectedCardId === item.id ? null : item.id"
-            >
-              <!-- Row 1: Phrase + Phonetic -->
-              <div class="ec-card-header">
-                <div class="ec-card-word-row">
-                  <span class="ec-card-word" @click.stop="speakWord(item.content_en)">{{ item.content_en }}</span>
-                  <span class="ec-card-phonetic" v-if="item.phonetic" @click.stop="speakWord(item.content_en)">{{ item.phonetic }}</span>
-                  <span class="ec-card-pos">短语</span>
-                  <button class="ec-speak-btn" @click.stop="speakWord(item.content_en)" title="播放发音">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Row 2: Chinese + English definition -->
-              <div class="ec-card-meanings">
-                <div class="ec-card-cn" v-if="!hideChinese && item.content_cn">{{ item.content_cn }}</div>
-                <div class="ec-card-en-def" v-if="item.english_definition">{{ item.english_definition }}</div>
-              </div>
-
-              <!-- Example sentence -->
-              <div class="ec-card-example" v-if="item.example_sentence">
-                <div class="ec-example-label">例句</div>
-                <div class="ec-example-text" @click.stop="speakWord(item.example_sentence)" style="cursor:pointer">{{ item.example_sentence }}</div>
-              </div>
-
-              <!-- Quick action buttons -->
-              <div class="ec-card-actions">
-                <SfTooltip content="认识" placement="top">
-                  <button
-                    class="ec-circle-btn ec-btn-known"
-                    :class="{ active: learningStatus[item.id] === 'known' }"
-                    @click.stop="setStatus(item.id, 'known')"
-                  >
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-                  </button>
-                </SfTooltip>
-                <SfTooltip content="不认识" placement="top">
-                  <button
-                    class="ec-circle-btn ec-btn-unknown"
-                    :class="{ active: learningStatus[item.id] === 'unknown' }"
-                    @click.stop="setStatus(item.id, 'unknown')"
-                  >
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-                  </button>
-                </SfTooltip>
-              </div>
-
-              <!-- Expand section -->
-              <transition name="ec-expand">
-                <div class="ec-card-expand" v-if="selectedCardId === item.id">
-                  <div class="ec-expand-section" v-if="item.context_sentence">
-                    <div class="ec-expand-label">语境</div>
-                    <div class="ec-expand-text">{{ item.context_sentence }}</div>
-                  </div>
-                  <div class="ec-expand-section" v-if="!hideChinese && item.context_translation">
-                    <div class="ec-expand-label">译文</div>
-                    <div class="ec-expand-text">{{ item.context_translation }}</div>
-                  </div>
-                  <div class="ec-expand-section" v-if="item.synonyms && parseList(item.synonyms).length > 0">
-                    <div class="ec-expand-label">近义词</div>
-                    <div class="ec-expand-tags">
-                      <span class="ec-expand-tag" v-for="(syn, idx) in parseList(item.synonyms)" :key="idx">{{ syn }}</span>
-                    </div>
-                  </div>
-                </div>
-              </transition>
-
-              <!-- Expand arrow indicator -->
-              <div class="ec-card-expand-indicator" v-if="hasExpandContent(item, 'phrase')">
-                <ArrowRight :size="14" :class="{ rotated: selectedCardId === item.id }" />
-              </div>
-            </div>
-          </template>
-
-          <!-- Grammar / Idiomatic Expression cards — 直接展示富内容 -->
-          <template v-if="activeTab === 'grammar'">
-            <div
-              v-for="item in filteredItems"
-              :key="item.id"
-              class="ec-vocab-card ec-grammar-card"
-              :class="{
-                'ec-card-known': learningStatus[item.id] === 'known',
-                'ec-card-unknown': learningStatus[item.id] === 'unknown'
-              }"
-            >
-              <!-- Expression text -->
-              <div class="ec-card-header">
-                <div class="ec-card-word-row">
-                  <span class="ec-card-word" @click.stop="speakWord(item.content_en)">{{ item.content_en }}</span>
-                  <span class="ec-card-pos">表达</span>
-                  <button class="ec-speak-btn" @click.stop="speakWord(item.content_en)" title="播放发音">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-                  </button>
-                </div>
-                <!-- Quick action buttons -->
-                <div class="ec-card-actions">
-                  <SfTooltip content="认识" placement="top">
-                    <button
-                      class="ec-circle-btn ec-btn-known"
-                      :class="{ active: learningStatus[item.id] === 'known' }"
-                      @click.stop="setStatus(item.id, 'known')"
-                    >
-                      <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-                    </button>
-                  </SfTooltip>
-                  <SfTooltip content="不认识" placement="top">
-                    <button
-                      class="ec-circle-btn ec-btn-unknown"
-                      :class="{ active: learningStatus[item.id] === 'unknown' }"
-                      @click.stop="setStatus(item.id, 'unknown')"
-                    >
-                      <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-                    </button>
-                  </SfTooltip>
-                </div>
-              </div>
-
-              <!-- 字幕原句 -->
-              <div class="ec-card-meanings" v-if="item.context_sentence">
-                <div class="ec-expand-label">字幕原句</div>
-                <div class="ec-expand-text">{{ item.context_sentence }}</div>
-              </div>
-
-              <!-- 中文翻译 -->
-              <div class="ec-card-meanings" v-if="!hideChinese && item.context_translation">
-                <div class="ec-expand-label">中文翻译</div>
-                <div class="ec-expand-text">{{ item.context_translation }}</div>
-              </div>
-
-              <!-- 表达分析区域 -->
-              <div class="ec-card-meanings ec-analysis-area" v-if="item.explanation || item.structure_analysis || item.similar_expressions || item.usage_scenario || item.alternative_phrasings">
-                <div class="ec-expand-label"><Lightbulb :size="16" class="analysis-icon" /> 表达分析</div>
-                <div class="ec-analysis-item" v-if="item.explanation">{{ item.explanation }}</div>
-                <div class="ec-analysis-item" v-if="item.structure_analysis">
-                  <span class="ec-analysis-label">结构解析：</span>{{ item.structure_analysis }}
-                </div>
-                <div class="ec-analysis-item" v-if="item.similar_expressions && parseList(item.similar_expressions).length > 0">
-                  <span class="ec-analysis-label">举一反三：</span>
-                  <div class="ec-expand-tags">
-                    <span class="ec-expand-tag" v-for="(expr, idx) in parseList(item.similar_expressions)" :key="idx">{{ expr }}</span>
-                  </div>
-                </div>
-                <div class="ec-analysis-item" v-if="item.usage_scenario">
-                  <span class="ec-analysis-label">使用场景：</span>{{ item.usage_scenario }}
-                </div>
-                <div class="ec-analysis-item" v-if="item.alternative_phrasings && parseList(item.alternative_phrasings).length > 0">
-                  <span class="ec-analysis-label">相似表达：</span>
-                  <div class="ec-expand-tags">
-                    <span class="ec-expand-tag" v-for="(phrase, idx) in parseList(item.alternative_phrasings)" :key="idx">{{ phrase }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 例句 -->
-              <div class="ec-card-example" v-if="item.example_sentence">
-                <div class="ec-example-label">例句</div>
-                <div class="ec-example-text">{{ item.example_sentence }}</div>
-              </div>
-
-              <!-- 点读跳转 -->
-              <div class="ec-jump-row">
-                <button class="ec-jump-btn" @click.stop="goLearn(selectedMaterialId)">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                  点读跳转
-                </button>
-              </div>
-            </div>
-          </template>
+          <!-- 2.10 grammar 默认折叠: 展开状态由 expandedGrammarIds Set 管理 -->
+          <EnglishCardItem
+            v-if="activeTab === 'grammar'"
+            v-for="item in filteredItems"
+            :key="item.id"
+            :item="item"
+            type="grammar"
+            :status="learningStatus[item.id] || ''"
+            :selected="false"
+            :hide-chinese="hideChinese"
+            :grammar-expanded="expandedGrammarIds.has(item.id)"
+            @toggle-select="onToggleSelect"
+            @set-status="onSetStatus"
+            @speak="speakWord"
+            @toggle-grammar="onToggleGrammar"
+            @jump-learn="onJumpLearn"
+          />
 
           <!-- Empty state for current tab -->
           <EmptyState
@@ -420,6 +200,7 @@ import FilterChip from '@/components/common/FilterChip.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import { materialAPI, interpretationAPI, vocabularyAPI } from '@/api'
 import { useUserStore } from '@/stores/user'
+import EnglishCardItem from '@/components/learn/EnglishCardItem.vue'
 
 const userStore = useUserStore()
 const router = useRouter()
@@ -435,6 +216,9 @@ const activeTab = ref('words')
 const filterStatus = ref('all')
 const hideChinese = ref(false)
 const selectedCardId = ref(null)
+
+// 2.10 grammar 展开状态 (Set, 默认全部折叠, 用户手动展开)
+const expandedGrammarIds = ref(new Set())
 
 const interpretationData = ref({ words: [], phrases: [], grammar: [] })
 const interpretationLoading = ref(false)
@@ -614,37 +398,36 @@ async function setStatus(interpretationId, status) {
 
 /** speakWord 由 useTTS 提供 */
 
-/** Parse a string or array field into an array */
-function parseList(val) {
-  if (!val) return []
-  if (Array.isArray(val)) return val
-  if (typeof val === 'string') {
-    return val.split(/[,，、;；]/).map(s => s.trim()).filter(Boolean)
-  }
-  return []
-}
-
-/** Check if an item has expand content */
-function hasExpandContent(item, type) {
-  if (type === 'word') {
-    return !!(item.context_sentence || item.context_translation || (item.other_pos_definitions && parseList(item.other_pos_definitions).length > 0))
-  }
-  if (type === 'phrase') {
-    return !!(item.context_sentence || item.context_translation || (item.synonyms && parseList(item.synonyms).length > 0))
-  }
-  if (type === 'grammar') {
-    return !!(item.context_sentence || item.context_translation || item.structure_analysis ||
-      (item.similar_expressions && parseList(item.similar_expressions).length > 0) ||
-      item.usage_scenario || (item.alternative_phrasings && parseList(item.alternative_phrasings).length > 0))
-  }
-  return false
-}
-
 /** 点读跳转到 Learn 页面 */
 const goLearn = (materialId) => {
   if (materialId) {
     router.push(`/learn/${materialId}`)
   }
+}
+
+// ==================== Event Handlers (2.9 CardItem 子组件) ====================
+
+/** 2.9 CardItem 触发: 父组件管理 selectedCardId (null = 关闭) */
+function onToggleSelect(id) {
+  selectedCardId.value = (id === null || selectedCardId.value === id) ? null : id
+}
+
+/** 2.9 CardItem 触发: 父组件管理 learningStatus (复用原 setStatus) */
+function onSetStatus({ id, status }) {
+  setStatus(id, status)
+}
+
+/** 2.10 切换 grammar 卡片的折叠状态 */
+function onToggleGrammar(id) {
+  const next = new Set(expandedGrammarIds.value)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  expandedGrammarIds.value = next
+}
+
+/** 2.9 grammar 点读跳转: 跳到 Learn 页面 (复用原 goLearn) */
+function onJumpLearn(_item) {
+  goLearn(selectedMaterialId.value)
 }
 
 // ==================== Lifecycle ====================
