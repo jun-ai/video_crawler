@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_, case
 from sqlalchemy.orm import joinedload
 from typing import Annotated, List, Optional
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, date
 import json
 import logging
 
@@ -579,28 +579,15 @@ async def get_learning_statistics(
         )
         this_week_learning_days = result.scalar() or 0
 
-        # 5. 计算连续学习天数
+        # 5. 计算连续学习天数 (Batch 4 Bug-1: 跨 DB helper)
         streak_days = 0
         result = await db.execute(
             select(func.distinct(func.date(LearningRecord.updated_at)))
             .where(LearningRecord.user_id == current_user.id)
             .order_by(func.date(LearningRecord.updated_at).desc())
         )
-        rows = result.fetchall()
-        learning_dates = [row[0] for row in rows if row[0] is not None]
-
-        if learning_dates:
-            check_date = today
-            # 如果今天没学习，从昨天开始检查
-            if learning_dates[0] != today:
-                check_date = today - timedelta(days=1)
-
-            for i, date in enumerate(learning_dates):
-                expected_date = check_date - timedelta(days=i)
-                if date == expected_date:
-                    streak_days += 1
-                else:
-                    break
+        learning_dates = _normalize_learning_dates(result.fetchall())
+        streak_days = _compute_streak_days(learning_dates, today)
 
         # 6. 计算累计观看时长（分钟）
         result = await db.execute(
@@ -672,6 +659,80 @@ async def get_learning_trend(
         )
 
 
+# ==================== Batch 4 Bug-1: 跨 DB 日期兼容 helper ====================
+
+def _normalize_to_date(d):
+    """func.date() 在 SQLite 返回 str 'YYYY-MM-DD', MySQL 返回 date 对象
+    统一转 date 对象, 避免 string != date 比较错乱
+
+    输入: str / datetime / date / None
+    输出: date 或 None
+    """
+    if d is None:
+        return None
+    if isinstance(d, str):
+        return datetime.strptime(d, '%Y-%m-%d').date()
+    if isinstance(d, datetime):
+        return d.date()
+    return d  # 已是 date
+
+
+def _normalize_learning_dates(raw_rows) -> list:
+    """SQLAlchemy rows -> list[date], 跳过 None
+
+    接受: [(date_or_str,)] / [date_or_str] / 混合
+    """
+    result = []
+    for row in raw_rows:
+        d = row[0] if isinstance(row, tuple) else row
+        normalized = _normalize_to_date(d)
+        if normalized is not None:
+            result.append(normalized)
+    return result
+
+
+def _compute_streak_days(dates: list, today: date) -> int:
+    """计算连续学习天数 (从今天或昨天往回数)
+
+    输入: 学习日期 list[date] (任意顺序)
+    输出: 连续天数 (>=0)
+    """
+    if not dates:
+        return 0
+    sorted_desc = sorted(dates, reverse=True)
+    check_date = today
+    if sorted_desc[0] != today:
+        # 今天没学, 从昨天开始数 (昨天的 streak 仍有效)
+        check_date = today - timedelta(days=1)
+    streak = 0
+    for i, date in enumerate(sorted_desc):
+        expected = check_date - timedelta(days=i)
+        if date == expected:
+            streak += 1
+        else:
+            break
+    return streak
+
+
+def _compute_max_streak(dates: list) -> int:
+    """计算历史最长连续学习天数
+
+    输入: 学习日期 list[date] (任意顺序)
+    输出: 最长连续段长度 (>=0)
+    """
+    if not dates:
+        return 0
+    sorted_asc = sorted(dates)
+    max_s = current = 1
+    for i in range(1, len(sorted_asc)):
+        if (sorted_asc[i] - sorted_asc[i-1]).days == 1:
+            current += 1
+        else:
+            max_s = max(max_s, current)
+            current = 1
+    return max(max_s, current)
+
+
 def _build_record_with_material(record: LearningRecord, material: Material) -> LearningRecordWithMaterialResponse:
     """构建带材料信息的学习记录响应"""
     return LearningRecordWithMaterialResponse(
@@ -713,34 +774,13 @@ async def get_learning_calendar(
             .where(LearningRecord.user_id == current_user.id)
             .order_by(func.date(LearningRecord.updated_at))
         )
-        all_dates = [row[0] for row in result.fetchall() if row[0] is not None]
+        all_dates = _normalize_learning_dates(result.fetchall())
 
-        # 2. 计算连续学习天数
-        streak = 0
-        if all_dates:
-            sorted_dates = sorted(all_dates, reverse=True)
-            check_date = today
-            if sorted_dates[0] != today:
-                check_date = today - timedelta(days=1)
-            for i, date in enumerate(sorted_dates):
-                expected = check_date - timedelta(days=i)
-                if date == expected:
-                    streak += 1
-                else:
-                    break
+        # 2. 计算连续学习天数 (Batch 4 Bug-1: 跨 DB helper)
+        streak = _compute_streak_days(all_dates, today)
 
         # 3. 计算最长连续天数
-        max_streak = 0
-        if all_dates:
-            sorted_asc = sorted(all_dates)
-            current_streak = 1
-            for i in range(1, len(sorted_asc)):
-                if (sorted_asc[i] - sorted_asc[i-1]).days == 1:
-                    current_streak += 1
-                else:
-                    max_streak = max(max_streak, current_streak)
-                    current_streak = 1
-            max_streak = max(max_streak, current_streak)
+        max_streak = _compute_max_streak(all_dates)
 
         # 4. 当月累计观看分钟数
         month_start = datetime(year, month, 1).date()
@@ -944,36 +984,14 @@ async def get_dashboard(
         )
         this_week_learning_days = result.scalar() or 0
 
-        # 1.5 连续学习天数 (3.3 修复点)
+        # 1.5 连续学习天数 (Batch 4 Bug-1: 跨 DB helper, 替代 Batch 3 内联)
         result = await db.execute(
             select(func.distinct(func.date(LearningRecord.updated_at)))
             .where(LearningRecord.user_id == current_user.id)
             .order_by(func.date(LearningRecord.updated_at).desc())
         )
-        # 3.3 修复: func.date() 在 SQLite 测试返回 string,在 MySQL 返回 date
-        # 统一转 date 对象, 避免 string != date 比较错乱
-        raw_dates = [row[0] for row in result.fetchall() if row[0] is not None]
-        learning_dates = []
-        for d in raw_dates:
-            if isinstance(d, str):
-                # SQLite: 'YYYY-MM-DD'
-                learning_dates.append(datetime.strptime(d, '%Y-%m-%d').date())
-            elif isinstance(d, datetime):
-                learning_dates.append(d.date())
-            else:
-                learning_dates.append(d)
-
-        streak_days = 0
-        if learning_dates:
-            check_date = today
-            if learning_dates[0] != today:
-                check_date = today - timedelta(days=1)
-            for i, date in enumerate(learning_dates):
-                expected_date = check_date - timedelta(days=i)
-                if date == expected_date:
-                    streak_days += 1
-                else:
-                    break
+        learning_dates = _normalize_learning_dates(result.fetchall())
+        streak_days = _compute_streak_days(learning_dates, today)
 
         # 1.6 累计观看时长(分钟)
         result = await db.execute(
