@@ -182,14 +182,17 @@
       </transition>
 
       <div :class="['vocab-list', { 'vocab-list-list-mode': viewMode === 'list' }]" v-loading="loading">
+        <TransitionGroup name="vocab-card" tag="div" class="vocab-list-inner">
         <div
-          v-for="item in vocabularies"
+          v-for="(item, index) in vocabularies"
           :key="item.id"
+          :style="{ '--vocab-stagger': index * 30 + 'ms' }"
           :class="['vocab-card', {
             'vocab-mastered': item.mastered,
             'vocab-learning': !item.mastered && item.review_count > 0,
             'vocab-new': !item.mastered && item.review_count === 0,
-            'vocab-selected': batchMode && selectedIds.has(item.id)
+            'vocab-selected': batchMode && selectedIds.has(item.id),
+            'vocab-focused': focusedIndex === index
           }]"
         >
           <!-- 状态色条 -->
@@ -212,9 +215,13 @@
                 <div class="vocab-word-row" @click="speakText(item.word)">
                   <span class="vocab-word">{{ item.word }}</span>
                 </div>
-                <!-- 查询到的音标和释义 -->
-                <div class="vocab-phonetic" v-if="getWordInfo(item.word)?.phonetic">
-                  /{{ getWordInfo(item.word).phonetic }}/
+                <!-- 查询到的音标 (5-P2-2: lookup 失败显示 '?' tooltip) -->
+                <div
+                  :class="['vocab-phonetic', { 'lookup-failed': isLookupFailed(item.word) }]"
+                  v-if="getWordInfo(item.word)?.phonetic || isLookupAttempted(item.word)"
+                >
+                  <span v-if="getWordInfo(item.word)?.phonetic">/{{ getWordInfo(item.word).phonetic }}/</span>
+                  <span v-else-if="isLookupFailed(item.word)" title="单词查询失败, 点击重试" @click.stop="retryLookup(item.word)">? 重试</span>
                 </div>
               </div>
 
@@ -256,9 +263,21 @@
               </div>
             </div>
 
-            <!-- 查询到的翻译 -->
-            <div class="vocab-translation" v-if="showChinese && getWordInfo(item.word)?.translation">
-              {{ getWordInfo(item.word).translation }}
+            <!-- 查询到的翻译 (5-P2-2: 失败显示 '?') -->
+            <div
+              :class="['vocab-translation', { 'lookup-failed': isLookupFailed(item.word) }]"
+              v-if="showChinese && (getWordInfo(item.word)?.translation || isLookupFailed(item.word))"
+              :title="isLookupFailed(item.word) ? '单词查询失败, 点击重试' : ''"
+              @click.stop="isLookupFailed(item.word) && retryLookup(item.word)"
+            >
+              <span v-if="getWordInfo(item.word)?.translation">{{ getWordInfo(item.word).translation }}</span>
+              <span v-else-if="isLookupFailed(item.word)">? 翻译查询失败</span>
+            </div>
+
+            <!-- 5-P2-1: 例句 (lookup cache 的 example 字段, 之前从未渲染过) -->
+            <div class="vocab-example" v-if="showChinese && getWordInfo(item.word)?.example">
+              <span class="example-label">例句</span>
+              <span class="example-text">「{{ getWordInfo(item.word).example }}」</span>
             </div>
 
             <!-- 复习进度可视化 -->
@@ -360,6 +379,7 @@
             <SfButton type="primary" @click="$router.push('/materials')">去发现语料</SfButton>
           </template>
         </EmptyState>
+        </TransitionGroup>
       </div>
 
       <!-- 分页 -->
@@ -383,12 +403,22 @@
           @change="loadVocabularies"
         />
       </div>
+
+      <!-- 5-P2-6: 键盘快捷键提示 (右下角悬浮) -->
+      <div class="vocab-kbd-hint" aria-label="键盘快捷键">
+        <span><kbd>j</kbd>/<kbd>k</kbd> 上下</span>
+        <span><kbd>m</kbd> 掌握</span>
+        <span><kbd>u</kbd> 取消</span>
+        <span><kbd>d</kbd> 删除</span>
+        <span><kbd>↵</kbd> 朗读</span>
+        <span><kbd>Esc</kbd> 退出</span>
+      </div>
     </template>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from '@/composables/useToast'
 import { useTTS } from '@/composables/useTTS'
@@ -443,6 +473,10 @@ const filterStatus = ref('all')  // 4-P1-3: 'all'/'learning'/'mastered'/'new' (�
 // 5-P0-4: 批量操作状态
 const batchMode = ref(false)
 const selectedIds = ref(new Set())
+
+// 5-P2-6: 键盘快捷键焦点索引 (j/k 上下移动)
+// batchMode=false 时单个聚焦, batchMode=true 时多选切换
+const focusedIndex = ref(-1)
 const filterMaterialId = ref(null)
 const sortBy = ref('newest')
 const materialsList = ref([])
@@ -459,9 +493,21 @@ const reviewStats = ref({ total_due: 0, total_learning: 0, total_mastered: 0 })
 // 单词查询缓存
 const wordInfoCache = reactive({})
 const lookupLoading = reactive({})
+// 5-P2-2: 跟踪 lookup 失败 (key=word.toLowerCase(), value=true 时表示失败)
+// 失败的卡片显示 '? 重试', 点击可手动 retry
+const lookupFailed = reactive({})
+// 5-P2-2: 跟踪是否已尝试 lookup (成功的不会有 phonetic 但也不显示 '?')
+const lookupAttempted = reactive({})
 
-// 获取缓存的单词信息
 const getWordInfo = (word) => wordInfoCache[word.toLowerCase()]
+const isLookupFailed = (word) => lookupFailed[word.toLowerCase()] === true
+const isLookupAttempted = (word) => lookupAttempted[word.toLowerCase()] === true
+
+const retryLookup = async (word) => {
+  const key = word.toLowerCase()
+  delete lookupFailed[key]
+  await lookupWordSilent(word)
+}
 
 // 加载语料列表（用于筛选）
 const loadMaterialsList = async () => {
@@ -548,8 +594,14 @@ const lookupWordSilent = async (word) => {
       translation: result.translation || result.meaning || '',
       example: result.example || ''
     }
+    lookupAttempted[key] = true
+    // 成功后清除失败标记
+    if (lookupFailed[key]) delete lookupFailed[key]
   } catch (e) {
-    // 静默失败
+    // 5-P2-2: 不再静默, 标记失败让前端显示 '? 重试'
+    console.warn(`lookup failed for "${word}":`, e.message)
+    lookupAttempted[key] = true
+    lookupFailed[key] = true
   }
 }
 
@@ -842,10 +894,95 @@ const exportVocabulary = async (format) => {
   }
 }
 
+// ==================== 5-P2-6: 键盘快捷键 ====================
+const handleKeyboard = (e) => {
+  // 输入框/textarea 中不拦截
+  const tag = e.target.tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) return
+  // 修饰键不拦截 (Ctrl+J 是浏览器快捷键)
+  if (e.ctrlKey || e.metaKey || e.altKey) return
+
+  const list = vocabularies.value
+  if (!list || list.length === 0) return
+
+  switch (e.key.toLowerCase()) {
+    case 'j':
+    case 'arrowdown':
+      e.preventDefault()
+      focusedIndex.value = Math.min(focusedIndex.value + 1, list.length - 1)
+      break
+    case 'k':
+    case 'arrowup':
+      e.preventDefault()
+      focusedIndex.value = Math.max(focusedIndex.value - 1, 0)
+      break
+    case 'm':
+      // 标记当前 focus 为掌握
+      if (focusedIndex.value >= 0 && focusedIndex.value < list.length) {
+        const item = list[focusedIndex.value]
+        if (!item.mastered) {
+          e.preventDefault()
+          markMastered(item.id)
+        }
+      }
+      break
+    case 'u':
+      // 取消当前 focus 的掌握
+      if (focusedIndex.value >= 0 && focusedIndex.value < list.length) {
+        const item = list[focusedIndex.value]
+        if (item.mastered) {
+          e.preventDefault()
+          unmarkVocab(item.id)
+        }
+      }
+      break
+    case 'd':
+      // 删除当前 focus
+      if (focusedIndex.value >= 0 && focusedIndex.value < list.length) {
+        const item = list[focusedIndex.value]
+        e.preventDefault()
+        deleteVocab(item)
+      }
+      break
+    case 'enter':
+      // 查释义 + 朗读
+      if (focusedIndex.value >= 0 && focusedIndex.value < list.length) {
+        const item = list[focusedIndex.value]
+        e.preventDefault()
+        lookupAndSpeak(item.word)
+      }
+      break
+    case 'escape':
+      // 退出批量模式 / 清空焦点
+      if (batchMode.value) {
+        toggleBatchMode()
+      } else {
+        focusedIndex.value = -1
+      }
+      break
+  }
+}
+
+// focusedIndex 变化时滚动到可视区域
+watch(focusedIndex, () => {
+  // 用 nextTick 等 DOM 更新
+  setTimeout(() => {
+    const el = document.querySelector('.vocab-focused')
+    if (el && typeof el.scrollIntoView === 'function') {
+      el.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    }
+  }, 50)
+})
+
 onMounted(() => {
   preloadVoices()
   loadMaterialsList()
   loadVocabularies()
+  window.addEventListener('keydown', handleKeyboard)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyboard)
 })
 </script>
 
@@ -1722,5 +1859,112 @@ onMounted(() => {
 .vocab-dropdown-item :deep(svg) {
   flex-shrink: 0;
   color: var(--color-text-secondary, #475569);
+}
+
+/* ==================== 5-P2-1: 例句样式 ==================== */
+.vocab-example {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 8px 12px;
+  background: rgba(245, 158, 11, 0.04);
+  border-left: 3px solid var(--color-accent, #F59E0B);
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.vocab-example .example-label {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: var(--color-accent, #F59E0B);
+  font-size: 12px;
+}
+.vocab-example .example-text {
+  color: var(--color-text-secondary, #475569);
+  font-style: italic;
+}
+
+/* ==================== 5-P2-2: lookup 失败提示 ==================== */
+.lookup-failed {
+  color: var(--color-text-tertiary, #94a3b8);
+  cursor: pointer;
+  font-style: italic;
+}
+.lookup-failed:hover {
+  color: var(--color-brand, #2563EB);
+  text-decoration: underline;
+}
+
+/* ==================== 5-P2-4: 列表入场动画 (stagger) ==================== */
+.vocab-list-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.vocab-list-list-mode > .vocab-list-inner {
+  gap: 6px;
+}
+/* 卡片入场动画 */
+.vocab-card-enter-active {
+  transition: opacity 280ms var(--sf-ease-standard),
+              transform 280ms var(--sf-ease-standard);
+  transition-delay: var(--vocab-stagger, 0ms);
+}
+.vocab-card-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.vocab-card-leave-active {
+  transition: opacity 180ms var(--sf-ease-standard),
+              transform 180ms var(--sf-ease-standard);
+  position: absolute;  /* leave 时脱离布局 */
+}
+.vocab-card-leave-to {
+  opacity: 0;
+  transform: translateX(-12px);
+}
+.vocab-card-move {
+  transition: transform 280ms var(--sf-ease-standard);
+}
+
+/* ==================== 5-P2-6: 键盘焦点高亮 ==================== */
+.vocab-card.vocab-focused {
+  outline: 2px dashed var(--color-brand, #2563EB);
+  outline-offset: 2px;
+  background: rgba(37, 99, 235, 0.02);
+}
+/* 列表模式: 焦点样式稍弱 (避免抢戏) */
+.vocab-list-list-mode .vocab-card.vocab-focused {
+  outline-offset: -1px;
+}
+
+/* 键盘快捷键提示 (右下角悬浮) */
+.vocab-kbd-hint {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  padding: 8px 12px;
+  background: var(--color-bg-card, #fff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 8px;
+  font-size: 11px;
+  color: var(--color-text-secondary, #475569);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  z-index: 50;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.vocab-kbd-hint kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  background: var(--color-bg-hover, rgba(37, 99, 235, 0.06));
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 3px;
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-text-primary, #1e293b);
 }
 </style>

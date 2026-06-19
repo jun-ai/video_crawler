@@ -101,6 +101,8 @@ export const vocabularyAPI = {
   batchDelete: (ids) => api.post('/learning/vocabulary/batch-delete', { ids }),
   // 5-P1-4: 导出 (后端返回文件流, 前端用 blob 下载)
   export: (params) => api.get('/learning/vocabulary/export', { params, responseType: 'blob' }),
+  // 5-P2-10: 单词查重
+  check: (word) => api.get(`/learning/vocabulary/check?word=${encodeURIComponent(word)}`),
   lookup: (word) => api.get(`/learning/vocabulary/lookup?word=${encodeURIComponent(word)}`, { timeout: 30000 }),
   // 复习相关
   getReviewQueue: (limit = 20) => api.get(`/learning/vocabulary/review-queue?limit=${limit}`),

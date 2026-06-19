@@ -184,10 +184,46 @@ async def add_vocabulary(
     current_user: Annotated[User, Depends(get_current_user)],
     db: AsyncSession = Depends(get_db)
 ):
-    """添加生词"""
+    """添加生词
+
+    5-P2-10: 自动去重 - 如果同一用户已有相同 word (大小写不敏感), 走 update 路径而非新建
+    - 已存在 + mastered: 提示已是 mastered
+    - 已存在 + learning: 更新 context / material_id / subtitle_id (新语境覆盖旧的)
+    - 不存在: 正常创建
+    """
+    from sqlalchemy import func
+
+    word_lower = data.word.strip().lower()
+    if not word_lower:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="单词不能为空"
+        )
+
+    # 查重 (同一用户, word 大小写不敏感)
+    existing_query = select(Vocabulary).where(
+        Vocabulary.user_id == current_user.id,
+        func.lower(Vocabulary.word) == word_lower
+    )
+    result = await db.execute(existing_query)
+    existing = result.scalar_one_or_none()
+
+    if existing:
+        # 已存在: 更新 context/material/subtitle (新语境覆盖)
+        if data.context is not None:
+            existing.context = data.context
+        if data.material_id is not None:
+            existing.material_id = data.material_id
+        if data.subtitle_id is not None:
+            existing.subtitle_id = data.subtitle_id
+        await db.commit()
+        await db.refresh(existing)
+        return existing
+
+    # 不存在: 创建新词
     vocabulary = Vocabulary(
         user_id=current_user.id,
-        word=data.word,
+        word=data.word.strip(),
         context=data.context,
         material_id=data.material_id,
         subtitle_id=data.subtitle_id
@@ -198,6 +234,46 @@ async def add_vocabulary(
     await db.refresh(vocabulary)
 
     return vocabulary
+
+
+@router.get("/vocabulary/check")
+async def check_vocabulary_exists(
+    current_user: Annotated[User, Depends(get_current_user)],
+    word: str = Query(..., description="要检查的单词"),
+    db: AsyncSession = Depends(get_db)
+):
+    """5-P2-10: 检查单词是否已在生词本 (前端加入前预检)
+
+    返回:
+    - exists: bool (是否已存在)
+    - vocabulary: 已存在时的完整对象 (供前端展示)
+    """
+    from sqlalchemy import func
+
+    word_lower = word.strip().lower()
+    if not word_lower:
+        return {"exists": False, "vocabulary": None}
+
+    query = select(Vocabulary).where(
+        Vocabulary.user_id == current_user.id,
+        func.lower(Vocabulary.word) == word_lower
+    )
+    result = await db.execute(query)
+    existing = result.scalar_one_or_none()
+
+    if not existing:
+        return {"exists": False, "vocabulary": None}
+
+    return {
+        "exists": True,
+        "vocabulary": {
+            "id": existing.id,
+            "word": existing.word,
+            "mastered": existing.mastered,
+            "review_count": existing.review_count,
+            "created_at": existing.created_at.isoformat() if existing.created_at else None
+        }
+    }
 
 
 @router.get("/vocabulary")
