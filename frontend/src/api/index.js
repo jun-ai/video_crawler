@@ -93,6 +93,7 @@ export const vocabularyAPI = {
   add: (data) => api.post('/learning/vocabulary', data),
   getList: (params) => api.get('/learning/vocabulary', { params }),
   markMastered: (id) => api.put(`/learning/vocabulary/${id}/master`),
+  unmarkMastered: (id) => api.put(`/learning/vocabulary/${id}/unmaster`), // 5-P0-1
   delete: (id) => api.delete(`/learning/vocabulary/${id}`),
   lookup: (word) => api.get(`/learning/vocabulary/lookup?word=${encodeURIComponent(word)}`, { timeout: 30000 }),
   // 复习相关

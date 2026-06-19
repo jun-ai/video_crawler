@@ -330,6 +330,34 @@ async def mark_vocabulary_mastered(
     return MessageResponse(message="已标记为掌握", success=True)
 
 
+# 5-P0-1: 取消掌握 (toggle mastered back to False)
+@router.put("/vocabulary/{vocabulary_id}/unmaster", response_model=MessageResponse)
+async def unmark_vocabulary_mastered(
+    vocabulary_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db)
+):
+    """取消生词的已掌握状态 (mastered=False, 保留 SM-2 历史)"""
+    result = await db.execute(
+        select(Vocabulary).where(
+            Vocabulary.id == vocabulary_id,
+            Vocabulary.user_id == current_user.id
+        )
+    )
+    vocabulary = result.scalar_one_or_none()
+
+    if not vocabulary:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="生词不存在"
+        )
+
+    vocabulary.mastered = False
+    await db.commit()
+
+    return MessageResponse(message="已取消掌握", success=True)
+
+
 @router.delete("/vocabulary/{vocabulary_id}", response_model=MessageResponse)
 async def delete_vocabulary(
     vocabulary_id: int,

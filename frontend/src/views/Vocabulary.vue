@@ -3,8 +3,10 @@
     <!-- 页面标题 -->
     <PageHeader title="生词本">
       <template #actions>
+        <!-- 5-P0-6: 显示中文开关加 label + localStorage 持久化 -->
         <SfSwitch
           v-model="showChinese"
+          label="显示中文"
         />
       </template>
     </PageHeader>
@@ -218,13 +220,15 @@
 
             <!-- 操作按钮 -->
             <div class="vocab-actions">
+              <!-- 5-P0-2: 单词点击查释义 (替代 '查询发音' 按钮) -->
               <SfButton
                 type="primary"
                 size="sm"
                 @click="lookupAndSpeak(item.word)"
                 :loading="lookupLoading[item.word]"
+                title="查释义: 未缓存时走 lookup API, 已缓存时直接朗读"
               >
-                <Headphones :size="14" /> 查询发音
+                <Headphones :size="14" /> 查释义
               </SfButton>
               <SfButton
                 v-if="!item.mastered"
@@ -234,13 +238,14 @@
               >
                 标记掌握
               </SfButton>
+              <!-- 5-P0-1: 已掌握项 '移出' 改 '取消掌握', 调 unmark 端点 (保留 SM-2 历史) -->
               <SfButton
                 v-if="item.mastered"
                 type="ghost"
                 size="sm"
-                @click="removeFromBook(item.id)"
+                @click="unmarkVocab(item.id)"
               >
-                移出
+                取消掌握
               </SfButton>
               <SfButton
                 v-if="!item.mastered"
@@ -292,7 +297,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from '@/composables/useToast'
 import { useTTS } from '@/composables/useTTS'
@@ -317,6 +322,15 @@ const { speakText, speakWord, preloadVoices } = useTTS()
 const loading = ref(false)
 const vocabularies = ref([])
 const showChinese = ref(true)
+// 5-P0-6: 从 localStorage 恢复 (回退默认 true)
+try {
+  const stored = localStorage.getItem('vocab-show-chinese')
+  if (stored !== null) showChinese.value = stored === 'true'
+} catch (e) { /* localStorage 不可用时忽略 */ }
+// 5-P0-6: 持久化
+watch(showChinese, (val) => {
+  try { localStorage.setItem('vocab-show-chinese', String(val)) } catch (e) { /* ignore */ }
+})
 const filterStatus = ref('all')  // 4-P1-3: 'all'/'learning'/'mastered'/'new' (原 filterMastered bool 升级为 string)
 const filterMaterialId = ref(null)
 const sortBy = ref('newest')
@@ -525,16 +539,14 @@ const markMastered = async (id) => {
   }
 }
 
-const removeFromBook = async (id) => {
-  const confirmed = await showConfirm({ title: '确认移出', message: '确定要将该生词移出生词本吗？' })
-  if (confirmed) {
-    try {
-      await vocabularyAPI.delete(id)
-      toast.success('已移出生词本')
-      loadVocabularies()
-    } catch (e) {
-      console.error('移出失败', e)
-    }
+// 5-P0-1: 取消掌握 (toggle mastered=False, 保留 SM-2 历史)
+const unmarkVocab = async (id) => {
+  try {
+    await vocabularyAPI.unmarkMastered(id)
+    toast.success('已取消掌握, 重新进入学习中')
+    loadVocabularies()
+  } catch (e) {
+    console.error('取消掌握失败', e)
   }
 }
 
