@@ -107,7 +107,7 @@
                 <div :class="['sf-interp-card__status-bar', getStatusBarClass(item.id)]"></div>
                 <div class="sf-interp-card__body">
                   <div class="sf-interp-card__row sf-interp-card__row--primary">
-                    <div class="sf-interp-card__word" @click.stop="$emit('interpretation-click', item.content_en)">
+                    <div class="sf-interp-card__word" @click.stop="$emit('interpretation-click', item)">
                       <span class="sf-interp-card__word-text">{{ item.content_en }}</span>
                       <Headphones class="sf-interp-card__speak" :size="13" />
                     </div>
@@ -140,7 +140,7 @@
                   <div class="sf-detail-item__label">其他词性</div>
                   <div class="sf-detail-item__text">{{ item.other_pos_definitions }}</div>
                 </div>
-                <div v-if="item.example_sentence" class="sf-detail-item sf-detail-item--clickable" @click="$emit('interpretation-click', item.example_sentence)">
+                <div v-if="item.example_sentence" class="sf-detail-item sf-detail-item--clickable" @click="$emit('interpretation-click', item)">
                   <div class="sf-detail-item__label">例句</div>
                   <div class="sf-detail-item__text sf-detail-item__text--clickable">{{ item.example_sentence }}</div>
                 </div>
@@ -175,7 +175,7 @@
                 <div :class="['sf-interp-card__status-bar', getStatusBarClass(item.id)]"></div>
                 <div class="sf-interp-card__body">
                   <div class="sf-interp-card__row sf-interp-card__row--primary">
-                    <div class="sf-interp-card__word" @click.stop="$emit('interpretation-click', item.content_en)">
+                    <div class="sf-interp-card__word" @click.stop="$emit('interpretation-click', item)">
                       <span class="sf-interp-card__word-text">{{ item.content_en }}</span>
                       <Headphones class="sf-interp-card__speak" :size="13" />
                     </div>
@@ -209,7 +209,7 @@
                     <span v-for="s in (item.synonyms || '').split(',')" :key="s" class="sf-tag">{{ s.trim() }}</span>
                   </div>
                 </div>
-                <div v-if="item.example_sentence" class="sf-detail-item sf-detail-item--clickable" @click="$emit('interpretation-click', item.example_sentence)">
+                <div v-if="item.example_sentence" class="sf-detail-item sf-detail-item--clickable" @click="$emit('interpretation-click', item)">
                   <div class="sf-detail-item__label">例句</div>
                   <div class="sf-detail-item__text sf-detail-item__text--clickable">{{ item.example_sentence }}</div>
                 </div>
@@ -238,7 +238,7 @@
                 <div :class="['sf-interp-card__status-bar', getStatusBarClass(item.id)]"></div>
                 <div class="sf-interp-card__body">
                   <div class="sf-interp-card__row sf-interp-card__row--primary">
-                    <div class="sf-interp-card__word" @click.stop="$emit('interpretation-click', item.content_en)">
+                    <div class="sf-interp-card__word" @click.stop="$emit('interpretation-click', item)">
                       <span class="sf-interp-card__word-text">{{ item.content_en }}</span>
                       <Headphones class="sf-interp-card__speak" :size="13" />
                     </div>
@@ -262,7 +262,7 @@
               </div>
 
               <div v-if="isExpanded(item.id)" class="sf-interp-card__details">
-                <div v-if="item.context_sentence" class="sf-detail-item sf-detail-item--clickable" @click="$emit('interpretation-click', item.context_sentence)">
+                <div v-if="item.context_sentence" class="sf-detail-item sf-detail-item--clickable" @click="$emit('interpretation-click', item)">
                   <div class="sf-detail-item__label">字幕原文</div>
                   <div class="sf-detail-item__text sf-detail-item__text--clickable">{{ item.context_sentence }}</div>
                 </div>
@@ -286,7 +286,7 @@
                     <span class="sf-detail-item__tag">相似表达：</span>{{ item.alternative_phrasings }}
                   </div>
                 </div>
-                <div v-if="item.example_sentence" class="sf-detail-item sf-detail-item--clickable" @click="$emit('interpretation-click', item.example_sentence)">
+                <div v-if="item.example_sentence" class="sf-detail-item sf-detail-item--clickable" @click="$emit('interpretation-click', item)">
                   <div class="sf-detail-item__label">例句</div>
                   <div class="sf-detail-item__text sf-detail-item__text--clickable">{{ item.example_sentence }}</div>
                 </div>
@@ -310,7 +310,7 @@
                 <div :class="['sf-interp-card__status-bar', getStatusBarClass(item.id)]"></div>
                 <div class="sf-interp-card__body">
                   <div class="sf-interp-card__row sf-interp-card__row--primary">
-                    <div class="sf-interp-card__word" @click.stop="$emit('interpretation-click', item.content_en)">
+                    <div class="sf-interp-card__word" @click.stop="$emit('interpretation-click', item)">
                       <span class="sf-interp-card__word-text">{{ item.content_en }}</span>
                       <Headphones class="sf-interp-card__speak" :size="13" />
                     </div>
@@ -342,7 +342,7 @@
                   <div class="sf-detail-item__label">文化背景</div>
                   <div class="sf-detail-item__text">{{ item.cultural_background }}</div>
                 </div>
-                <div v-if="item.context_sentence" class="sf-detail-item sf-detail-item--clickable" @click="$emit('interpretation-click', item.context_sentence)">
+                <div v-if="item.context_sentence" class="sf-detail-item sf-detail-item--clickable" @click="$emit('interpretation-click', item)">
                   <div class="sf-detail-item__label">字幕原文</div>
                   <div class="sf-detail-item__text sf-detail-item__text--clickable">{{ item.context_sentence }}</div>
                 </div>
@@ -365,7 +365,7 @@
                     <span class="sf-detail-item__tag">相似表达：</span>{{ item.alternative_phrasings }}
                   </div>
                 </div>
-                <div v-if="item.example_sentence" class="sf-detail-item sf-detail-item--clickable" @click="$emit('interpretation-click', item.example_sentence)">
+                <div v-if="item.example_sentence" class="sf-detail-item sf-detail-item--clickable" @click="$emit('interpretation-click', item)">
                   <div class="sf-detail-item__label">例句</div>
                   <div class="sf-detail-item__text sf-detail-item__text--clickable">{{ item.example_sentence }}</div>
                 </div>

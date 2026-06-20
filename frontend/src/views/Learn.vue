@@ -1471,8 +1471,8 @@ const seekToWordInVideo = () => {
     wordPopupVisible.value = false
     toast.success(`已跳转到 ${formatTime(seekTime * 1000)}`)
   } else {
-    // 尝试从 interpretation 中查找
-    handleInterpretationClick(currentWord.value)
+    // 尝试从 interpretation 中查找 (构造一个 minimal item 对象)
+    handleInterpretationClick({ content_en: currentWord.value })
     wordPopupVisible.value = false
   }
 }
@@ -1619,14 +1619,40 @@ const handleAnnotationClick = (event) => {
 }
 
 // 点击解读项（单词/短语/语法），跳转到视频对应时间
-const handleInterpretationClick = (contentEn) => {
-  if (!contentEn || !subtitles.value.length) return
+// 5-P0 (1.1): 优先用 item.timestamp (后端已存), 找不到再 fallback 到 text 匹配
+const handleInterpretationClick = (item) => {
+  if (!item) return
 
-  // 先播放发音
-  speakText(contentEn)
+  // 1. 播放发音
+  const speakContent = item.content_en || item.example_sentence || item.context_sentence || ''
+  if (speakContent) speakText(speakContent)
 
-  // 在字幕中查找包含该词/短语的字幕
-  const searchText = contentEn.toLowerCase().trim()
+  // 2. 优先用 timestamp 字段 (后端 VideoInterpretation.timestamp, AI 生成时存)
+  if (item.timestamp) {
+    seekTo(item.timestamp)
+    // 尝试找到对应的 subtitle, 高亮 + 翻页
+    if (subtitles.value.length) {
+      const foundSubtitle = subtitles.value.find(
+        sub => Math.abs((sub.start_time || 0) - item.timestamp) < 1500  // 1.5s 误差
+      )
+      if (foundSubtitle) {
+        const index = subtitles.value.findIndex(s => s.id === foundSubtitle.id)
+        if (index !== -1) {
+          currentIndex.value = index
+          const targetPage = Math.ceil((index + 1) / subtitlePageSize)
+          if (targetPage !== subtitleCurrentPage.value) {
+            subtitleCurrentPage.value = targetPage
+          }
+        }
+      }
+    }
+    return
+  }
+
+  // 3. Fallback: 在字幕中查找包含该词/短语的字幕 (老逻辑)
+  if (!subtitles.value.length) return
+  const searchText = (item.content_en || '').toLowerCase().trim()
+  if (!searchText) return
   const foundSubtitle = subtitles.value.find(sub => {
     const subtitleText = (sub.text_en || '').toLowerCase()
     // 检查是否包含完整词/短语
