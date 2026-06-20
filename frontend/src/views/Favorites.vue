@@ -185,32 +185,14 @@
             </button>
           </div>
           <div class="fav-material-filter">
-            <SfDropdown>
-              <template #trigger>
-                <SfButton type="ghost" size="sm">
-                  <Filter :size="14" />
-                  {{ filterMaterialTitle || '全部视频' }}
-                </SfButton>
-              </template>
-              <div class="material-filter-menu">
-                <div
-                  class="dropdown-item"
-                  :class="{ active: filterMaterialId === null }"
-                  @click="filterMaterialById(null)"
-                >
-                  全部视频
-                </div>
-                <div
-                  v-for="m in availableMaterials"
-                  :key="m.id"
-                  class="dropdown-item"
-                  :class="{ active: filterMaterialId === m.id }"
-                  @click="filterMaterialById(m.id)"
-                >
-                  {{ m.title }}
-                </div>
-              </div>
-            </SfDropdown>
+            <!-- 5-P2-3: 语料 Combobox (可搜索, 替代下拉) -->
+            <SfCombobox
+              v-model="filterMaterialId"
+              :options="availableMaterials.map(m => ({ value: m.id, label: m.title }))"
+              placeholder="全部视频 (可搜索)"
+              :display-value="filterMaterialTitle"
+              class="filter-combobox"
+            />
           </div>
           <!-- 5-P2 (后缀): 导出当前筛选 -->
           <SfDropdown>
@@ -746,6 +728,7 @@ import SfTag from '@/components/ui/SfTag.vue'
 import SfEmpty from '@/components/ui/SfEmpty.vue'
 import SfDropdown from '@/components/ui/SfDropdown.vue'
 import SfPagination from '@/components/ui/SfPagination.vue'
+import SfCombobox from '@/components/ui/SfCombobox.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import { favoriteAPI, vocabularyAPI, subtitleBookmarkAPI, materialAPI, bookmarkTagAPI, bookmarkFolderAPI, bookmarkExportAPI } from '@/api'
 import { useUserStore } from '@/stores/user'

@@ -106,13 +106,15 @@
         </div>
 
         <div class="filter-row">
-          <!-- 语料筛选 -->
+          <!-- 5-P2-3: 语料 Combobox (可搜索, 语料多了下拉不好找) -->
           <div class="filter-section">
             <span class="filter-label">来源：</span>
-            <SfSelect
+            <SfCombobox
               v-model="filterMaterialId"
-              :options="materialsList.map(m => ({ label: m.title, value: m.id }))"
-              placeholder="全部语料"
+              :options="materialsList.map(m => ({ value: m.id, label: m.title }))"
+              placeholder="全部语料 (可搜索)"
+              :display-value="filterMaterialTitle"
+              class="filter-combobox"
             />
           </div>
 
@@ -468,6 +470,7 @@ import { showConfirm } from '@/composables/useConfirm'
 import { Headphones, Play, Flame, Search, X, CheckSquare, Square, CheckCheck, Check, RotateCcw, Trash2, Download, FileJson, FileText, LayoutGrid, Rows3, Star, Infinity as InfinityIcon, ListOrdered } from 'lucide-vue-next'
 import SfSwitch from '@/components/ui/SfSwitch.vue'
 import SfSelect from '@/components/ui/SfSelect.vue'
+import SfCombobox from '@/components/ui/SfCombobox.vue'
 import SfInput from '@/components/ui/SfInput.vue'
 import SfDropdown from '@/components/ui/SfDropdown.vue'
 import SfEmpty from '@/components/ui/SfEmpty.vue'
@@ -543,6 +546,12 @@ const materialsList = ref([])
 const currentPage = ref(1)
 const pageSize = ref(20)
 const total = ref(0)
+
+// 5-P2-3: 当前选中的语料标题 (用于 combobox 显示)
+const filterMaterialTitle = computed(() => {
+  if (!filterMaterialId.value) return ''
+  return materialsList.value.find(m => m.id === filterMaterialId.value)?.title || ''
+})
 
 // 5-P0-3: 单词模糊搜索 (前端 debounce 300ms, 推送给后端 ?keyword=)
 const searchKeyword = ref('')
