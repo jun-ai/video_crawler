@@ -130,6 +130,36 @@
             <span>管理</span>
           </button>
         </div>
+        <!-- 5-P2 (后缀): 标签 chip 行 (5-P1-2 tags 筛选, 跟文件夹独立可组合) -->
+        <div v-if="allUserTags.length > 0" class="fav-folder-chips fav-tag-chips">
+          <button
+            :class="['fav-folder-chip', 'fav-tag-chip', { active: filterTagId === null }]"
+            @click="filterTagById(null)"
+            aria-label="清除标签筛选"
+          >
+            <X :size="12" />
+            <span>全部标签</span>
+          </button>
+          <button
+            :class="['fav-folder-chip', 'fav-tag-chip', { active: filterTagId === 0 }]"
+            @click="filterTagById(0)"
+            aria-label="仅显示无标签"
+          >
+            <X :size="12" />
+            <span>无标签</span>
+          </button>
+          <button
+            v-for="t in allUserTags"
+            :key="`tag-${t.id}`"
+            :class="['fav-folder-chip', 'fav-tag-chip', { active: filterTagId === t.id }]"
+            :style="{ '--folder-color': t.color || '#5c6ef5' }"
+            @click="filterTagById(t.id)"
+            :aria-label="`筛选标签 ${t.name}`"
+          >
+            <span class="user-tag-name">{{ t.name }}</span>
+            <span class="fav-folder-count">{{ t.usage_count }}</span>
+          </button>
+        </div>
         <div class="fav-search-row">
           <div class="fav-search-wrap">
             <Search :size="14" class="fav-search-icon" />
@@ -1021,6 +1051,7 @@ const loadSubtitleBookmarks = async () => {
     if (searchQuery.value.trim()) params.search = searchQuery.value.trim()
     if (filterMaterialId.value) params.material_id = filterMaterialId.value
     if (filterFolderId.value !== null) params.folder_id = filterFolderId.value
+    if (filterTagId.value !== null) params.tag_id = filterTagId.value
     const res = await subtitleBookmarkAPI.getAll(params)
     const items = Array.isArray(res) ? res : (res.items || [])
     // 字段映射：后端 subtitle_text_en → 前端 text_en
@@ -1128,6 +1159,7 @@ const refreshData = async () => {
 // 状态
 const allFolders = ref([])         // [{ id, name, color, icon, bookmark_count }]
 const filterFolderId = ref(null)   // null=全部, 0=未分类, 其他=该 folder
+const filterTagId = ref(null)      // 5-P2 (后缀): null=全部, 0=无标签, 其他=该 tag (跟 folder 可组合)
 const uncategorizedCount = computed(() => {
   // 从当前已加载的 bookmarks 推断未分类数 (无 folder_id)
   return subtitleBookmarks.value.filter(b => !b.folder_id).length
@@ -1154,6 +1186,12 @@ const loadFolders = async () => {
 // 按文件夹筛选
 const filterFolderById = (id) => {
   filterFolderId.value = id
+  loadSubtitleBookmarks()
+}
+
+// 5-P2 (后缀): 按标签筛选
+const filterTagById = (id) => {
+  filterTagId.value = id
   loadSubtitleBookmarks()
 }
 
@@ -1521,6 +1559,13 @@ onMounted(() => {
   overflow-x: auto;
   scrollbar-width: thin;
   flex-wrap: nowrap;
+}
+/* 5-P2 (后缀): 标签 chip 行 (跟文件夹同结构, 但用更浅的背景区分) */
+.fav-tag-chips {
+  padding: 0 0 8px;
+}
+.fav-tag-chip {
+  background: color-mix(in srgb, var(--folder-color, #5c6ef5) 5%, transparent);
 }
 .fav-folder-chips::-webkit-scrollbar {
   height: 4px;

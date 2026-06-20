@@ -2668,6 +2668,7 @@ async def get_all_user_bookmarks(
     search: str = Query(None, description="4-P1-4: 搜索字幕 text_en/text_cn"),
     material_id: int = Query(None, description="4-P1-4: 按视频筛选"),
     folder_id: Optional[int] = Query(None, description="5-P1-2 (后缀): 按文件夹筛选, 0=仅未分类, 其他=该 folder"),
+    tag_id: Optional[int] = Query(None, description="5-P2 (后缀): 按标签筛选, 0=仅无标签, 其他=该 tag"),
     db: AsyncSession = Depends(get_db)
 ):
     """获取用户所有字幕收藏（join Subtitle + Material, 单次查询解决 N+1）
@@ -2677,13 +2678,43 @@ async def get_all_user_bookmarks(
 
     4-P1-4: 支持搜索 (text_en/text_cn 模糊匹配) + 按视频筛选
     5-P1-2 (后缀): 支持按文件夹筛选 (folder_id=0 → 未分类, folder_id=N → 该 folder)
+    5-P2 (后缀): 支持按标签筛选 (tag_id=0 → 无标签, tag_id=N → 含该 tag)
     """
-    query = (
-        select(SubtitleBookmark, Subtitle, Material)
-        .join(Subtitle, SubtitleBookmark.subtitle_id == Subtitle.id)
-        .join(Material, SubtitleBookmark.material_id == Material.id)
-        .where(SubtitleBookmark.user_id == current_user.id)
-    )
+    # 5-P2 (后缀): 标签筛选需要 BookmarkTag 关联
+    if tag_id is not None:
+        from sqlalchemy import exists
+        if tag_id == 0:
+            # 仅无标签: NOT EXISTS 模式 (bookmark 不在 BookmarkTag 表中)
+            no_tag_exists = ~exists().where(BookmarkTag.bookmark_id == SubtitleBookmark.id)
+            query = (
+                select(SubtitleBookmark, Subtitle, Material)
+                .join(Subtitle, SubtitleBookmark.subtitle_id == Subtitle.id)
+                .join(Material, SubtitleBookmark.material_id == Material.id)
+                .where(SubtitleBookmark.user_id == current_user.id)
+                .where(no_tag_exists)
+            )
+        else:
+            # 含指定标签: bookmark 必须在 BookmarkTag 中
+            has_tag = exists().where(
+                and_(
+                    BookmarkTag.bookmark_id == SubtitleBookmark.id,
+                    BookmarkTag.user_tag_id == tag_id
+                )
+            )
+            query = (
+                select(SubtitleBookmark, Subtitle, Material)
+                .join(Subtitle, SubtitleBookmark.subtitle_id == Subtitle.id)
+                .join(Material, SubtitleBookmark.material_id == Material.id)
+                .where(SubtitleBookmark.user_id == current_user.id)
+                .where(has_tag)
+            )
+    else:
+        query = (
+            select(SubtitleBookmark, Subtitle, Material)
+            .join(Subtitle, SubtitleBookmark.subtitle_id == Subtitle.id)
+            .join(Material, SubtitleBookmark.material_id == Material.id)
+            .where(SubtitleBookmark.user_id == current_user.id)
+        )
 
     if material_id is not None:
         query = query.where(SubtitleBookmark.material_id == material_id)
