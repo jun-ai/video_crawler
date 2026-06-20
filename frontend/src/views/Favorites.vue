@@ -212,6 +212,29 @@
               </div>
             </SfDropdown>
           </div>
+          <!-- 5-P2 (后缀): 导出当前筛选 -->
+          <SfDropdown>
+            <template #trigger>
+              <SfButton type="ghost" size="sm" :disabled="exporting" :loading="exporting">
+                <Download :size="14" />
+                导出
+              </SfButton>
+            </template>
+            <div class="dropdown-menu">
+              <div class="dropdown-item" @click="exportBookmarks('csv')">
+                <span>CSV (Anki/Excel)</span>
+              </div>
+              <div class="dropdown-item" @click="exportBookmarks('json')">
+                <span>JSON (完整备份)</span>
+              </div>
+              <div class="dropdown-divider"></div>
+              <div class="dropdown-item fav-export-hint">
+                <span class="fav-export-hint-text">
+                  当前筛选: {{ exportFilterSummary }}
+                </span>
+              </div>
+            </div>
+          </SfDropdown>
         </div>
       </div>
 
@@ -714,7 +737,9 @@ import {
   // 5-P2 (后缀): 文件夹拖拽排序
   GripVertical,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  // 5-P2 (后缀): 导出
+  Download
 } from 'lucide-vue-next'
 import SfButton from '@/components/ui/SfButton.vue'
 import SfTag from '@/components/ui/SfTag.vue'
@@ -722,7 +747,7 @@ import SfEmpty from '@/components/ui/SfEmpty.vue'
 import SfDropdown from '@/components/ui/SfDropdown.vue'
 import SfPagination from '@/components/ui/SfPagination.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
-import { favoriteAPI, vocabularyAPI, subtitleBookmarkAPI, materialAPI, bookmarkTagAPI, bookmarkFolderAPI } from '@/api'
+import { favoriteAPI, vocabularyAPI, subtitleBookmarkAPI, materialAPI, bookmarkTagAPI, bookmarkFolderAPI, bookmarkExportAPI } from '@/api'
 import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
@@ -1528,6 +1553,74 @@ const persistFolderOrder = async (orderedList) => {
   }
 }
 
+// ==================== 5-P2 (后缀): 导出当前筛选 ====================
+// 复用所有筛选条件 (search/material_id/folder_id/tag_id) 导成 csv/json
+// 浏览器自动下载, 文件名后端带时间戳
+const exporting = ref(false)
+
+const exportFilterSummary = computed(() => {
+  const parts = []
+  if (searchQuery.value.trim()) parts.push(`搜索"${searchQuery.value.trim()}"`)
+  if (filterMaterialId.value) {
+    const m = availableMaterials.value.find(x => x.id === filterMaterialId.value)
+    if (m) parts.push(`视频"${m.title}"`)
+  }
+  if (filterFolderId.value !== null) {
+    if (filterFolderId.value === 0) parts.push('未分类')
+    else {
+      const f = allFolders.value.find(x => x.id === filterFolderId.value)
+      parts.push(f ? `文件夹"${f.name}"` : '该文件夹')
+    }
+  }
+  if (filterTagId.value !== null) {
+    if (filterTagId.value === 0) parts.push('无标签')
+    else {
+      const t = allUserTags.value.find(x => x.id === filterTagId.value)
+      parts.push(t ? `标签"${t.name}"` : '该标签')
+    }
+  }
+  if (parts.length === 0) return '全部 (无筛选)'
+  return `${parts.join(' + ')} (${subtitleBookmarks.value.length} 项)`
+})
+
+const exportBookmarks = async (format) => {
+  if (exporting.value) return
+  exporting.value = true
+  try {
+    const params = { format }
+    if (searchQuery.value.trim()) params.search = searchQuery.value.trim()
+    if (filterMaterialId.value) params.material_id = filterMaterialId.value
+    if (filterFolderId.value !== null) params.folder_id = filterFolderId.value
+    if (filterTagId.value !== null) params.tag_id = filterTagId.value
+
+    const res = await bookmarkExportAPI.download(params)
+    // 从 Content-Disposition 拿文件名 (回退用)
+    const cd = res.headers['content-disposition'] || ''
+    const match = cd.match(/filename=([^;]+)/)
+    const filename = match ? match[1] : `bookmarks.${format}`
+
+    // 创建 Blob URL 触发下载
+    const blob = new Blob([res.data], {
+      type: format === 'json' ? 'application/json' : 'text/csv;charset=utf-8'
+    })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+
+    toast.success(`已导出 ${subtitleBookmarks.value.length} 项`)
+  } catch (e) {
+    console.error('导出失败', e)
+    toast.error('导出失败')
+  } finally {
+    exporting.value = false
+  }
+}
+
 onMounted(() => {
   preloadVoices()
   if (userStore.isLoggedIn) {
@@ -2026,6 +2119,20 @@ onMounted(() => {
 .fav-modal-enter-from .fav-modal,
 .fav-modal-leave-to .fav-modal {
   transform: scale(0.95) translateY(-10px);
+}
+
+/* 5-P2 (后缀): 导出提示 */
+.fav-export-hint {
+  cursor: default;
+  opacity: 0.75;
+}
+.fav-export-hint:hover {
+  background: transparent;
+}
+.fav-export-hint-text {
+  font-size: 11px;
+  color: var(--color-text-tertiary, #9ca3af);
+  white-space: nowrap;
 }
 
 /* 4-P1-5: 批量操作工具栏 */

@@ -198,6 +198,15 @@ export const bookmarkFolderAPI = {
   batchMove: (ids, folderId) => api.post('/learning/bookmarks/batch-move-folder', { ids, folder_id: folderId })
 }
 
+// ==================== 5-P2 (后缀): 收藏导出 API ====================
+// 返回 Blob (csv/json), 浏览器自动下载
+export const bookmarkExportAPI = {
+  download: (params) => api.get('/learning/bookmarks/export', {
+    params,
+    responseType: 'blob'
+  })
+}
+
 // ==================== 标签 API ====================
 export const tagsAPI = {
   getList: (params) => api.get('/tags', { params }),

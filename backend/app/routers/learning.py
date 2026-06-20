@@ -2680,63 +2680,8 @@ async def get_all_user_bookmarks(
     5-P1-2 (后缀): 支持按文件夹筛选 (folder_id=0 → 未分类, folder_id=N → 该 folder)
     5-P2 (后缀): 支持按标签筛选 (tag_id=0 → 无标签, tag_id=N → 含该 tag)
     """
-    # 5-P2 (后缀): 标签筛选需要 BookmarkTag 关联
-    if tag_id is not None:
-        from sqlalchemy import exists
-        if tag_id == 0:
-            # 仅无标签: NOT EXISTS 模式 (bookmark 不在 BookmarkTag 表中)
-            no_tag_exists = ~exists().where(BookmarkTag.bookmark_id == SubtitleBookmark.id)
-            query = (
-                select(SubtitleBookmark, Subtitle, Material)
-                .join(Subtitle, SubtitleBookmark.subtitle_id == Subtitle.id)
-                .join(Material, SubtitleBookmark.material_id == Material.id)
-                .where(SubtitleBookmark.user_id == current_user.id)
-                .where(no_tag_exists)
-            )
-        else:
-            # 含指定标签: bookmark 必须在 BookmarkTag 中
-            has_tag = exists().where(
-                and_(
-                    BookmarkTag.bookmark_id == SubtitleBookmark.id,
-                    BookmarkTag.user_tag_id == tag_id
-                )
-            )
-            query = (
-                select(SubtitleBookmark, Subtitle, Material)
-                .join(Subtitle, SubtitleBookmark.subtitle_id == Subtitle.id)
-                .join(Material, SubtitleBookmark.material_id == Material.id)
-                .where(SubtitleBookmark.user_id == current_user.id)
-                .where(has_tag)
-            )
-    else:
-        query = (
-            select(SubtitleBookmark, Subtitle, Material)
-            .join(Subtitle, SubtitleBookmark.subtitle_id == Subtitle.id)
-            .join(Material, SubtitleBookmark.material_id == Material.id)
-            .where(SubtitleBookmark.user_id == current_user.id)
-        )
-
-    if material_id is not None:
-        query = query.where(SubtitleBookmark.material_id == material_id)
-
-    if folder_id is not None:
-        # folder_id=0 是哨兵值, 表示"仅未分类" (前端传 0 避免 null 歧义)
-        if folder_id == 0:
-            query = query.where(SubtitleBookmark.folder_id.is_(None))
-        else:
-            query = query.where(SubtitleBookmark.folder_id == folder_id)
-
-    if search:
-        # 4-P1-4: 模糊搜索字幕英中文 (大小写不敏感)
-        search_pattern = f"%{search.strip()}%"
-        query = query.where(
-            or_(
-                Subtitle.text_en.ilike(search_pattern),
-                Subtitle.text_cn.ilike(search_pattern)
-            )
-        )
-
-    query = query.order_by(SubtitleBookmark.created_at.desc())
+    # 5-P2 (后缀): 用 helper 共享过滤逻辑 (跟 /bookmarks/export 一致)
+    query = _build_bookmarks_export_query(current_user, search, material_id, folder_id, tag_id)
     result = await db.execute(query)
     rows = result.all()
 
@@ -2791,6 +2736,190 @@ async def get_all_user_bookmarks(
             folder_color=folder.color if folder else None,
         ))
     return response
+
+
+# ==================== 5-P2 (后缀): 字幕收藏导出 (备份/迁移/Anki) ====================
+# 与 /bookmarks/all 共享 filter 参数 (search/material_id/folder_id/tag_id)
+# 复用同样的 query 构造逻辑
+
+def _build_bookmarks_export_query(current_user, search, material_id, folder_id, tag_id):
+    """构造 /bookmarks/all 和 /bookmarks/export 共用的查询 (避免重复逻辑)"""
+    from sqlalchemy import exists
+    if tag_id is not None:
+        if tag_id == 0:
+            # 仅无标签
+            no_tag_exists = ~exists().where(BookmarkTag.bookmark_id == SubtitleBookmark.id)
+            query = (
+                select(SubtitleBookmark, Subtitle, Material)
+                .join(Subtitle, SubtitleBookmark.subtitle_id == Subtitle.id)
+                .join(Material, SubtitleBookmark.material_id == Material.id)
+                .where(SubtitleBookmark.user_id == current_user.id)
+                .where(no_tag_exists)
+            )
+        else:
+            has_tag = exists().where(
+                and_(
+                    BookmarkTag.bookmark_id == SubtitleBookmark.id,
+                    BookmarkTag.user_tag_id == tag_id
+                )
+            )
+            query = (
+                select(SubtitleBookmark, Subtitle, Material)
+                .join(Subtitle, SubtitleBookmark.subtitle_id == Subtitle.id)
+                .join(Material, SubtitleBookmark.material_id == Material.id)
+                .where(SubtitleBookmark.user_id == current_user.id)
+                .where(has_tag)
+            )
+    else:
+        query = (
+            select(SubtitleBookmark, Subtitle, Material)
+            .join(Subtitle, SubtitleBookmark.subtitle_id == Subtitle.id)
+            .join(Material, SubtitleBookmark.material_id == Material.id)
+            .where(SubtitleBookmark.user_id == current_user.id)
+        )
+
+    if material_id is not None:
+        query = query.where(SubtitleBookmark.material_id == material_id)
+    if folder_id is not None:
+        if folder_id == 0:
+            query = query.where(SubtitleBookmark.folder_id.is_(None))
+        else:
+            query = query.where(SubtitleBookmark.folder_id == folder_id)
+    if search:
+        search_pattern = f"%{search.strip()}%"
+        query = query.where(
+            or_(
+                Subtitle.text_en.ilike(search_pattern),
+                Subtitle.text_cn.ilike(search_pattern)
+            )
+        )
+    query = query.order_by(SubtitleBookmark.created_at.desc())
+    return query
+
+
+@router.get("/bookmarks/export")
+async def export_bookmarks(
+    current_user: Annotated[User, Depends(get_current_user)],
+    search: str = Query(None, description="搜索字幕 text_en/text_cn"),
+    material_id: int = Query(None, description="按视频筛选"),
+    folder_id: Optional[int] = Query(None, description="按文件夹筛选, 0=仅未分类"),
+    tag_id: Optional[int] = Query(None, description="按标签筛选, 0=仅无标签"),
+    format: str = Query("csv", description="导出格式: csv | json"),
+    db: AsyncSession = Depends(get_db)
+):
+    """5-P2 (后缀): 导出用户字幕收藏 (备份/迁移/Anki/语料库)
+
+    跟 /bookmarks/all 完全一样的过滤 (search/material_id/folder_id/tag_id)
+    - 默认 csv: 表格 (适合 Anki/Excel/Notion 导入)
+      列: english, chinese, video, video_url, start_time_sec, folder, tags, note, practice_count, last_practiced_at, created_at
+    - json: 完整结构 (含 id/subtitle_id/material_id, 适合迁移)
+    """
+    query = _build_bookmarks_export_query(current_user, search, material_id, folder_id, tag_id)
+    result = await db.execute(query)
+    rows = result.all()
+
+    # 一次性加载 folders + tags + tag 关联 (避免 N+1)
+    folder_ids = set(b.folder_id for b, _, _ in rows if b.folder_id)
+    folder_map = {}
+    if folder_ids:
+        fr = await db.execute(
+            select(BookmarkFolder).where(BookmarkFolder.id.in_(folder_ids))
+        )
+        folder_map = {f.id: f for f in fr.scalars()}
+
+    bookmark_ids = [b.id for b, _, _ in rows]
+    bookmark_tag_map = {}
+    if bookmark_ids:
+        bt = await db.execute(
+            select(BookmarkTag, UserTag)
+            .join(UserTag, BookmarkTag.user_tag_id == UserTag.id)
+            .where(BookmarkTag.bookmark_id.in_(bookmark_ids))
+        )
+        for link, tag in bt.all():
+            bookmark_tag_map.setdefault(link.bookmark_id, []).append(tag)
+
+    # 时间戳用于文件名
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+
+    if format == "json":
+        items = []
+        for bookmark, subtitle, material in rows:
+            tags = bookmark_tag_map.get(bookmark.id, [])
+            folder = folder_map.get(bookmark.folder_id) if bookmark.folder_id else None
+            items.append({
+                "id": bookmark.id,
+                "subtitle_id": bookmark.subtitle_id,
+                "material_id": bookmark.material_id,
+                "material_title": material.title if material else None,
+                "english": subtitle.text_en,
+                "chinese": subtitle.text_cn,
+                "start_time_sec": (subtitle.start_time or 0) // 1000 if subtitle.start_time else 0,
+                "note": bookmark.note,
+                "folder_id": bookmark.folder_id,
+                "folder_name": folder.name if folder else None,
+                "tags": [t.name for t in tags],
+                "practice_count": bookmark.practice_count or 0,
+                "last_practiced_at": bookmark.last_practiced_at.isoformat() if bookmark.last_practiced_at else None,
+                "created_at": bookmark.created_at.isoformat() if bookmark.created_at else None,
+            })
+        payload = {
+            "exported_at": datetime.now(timezone.utc).isoformat(),
+            "user_id": current_user.id,
+            "total": len(items),
+            "filters": {
+                "search": search,
+                "material_id": material_id,
+                "folder_id": folder_id,
+                "tag_id": tag_id
+            },
+            "items": items
+        }
+        buf = io.StringIO()
+        buf.write(json.dumps(payload, ensure_ascii=False, indent=2))
+        buf.seek(0)
+        return StreamingResponse(
+            iter([buf.getvalue()]),
+            media_type="application/json; charset=utf-8",
+            headers={
+                "Content-Disposition": f"attachment; filename=subtitle-bookmarks-{timestamp}.json"
+            }
+        )
+
+    # 默认 CSV
+    buf = io.StringIO()
+    buf.write("\ufeff")  # BOM for Excel
+    writer = csv.writer(buf)
+    writer.writerow([
+        "english", "chinese", "video", "video_url", "start_time_sec",
+        "folder", "tags", "note", "practice_count", "last_practiced_at", "created_at"
+    ])
+    for bookmark, subtitle, material in rows:
+        tags = bookmark_tag_map.get(bookmark.id, [])
+        folder = folder_map.get(bookmark.folder_id) if bookmark.folder_id else None
+        start_sec = (subtitle.start_time or 0) // 1000 if subtitle.start_time else 0
+        # video_url 走 Learn 页 (带时间戳跳转)
+        video_url = f"/learn/{bookmark.material_id}?start_time={subtitle.start_time or 0}" if subtitle.start_time else f"/learn/{bookmark.material_id}"
+        writer.writerow([
+            subtitle.text_en or "",
+            subtitle.text_cn or "",
+            material.title if material else "",
+            video_url,
+            start_sec,
+            folder.name if folder else "",
+            ",".join(t.name for t in tags) if tags else "",
+            bookmark.note or "",
+            bookmark.practice_count or 0,
+            bookmark.last_practiced_at.isoformat() if bookmark.last_practiced_at else "",
+            bookmark.created_at.isoformat() if bookmark.created_at else ""
+        ])
+    buf.seek(0)
+    return StreamingResponse(
+        iter([buf.getvalue()]),
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": f"attachment; filename=subtitle-bookmarks-{timestamp}.csv"
+        }
+    )
 
 
 @router.get("/bookmarks/{material_id}", response_model=List[SubtitleBookmarkResponse])
