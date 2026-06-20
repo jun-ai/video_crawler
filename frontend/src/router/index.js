@@ -81,8 +81,19 @@ const routes = [
       },
       {
         path: 'upload',
-        name: 'AdminUpload',
-        component: () => import('@/views/admin/MaterialUpload.vue')
+        component: () => import('@/views/admin/UploadLayout.vue'),
+        children: [
+          {
+            path: '',
+            name: 'AdminUpload',
+            component: () => import('@/views/admin/MaterialUpload.vue')
+          },
+          {
+            path: 'transcribe',
+            name: 'AdminUploadTranscribe',
+            component: () => import('@/views/admin/upload/Transcribe.vue')
+          }
+        ]
       },
       {
         path: 'tags',
@@ -98,11 +109,6 @@ const routes = [
         path: 'announcements',
         name: 'AdminAnnouncements',
         component: () => import('@/views/admin/AnnouncementsManage.vue')
-      },
-      {
-        path: 'transcribe',
-        name: 'AdminTranscribe',
-        component: () => import('@/views/admin/TranscribeManage.vue')
       }
     ]
   }
