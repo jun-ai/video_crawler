@@ -220,7 +220,7 @@ const vClickOutside = {
 .sf-combobox-chevron {
   color: var(--color-text-tertiary, #9ca3af);
   flex-shrink: 0;
-  transition: transform 0.15s;
+  transition: transform var(--sf-duration-fast);
 }
 .sf-combobox-chevron.rotated {
   transform: rotate(180deg);
@@ -257,7 +257,7 @@ const vClickOutside = {
   cursor: pointer;
   font-size: 13px;
   color: var(--color-text-primary, #111827);
-  transition: background 0.1s;
+  transition: background var(--sf-duration-fast);
 }
 .sf-combobox-option.highlighted {
   background: var(--color-bg-page, #f3f4f6);
@@ -285,7 +285,7 @@ const vClickOutside = {
 /* 过渡 */
 .sf-combobox-dropdown-enter-active,
 .sf-combobox-dropdown-leave-active {
-  transition: opacity 0.15s, transform 0.15s;
+  transition: opacity var(--sf-duration-fast), transform var(--sf-duration-fast);
 }
 .sf-combobox-dropdown-enter-from,
 .sf-combobox-dropdown-leave-to {

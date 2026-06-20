@@ -660,7 +660,7 @@
                 <SfButton size="sm" type="ghost" @click="moveFolderOrder(f, 1)" :disabled="idx === allFolders.length - 1" aria-label="下移">
                   <ChevronDown :size="13" />
                 </SfButton>
-                <SfButton size="sm" type="ghost" @click="renameFolderPrompt(f)" aria-label="重命名">
+                <SfButton size="sm" type="ghost" @click="openRenameFolderDialog(f)" aria-label="重命名">
                   <Edit2 :size="13" />
                 </SfButton>
                 <SfButton size="sm" type="danger" @click="deleteFolderConfirm(f)" aria-label="删除">
@@ -676,6 +676,36 @@
         </div>
       </Transition>
     </Teleport>
+
+    <!-- P2-6 (UI 统一): 重命名文件夹弹窗 (替代 window.prompt) -->
+    <SfDialog
+      v-model="renameDialog.open"
+      :title="`重命名文件夹`"
+      width="420px"
+      @close="closeRenameFolderDialog"
+    >
+      <div class="fav-rename-body">
+        <label class="fav-rename-label">新名称</label>
+        <SfInput
+          v-model="renameDialog.name"
+          placeholder="输入新名称"
+          :maxlength="30"
+          @keydown.enter="submitRenameFolder"
+        />
+        <p class="fav-rename-hint">文件夹名 1-30 字符, 重名会提示冲突</p>
+      </div>
+      <template #footer>
+        <SfButton type="ghost" @click="closeRenameFolderDialog">取消</SfButton>
+        <SfButton
+          type="primary"
+          :loading="renamingFolder"
+          :disabled="!renameDialog.name.trim() || renameDialog.name.trim() === renameDialog.folder?.name"
+          @click="submitRenameFolder"
+        >
+          保存
+        </SfButton>
+      </template>
+    </SfDialog>
   </div>
 </template>
 
@@ -728,6 +758,8 @@ import SfButton from '@/components/ui/SfButton.vue'
 import SfTag from '@/components/ui/SfTag.vue'
 import SfEmpty from '@/components/ui/SfEmpty.vue'
 import SfDropdown from '@/components/ui/SfDropdown.vue'
+import SfDialog from '@/components/ui/SfDialog.vue'
+import SfInput from '@/components/ui/SfInput.vue'
 import SfPagination from '@/components/ui/SfPagination.vue'
 import SfCombobox from '@/components/ui/SfCombobox.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
@@ -1419,24 +1451,42 @@ const batchMoveToFolder = async (folderId, folderName) => {
 // ====== 文件夹管理 (重命名 / 删除) ======
 const showManageFolders = ref(false)
 
-const renameFolderPrompt = async (f) => {
-  // 简单用 prompt 弹一下 (避免再造一个 modal)
-  const newName = window.prompt(`重命名文件夹 "${f.name}"`, f.name)
-  if (!newName || newName === f.name || !newName.trim()) return
+// P2-6 (UI 统一): 改用 SfDialog 弹窗替代 window.prompt
+const renameDialog = ref({ open: false, folder: null, name: '' })
+const renamingFolder = ref(false)
+
+const openRenameFolderDialog = (f) => {
+  renameDialog.value = { open: true, folder: f, name: f.name }
+}
+const closeRenameFolderDialog = () => {
+  renameDialog.value.open = false
+}
+
+const submitRenameFolder = async () => {
+  const f = renameDialog.value.folder
+  const newName = renameDialog.value.name.trim()
+  if (!f || !newName || newName === f.name) {
+    closeRenameFolderDialog()
+    return
+  }
+  renamingFolder.value = true
   try {
-    await bookmarkFolderAPI.update(f.id, { name: newName.trim() })
-    f.name = newName.trim()
+    await bookmarkFolderAPI.update(f.id, { name: newName })
+    f.name = newName
     // 同步更新已显示的 bookmark 上的 folder_name
     for (const bm of subtitleBookmarks.value) {
       if (bm.folder_id === f.id) bm.folder_name = f.name
     }
     toast.success('已重命名')
+    closeRenameFolderDialog()
   } catch (e) {
     if (e?.response?.status === 409) {
       toast.error(e.response.data?.detail || '重名')
     } else {
       toast.error('重命名失败')
     }
+  } finally {
+    renamingFolder.value = false
   }
 }
 
@@ -1837,7 +1887,7 @@ onMounted(() => {
   font-size: 12px;
   white-space: nowrap;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all var(--sf-duration-fast) var(--sf-ease-standard);
   flex-shrink: 0;
 }
 .fav-folder-chip:hover {
@@ -1995,7 +2045,7 @@ onMounted(() => {
   border: 2px solid transparent;
   cursor: pointer;
   padding: 0;
-  transition: transform 0.1s;
+  transition: transform var(--sf-duration-fast);
 }
 .fav-color-dot:hover {
   transform: scale(1.1);
@@ -2056,7 +2106,7 @@ onMounted(() => {
   gap: 10px;
   padding: 8px 4px;
   border-bottom: 1px solid var(--color-border, #f3f4f6);
-  transition: background 0.15s;
+  transition: background var(--sf-duration-fast);
 }
 .fav-manage-row:last-child {
   border-bottom: none;
@@ -2091,18 +2141,35 @@ onMounted(() => {
 
 /* 弹层过渡 */
 .fav-modal-enter-active, .fav-modal-leave-active {
-  transition: opacity 0.2s ease;
+  transition: opacity var(--sf-duration-normal) var(--sf-ease-standard);
 }
 .fav-modal-enter-from, .fav-modal-leave-to {
   opacity: 0;
 }
 .fav-modal-enter-active .fav-modal,
 .fav-modal-leave-active .fav-modal {
-  transition: transform 0.2s ease;
+  transition: transform var(--sf-duration-normal) var(--sf-ease-standard);
 }
 .fav-modal-enter-from .fav-modal,
 .fav-modal-leave-to .fav-modal {
   transform: scale(0.95) translateY(-10px);
+}
+
+/* P2-6 (UI 统一): 重命名文件夹弹窗 */
+.fav-rename-body {
+  padding: 8px 0;
+}
+.fav-rename-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-bottom: 8px;
+}
+.fav-rename-hint {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin: 6px 0 0 0;
 }
 
 /* 5-P2 (后缀): 导出提示 */
@@ -2490,7 +2557,7 @@ onMounted(() => {
   background: color-mix(in srgb, var(--tag-color, #5c6ef5) 12%, transparent);
   color: var(--tag-color, #5c6ef5);
   border: 1px solid color-mix(in srgb, var(--tag-color, #5c6ef5) 30%, transparent);
-  transition: all 0.15s ease;
+  transition: all var(--sf-duration-fast) var(--sf-ease-standard);
 }
 .user-tag-chip:hover {
   background: color-mix(in srgb, var(--tag-color, #5c6ef5) 18%, transparent);
@@ -2513,7 +2580,7 @@ onMounted(() => {
   border-radius: 50%;
   opacity: 0.5;
   padding: 0;
-  transition: opacity 0.15s ease, background 0.15s ease;
+  transition: opacity var(--sf-duration-fast) var(--sf-ease-standard), background var(--sf-duration-fast) var(--sf-ease-standard);
 }
 .user-tag-remove:hover {
   opacity: 1;
@@ -2528,7 +2595,7 @@ onMounted(() => {
   padding: 1px 8px;
   border-radius: 10px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all var(--sf-duration-fast) var(--sf-ease-standard);
 }
 .add-tag-btn:hover {
   border-color: var(--color-primary, #5c6ef5);
@@ -2554,7 +2621,7 @@ onMounted(() => {
 }
 /* TransitionGroup for tag chips */
 .tag-chip-enter-active, .tag-chip-leave-active {
-  transition: all 0.2s ease;
+  transition: all var(--sf-duration-normal) var(--sf-ease-standard);
 }
 .tag-chip-enter-from {
   opacity: 0;
