@@ -1,8 +1,9 @@
 import axios from 'axios'
 import { toast } from '@/composables/useToast'
 
+// baseURL: 生产环境用绝对 URL（api 子域）, 开发环境用相对路径（同源 vite proxy）
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
   timeout: 30000
 })
 
@@ -227,6 +228,11 @@ export const adminAPI = {
     timeout: 300000
   }),
 
+  // 通过 URL 抓取语料 (B站自动,YouTube手动)
+  fetchFromUrl: (data) => api.post('/admin/materials/fetch-url', data, { timeout: 30000 }),
+  getFetchStatus: (taskId) => api.get(`/admin/materials/fetch-status/${taskId}`),
+  listFetchTasks: () => api.get('/admin/materials/fetch-tasks'),
+
   // 统计信息
   getStats: () => api.get('/admin/stats'),
 
@@ -243,7 +249,15 @@ export const adminAPI = {
   createAnnouncement: (data) => api.post('/admin/announcements', data),
   getAnnouncements: (params) => api.get('/admin/announcements', { params }),
   updateAnnouncement: (id, data) => api.put(`/admin/announcements/${id}`, data),
-  deleteAnnouncement: (id) => api.delete(`/admin/announcements/${id}`)
+  deleteAnnouncement: (id) => api.delete(`/admin/announcements/${id}`),
+
+  // 视频转字幕 (faster-whisper)
+  transcribe: (formData) => api.post('/admin/transcribe', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 600000  // 10 分钟
+  }),
+  getTranscribeStatus: (taskId) => api.get(`/admin/transcribe-status/${taskId}`),
+  listTranscribeTasks: () => api.get('/admin/transcribe-tasks')
 }
 
 // ==================== 公告 API ====================

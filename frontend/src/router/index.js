@@ -98,6 +98,11 @@ const routes = [
         path: 'announcements',
         name: 'AdminAnnouncements',
         component: () => import('@/views/admin/AnnouncementsManage.vue')
+      },
+      {
+        path: 'transcribe',
+        name: 'AdminTranscribe',
+        component: () => import('@/views/admin/TranscribeManage.vue')
       }
     ]
   }

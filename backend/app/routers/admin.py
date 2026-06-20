@@ -3,11 +3,14 @@
 用于语料管理、批量操作等
 """
 import asyncio
+import uuid
+import re
+from typing import Annotated, Optional, List, Dict
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, delete
 from sqlalchemy.orm import joinedload
-from typing import Annotated, Optional, List
 from pathlib import Path
 import os
 
@@ -28,6 +31,403 @@ from pydantic import BaseModel
 import tempfile
 
 router = APIRouter(prefix="/api/admin", tags=["管理后台"])
+
+
+# ==================== URL 抓取任务存储(内存) ====================
+
+class FetchTask(BaseModel):
+    task_id: str
+    url: str
+    platform: str
+    status: str = "pending"  # pending / fetching / parsing / done / failed
+    progress: int = 0
+    message: str = ""
+    material_id: Optional[int] = None
+    error: str = ""
+    created_at: str = ""
+    finished_at: str = ""
+
+# 进程内任务表(单实例足够)
+_FETCH_TASKS: Dict[str, FetchTask] = {}
+
+
+# ==================== URL 抓取语料 ====================
+
+class FetchURLRequest(BaseModel):
+    url: str
+    category: Optional[str] = None
+    difficulty: Optional[int] = None
+    subtitle_langs: Optional[List[str]] = None
+
+
+@router.post("/materials/fetch-url")
+async def fetch_material_from_url(
+    req: FetchURLRequest,
+    current_admin: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    通过视频URL自动抓取语料(YouTube/B站)
+    后台异步执行,返回 task_id 用于轮询进度
+    """
+    from datetime import datetime
+    from app.services.video_fetcher import detect_platform, fetch_from_url
+
+    platform = detect_platform(req.url)
+    if platform == "unknown":
+        raise HTTPException(
+            status_code=400,
+            detail="不支持的URL,目前支持 YouTube / Bilibili"
+        )
+
+    task_id = uuid.uuid4().hex[:16]
+    task = FetchTask(
+        task_id=task_id,
+        url=req.url,
+        platform=platform,
+        status="pending",
+        message=f"已加入队列,等待执行...",
+        created_at=datetime.now().isoformat(),
+    )
+    _FETCH_TASKS[task_id] = task
+
+    async def _do_fetch():
+        from app.services.interpretation_tasks import generate_interpretations_for_material
+        from app.services.subtitle_parser import parse_srt_file
+
+        try:
+            task.status = "fetching"
+            task.message = "正在下载视频、字幕、封面..."
+            task.progress = 10
+
+            # 存储目录 - 用配置里的 upload_dir
+            output_dir = os.path.join(
+                os.path.dirname(settings.upload_dir.rstrip("/")),
+                "fetched"
+            ) if settings.storage_type == "local" else "/tmp/fetched"
+            output_dir = os.path.abspath(output_dir)
+            os.makedirs(output_dir, exist_ok=True)
+
+            fetch_result = await fetch_from_url(
+                req.url,
+                output_dir=output_dir,
+                prefer_subtitle_langs=req.subtitle_langs,
+            )
+
+            if not fetch_result.success:
+                task.status = "failed"
+                task.error = fetch_result.error
+                task.finished_at = datetime.now().isoformat()
+                return
+
+            task.status = "parsing"
+            task.message = f"已下载 {fetch_result.file_size//1024}KB,正在解析字幕..."
+            task.progress = 60
+
+            # 复制到正式存储目录
+            storage = get_storage_service()
+            final_video_path = ""
+            final_subtitle_path = ""
+            final_cover_path = ""
+
+            if fetch_result.video_path and os.path.exists(fetch_result.video_path):
+                with open(fetch_result.video_path, "rb") as f:
+                    data = f.read()
+                key = generate_object_key("video", os.path.basename(fetch_result.video_path))
+                final_video_path = await storage.upload_file(data, key, "video/mp4")
+
+            if fetch_result.subtitle_path and os.path.exists(fetch_result.subtitle_path):
+                with open(fetch_result.subtitle_path, "rb") as f:
+                    data = f.read()
+                key = generate_object_key("subtitle", os.path.basename(fetch_result.subtitle_path))
+                final_subtitle_path = await storage.upload_file(data, key, "text/plain")
+
+            if fetch_result.cover_path and os.path.exists(fetch_result.cover_path):
+                with open(fetch_result.cover_path, "rb") as f:
+                    data = f.read()
+                key = generate_object_key("cover", os.path.basename(fetch_result.cover_path))
+                final_cover_path = await storage.upload_file(data, key, "image/jpeg")
+
+            # 创建 Material 记录
+            material = Material(
+                title=fetch_result.title[:200],
+                description=fetch_result.description[:1000] if fetch_result.description else None,
+                video_path=final_video_path or fetch_result.video_url,
+                subtitle_path=final_subtitle_path,
+                cover_path=final_cover_path,
+                storage_type=settings.storage_type,
+                video_size=fetch_result.file_size,
+                category=req.category,
+                difficulty=req.difficulty or 2,
+                duration=fetch_result.duration,
+                interpretation_status="pending",
+            )
+            db.add(material)
+            await db.flush()
+
+            # 解析字幕
+            subtitle_count = 0
+            if fetch_result.subtitle_path and os.path.exists(fetch_result.subtitle_path):
+                try:
+                    subtitles = await parse_srt_file(fetch_result.subtitle_path, material.id)
+                    for sub in subtitles:
+                        db.add(Subtitle(**sub.model_dump()))
+                        subtitle_count += 1
+                except Exception as e:
+                    print(f"[FetchURL] 字幕解析失败: {e}")
+
+            await db.commit()
+            await db.refresh(material)
+
+            # 清理临时下载文件
+            for fp in [fetch_result.video_path, fetch_result.subtitle_path, fetch_result.cover_path]:
+                try:
+                    if fp and os.path.exists(fp):
+                        os.unlink(fp)
+                except Exception:
+                    pass
+
+            task.material_id = material.id
+            task.progress = 80
+            task.message = f"已创建语料(id={material.id}, 字幕{subtitle_count}条),正在生成AI解读..."
+
+            # 触发 AI 解读后台任务
+            try:
+                asyncio.create_task(generate_interpretations_for_material(material.id))
+            except Exception as e:
+                print(f"[FetchURL] 触发解读失败: {e}")
+
+            task.status = "done"
+            task.progress = 100
+            task.message = f"完成!语料ID={material.id},字幕{subtitle_count}条"
+            task.finished_at = datetime.now().isoformat()
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            task.status = "failed"
+            task.error = f"{type(e).__name__}: {str(e)[:300]}"
+            task.finished_at = datetime.now().isoformat()
+
+    asyncio.create_task(_do_fetch())
+
+    return {"task_id": task_id, "status": "pending", "message": "抓取任务已启动"}
+
+
+@router.get("/materials/fetch-status/{task_id}")
+async def get_fetch_status(
+    task_id: str,
+    current_admin: User = Depends(get_current_admin)
+):
+    """轮询抓取任务状态"""
+    task = _FETCH_TASKS.get(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="任务不存在或已过期")
+    return task.model_dump()
+
+
+@router.get("/materials/fetch-tasks")
+async def list_fetch_tasks(
+    current_admin: User = Depends(get_current_admin)
+):
+    """列出最近的抓取任务(最多 20 条)"""
+    tasks = sorted(_FETCH_TASKS.values(), key=lambda t: t.created_at, reverse=True)[:20]
+    return [t.model_dump() for t in tasks]
+
+
+# ==================== 视频转字幕（faster-whisper） ====================
+
+class TranscribeTask(BaseModel):
+    task_id: str
+    filename: str
+    model_size: str = "base"
+    language: Optional[str] = None
+    status: str = "pending"  # pending / extracting / transcribing / done / failed
+    progress: int = 0
+    message: str = ""
+    srt: Optional[str] = None
+    language_detected: Optional[str] = None
+    duration: Optional[float] = None
+    segment_count: Optional[int] = None
+    error: str = ""
+    created_at: str = ""
+    finished_at: str = ""
+
+
+_TRANSCRIBE_TASKS: Dict[str, TranscribeTask] = {}
+
+# 上传目录
+_TRANSCRIBE_UPLOAD_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(settings.upload_dir.rstrip("/")), "transcribe_tmp")
+)
+os.makedirs(_TRANSCRIBE_UPLOAD_DIR, exist_ok=True)
+
+ALLOWED_VIDEO_EXTS = {".mp4", ".mov", ".mkv", ".webm", ".avi", ".flv", ".m4v"}
+MAX_VIDEO_SIZE_MB = 500  # 超过 500MB 拒绝
+
+
+@router.post("/transcribe")
+async def transcribe_video(
+    file: UploadFile = File(...),
+    model_size: str = Form("base"),
+    language: Optional[str] = Form(None),
+    current_admin: User = Depends(get_current_admin),
+):
+    """
+    上传视频文件 → 后台 faster-whisper 转录 → 返回 task_id 轮询
+
+    表单字段:
+      file: 视频文件 (mp4/mov/mkv/webm/avi/flv/m4v)
+      model_size: tiny / base / small（默认 base）
+      language: 强制语言 (en/zh)，留空自动检测
+    """
+    # 1) 校验扩展名
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    if ext not in ALLOWED_VIDEO_EXTS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"不支持的视频格式: {ext}，仅支持 {', '.join(sorted(ALLOWED_VIDEO_EXTS))}",
+        )
+
+    # 2) 校验大小（看 Content-Length）
+    if file.size and file.size > MAX_VIDEO_SIZE_MB * 1024 * 1024:
+        raise HTTPException(
+            status_code=400,
+            detail=f"视频过大（{file.size // 1024 // 1024}MB），上限 {MAX_VIDEO_SIZE_MB}MB",
+        )
+
+    # 3) 校验 model_size
+    if model_size not in ("tiny", "base", "small"):
+        raise HTTPException(status_code=400, detail="model_size 必须为 tiny/base/small")
+
+    # 4) 保存到磁盘
+    task_id = uuid.uuid4().hex[:16]
+    safe_name = re.sub(r"[^\w.\-]", "_", file.filename or f"video_{task_id}{ext}")
+    save_path = os.path.join(_TRANSCRIBE_UPLOAD_DIR, f"{task_id}_{safe_name}")
+
+    try:
+        with open(save_path, "wb") as f:
+            while True:
+                chunk = await file.read(1024 * 1024)  # 1MB chunks
+                if not chunk:
+                    break
+                f.write(chunk)
+    except Exception as e:
+        if os.path.exists(save_path):
+            os.unlink(save_path)
+        raise HTTPException(status_code=500, detail=f"上传失败: {e}")
+
+    actual_size = os.path.getsize(save_path)
+    if actual_size > MAX_VIDEO_SIZE_MB * 1024 * 1024:
+        os.unlink(save_path)
+        raise HTTPException(
+            status_code=400,
+            detail=f"视频过大（{actual_size // 1024 // 1024}MB），上限 {MAX_VIDEO_SIZE_MB}MB",
+        )
+
+    # 5) 创建任务
+    task = TranscribeTask(
+        task_id=task_id,
+        filename=file.filename or safe_name,
+        model_size=model_size,
+        language=language or None,
+        message="已加入队列...",
+        created_at=datetime.now().isoformat(),
+    )
+    _TRANSCRIBE_TASKS[task_id] = task
+
+    # 6) 后台执行
+    async def _do_transcribe():
+        try:
+            from app.services.video_transcriber import transcribe_video, is_faster_whisper_available
+
+            if not is_faster_whisper_available():
+                raise RuntimeError("faster-whisper 未安装，请联系运维")
+
+            task.status = "transcribing"
+
+            def _on_progress(pct: int, msg: str):
+                task.progress = pct
+                task.message = msg
+
+            result = await transcribe_video(
+                video_path=save_path,
+                model_size=task.model_size,
+                language=task.language,
+                progress_callback=_on_progress,
+            )
+
+            if not result.get("success"):
+                task.status = "failed"
+                task.error = result.get("error", "未知错误")[:500]
+                task.finished_at = datetime.now().isoformat()
+                return
+
+            task.status = "done"
+            task.progress = 100
+            task.message = f"完成！共 {result['segment_count']} 条字幕"
+            task.srt = result["srt"]
+            task.language_detected = result["language"]
+            task.duration = result["duration"]
+            task.segment_count = result["segment_count"]
+            task.finished_at = datetime.now().isoformat()
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            task.status = "failed"
+            task.error = f"{type(e).__name__}: {str(e)[:300]}"
+            task.finished_at = datetime.now().isoformat()
+        finally:
+            # 清理临时文件
+            try:
+                if os.path.exists(save_path):
+                    os.unlink(save_path)
+            except Exception:
+                pass
+
+    asyncio.create_task(_do_transcribe())
+
+    return {
+        "task_id": task_id,
+        "status": "pending",
+        "filename": file.filename,
+        "model_size": model_size,
+        "message": "转录任务已启动",
+    }
+
+
+@router.get("/transcribe-status/{task_id}")
+async def get_transcribe_status(
+    task_id: str,
+    current_admin: User = Depends(get_current_admin),
+):
+    """轮询转录任务状态"""
+    task = _TRANSCRIBE_TASKS.get(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="任务不存在或已过期")
+    return task.model_dump()
+
+
+@router.get("/transcribe-tasks")
+async def list_transcribe_tasks(
+    current_admin: User = Depends(get_current_admin),
+):
+    """列出最近的转录任务（最多 20 条）"""
+    tasks = sorted(_TRANSCRIBE_TASKS.values(), key=lambda t: t.created_at, reverse=True)[:20]
+    return [t.model_dump() for t in tasks]
+
+
+@router.delete("/transcribe/{task_id}")
+async def delete_transcribe_task(
+    task_id: str,
+    current_admin: User = Depends(get_current_admin),
+):
+    """清理转录任务记录（不影响已下载的 SRT）"""
+    if task_id not in _TRANSCRIBE_TASKS:
+        raise HTTPException(status_code=404, detail="任务不存在")
+    del _TRANSCRIBE_TASKS[task_id]
+    return {"message": "已清理"}
 
 
 # ==================== 语料管理 ====================

@@ -76,7 +76,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BarChart3, Video, Upload, Tag, ArrowLeft, Key, Bell } from 'lucide-vue-next'
+import { BarChart3, Video, Upload, Tag, ArrowLeft, Key, Bell, Mic } from 'lucide-vue-next'
 import SfButton from '@/components/ui/SfButton.vue'
 
 const route = useRoute()
@@ -88,6 +88,7 @@ const sidebarMenuItems = [
   { path: '/admin', label: '数据统计', icon: BarChart3 },
   { path: '/admin/materials', label: '语料管理', icon: Video },
   { path: '/admin/upload', label: '上传语料', icon: Upload },
+  { path: '/admin/transcribe', label: '视频转字幕', icon: Mic },
   { path: '/admin/tags', label: '标签管理', icon: Tag }
 ]
 
@@ -100,6 +101,7 @@ const mobileMenuItems = [
   { path: '/admin', label: '统计', icon: BarChart3 },
   { path: '/admin/materials', label: '语料', icon: Video },
   { path: '/admin/upload', label: '上传', icon: Upload },
+  { path: '/admin/transcribe', label: '转字幕', icon: Mic },
   { path: '/admin/tags', label: '标签', icon: Tag },
   { path: '/admin/activation-codes', label: '激活码', icon: Key },
   { path: '/admin/announcements', label: '公告', icon: Bell }
