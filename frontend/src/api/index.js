@@ -188,6 +188,16 @@ export const bookmarkTagAPI = {
   delete: (id) => api.delete(`/learning/bookmark-tags/${id}`)
 }
 
+// ==================== 5-P1-2 (后缀): 收藏文件夹 API ====================
+export const bookmarkFolderAPI = {
+  list: () => api.get('/learning/bookmark-folders'),
+  create: (data) => api.post('/learning/bookmark-folders', data),
+  update: (id, data) => api.patch(`/learning/bookmark-folders/${id}`, data),
+  delete: (id) => api.delete(`/learning/bookmark-folders/${id}`),
+  moveBookmark: (bookmarkId, folderId) => api.put(`/learning/bookmarks/${bookmarkId}/folder`, { folder_id: folderId }),
+  batchMove: (ids, folderId) => api.post('/learning/bookmarks/batch-move-folder', { ids, folder_id: folderId })
+}
+
 // ==================== 标签 API ====================
 export const tagsAPI = {
   getList: (params) => api.get('/tags', { params }),

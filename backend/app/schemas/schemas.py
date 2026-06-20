@@ -477,11 +477,13 @@ class SubtitleBookmarkCreate(BaseModel):
     material_id: int
     subtitle_id: int
     note: Optional[str] = None
+    folder_id: Optional[int] = None  # 5-P1-2 (后缀): 可选指定所属文件夹
 
 
 class SubtitleBookmarkUpdate(BaseModel):
     """5-P1-2: 更新字幕收藏 (目前只支持 note)"""
     note: Optional[str] = None
+    folder_id: Optional[int] = None  # 5-P1-2 (后缀): 移动到文件夹 (None=移出)
 
 
 class SubtitleBookmarkResponse(BaseModel):
@@ -503,6 +505,10 @@ class SubtitleBookmarkResponse(BaseModel):
     material_cover: Optional[str] = None
     # 5-P1-2: 用户标签 (bookmark 维度)
     tags: List[Dict[str, Any]] = []
+    # 5-P1-2 (后缀): 文件夹 (bookmark 所属文件夹, nullable)
+    folder_id: Optional[int] = None
+    folder_name: Optional[str] = None
+    folder_color: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -528,6 +534,48 @@ class UserTagCreateRequest(BaseModel):
 class BookmarkTagsRequest(BaseModel):
     """5-P1-2: 设置 bookmark 的标签 (按名字, 自动创建不存在的)"""
     tag_names: List[str]
+
+
+# ==================== 5-P1-2 (后缀): 收藏文件夹 Schemas ====================
+
+class BookmarkFolderResponse(BaseModel):
+    """文件夹响应 (含 bookmark 数量)"""
+    id: int
+    name: str
+    color: str = '#5c6ef5'
+    icon: str = 'folder'
+    sort_order: int = 0
+    bookmark_count: int = 0  # 该文件夹下 bookmark 数量
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class BookmarkFolderCreateRequest(BaseModel):
+    """创建文件夹"""
+    name: str
+    color: Optional[str] = None
+    icon: Optional[str] = None
+
+
+class BookmarkFolderUpdateRequest(BaseModel):
+    """更新文件夹 (部分更新)"""
+    name: Optional[str] = None
+    color: Optional[str] = None
+    icon: Optional[str] = None
+    sort_order: Optional[int] = None
+
+
+class BookmarkMoveFolderRequest(BaseModel):
+    """移动 bookmark 到文件夹 (folder_id=null 表示移出文件夹)"""
+    folder_id: Optional[int] = None
+
+
+class BatchMoveFolderRequest(BaseModel):
+    """批量移动 bookmarks 到文件夹"""
+    ids: List[int]
+    folder_id: Optional[int] = None
 
 
 # ==================== 生词复习 Schemas ====================

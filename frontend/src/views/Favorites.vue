@@ -53,6 +53,32 @@
             <X :size="14" />
             取消
           </SfButton>
+          <!-- 5-P1-2 (后缀): 批量移动到文件夹 -->
+          <SfDropdown v-if="allFolders.length > 0">
+            <template #trigger>
+              <SfButton size="sm" type="ghost">
+                <Move :size="14" />
+                移动到
+              </SfButton>
+            </template>
+            <div class="folder-picker-menu">
+              <div
+                v-for="f in allFolders"
+                :key="f.id"
+                class="dropdown-item"
+                @click="batchMoveToFolder(f.id, f.name)"
+              >
+                <span class="folder-dot" :style="{ background: f.color || '#5c6ef5' }"></span>
+                {{ f.name }}
+                <span class="folder-pick-count">{{ f.bookmark_count }}</span>
+              </div>
+              <div class="dropdown-divider"></div>
+              <div class="dropdown-item" @click="batchMoveToFolder(null, '未分类')">
+                <FolderMinus :size="14" />
+                未分类
+              </div>
+            </div>
+          </SfDropdown>
           <SfButton size="sm" type="danger" @click="batchDelete">
             <Trash2 :size="14" />
             删除
@@ -62,47 +88,91 @@
 
       <!-- 4-P1-4: 字幕 Tab 搜索 + 视频筛选 -->
       <div v-if="activeTab === 'subtitles'" class="fav-filter-bar">
-        <div class="fav-search-wrap">
-          <Search :size="14" class="fav-search-icon" />
-          <input
-            v-model="searchQuery"
-            type="text"
-            class="fav-search-input"
-            placeholder="搜索字幕 (英文/中文)..."
-            aria-label="搜索字幕"
-            @input="onSearchInput"
-          />
-          <button v-if="searchQuery" class="fav-search-clear" @click="clearSearch" aria-label="清空搜索">
-            <X :size="14" />
+        <!-- 5-P1-2 (后缀): 文件夹 chip 行 (横向滚动, 默认显示全部/未分类) -->
+        <div class="fav-folder-chips">
+          <button
+            :class="['fav-folder-chip', { active: filterFolderId === null }]"
+            @click="filterFolderById(null)"
+            aria-label="显示全部"
+          >
+            <Inbox :size="13" />
+            <span>全部</span>
+            <span class="fav-folder-count">{{ subtitleBookmarks.length }}</span>
+          </button>
+          <button
+            :class="['fav-folder-chip', { active: filterFolderId === 0 }]"
+            @click="filterFolderById(0)"
+            aria-label="仅显示未分类"
+            v-if="uncategorizedCount > 0"
+          >
+            <FolderMinus :size="13" />
+            <span>未分类</span>
+            <span class="fav-folder-count">{{ uncategorizedCount }}</span>
+          </button>
+          <button
+            v-for="f in allFolders"
+            :key="f.id"
+            :class="['fav-folder-chip', { active: filterFolderId === f.id }]"
+            :style="{ '--folder-color': f.color || '#5c6ef5' }"
+            @click="filterFolderById(f.id)"
+            :aria-label="`筛选文件夹 ${f.name}`"
+          >
+            <Folder :size="13" />
+            <span>{{ f.name }}</span>
+            <span class="fav-folder-count">{{ f.bookmark_count }}</span>
+          </button>
+          <button class="fav-folder-chip fav-folder-add" @click="openCreateFolder" aria-label="新建文件夹">
+            <FolderPlus :size="13" />
+            <span>新建</span>
+          </button>
+          <button v-if="allFolders.length > 0" class="fav-folder-chip fav-folder-manage" @click="showManageFolders = true" aria-label="管理文件夹">
+            <Settings2 :size="13" />
+            <span>管理</span>
           </button>
         </div>
-        <div class="fav-material-filter">
-          <SfDropdown>
-            <template #trigger>
-              <SfButton type="ghost" size="sm">
-                <Filter :size="14" />
-                {{ filterMaterialTitle || '全部视频' }}
-              </SfButton>
-            </template>
-            <div class="material-filter-menu">
-              <div
-                class="dropdown-item"
-                :class="{ active: filterMaterialId === null }"
-                @click="filterMaterialById(null)"
-              >
-                全部视频
+        <div class="fav-search-row">
+          <div class="fav-search-wrap">
+            <Search :size="14" class="fav-search-icon" />
+            <input
+              v-model="searchQuery"
+              type="text"
+              class="fav-search-input"
+              placeholder="搜索字幕 (英文/中文)..."
+              aria-label="搜索字幕"
+              @input="onSearchInput"
+            />
+            <button v-if="searchQuery" class="fav-search-clear" @click="clearSearch" aria-label="清空搜索">
+              <X :size="14" />
+            </button>
+          </div>
+          <div class="fav-material-filter">
+            <SfDropdown>
+              <template #trigger>
+                <SfButton type="ghost" size="sm">
+                  <Filter :size="14" />
+                  {{ filterMaterialTitle || '全部视频' }}
+                </SfButton>
+              </template>
+              <div class="material-filter-menu">
+                <div
+                  class="dropdown-item"
+                  :class="{ active: filterMaterialId === null }"
+                  @click="filterMaterialById(null)"
+                >
+                  全部视频
+                </div>
+                <div
+                  v-for="m in availableMaterials"
+                  :key="m.id"
+                  class="dropdown-item"
+                  :class="{ active: filterMaterialId === m.id }"
+                  @click="filterMaterialById(m.id)"
+                >
+                  {{ m.title }}
+                </div>
               </div>
-              <div
-                v-for="m in availableMaterials"
-                :key="m.id"
-                class="dropdown-item"
-                :class="{ active: filterMaterialId === m.id }"
-                @click="filterMaterialById(m.id)"
-              >
-                {{ m.title }}
-              </div>
-            </div>
-          </SfDropdown>
+            </SfDropdown>
+          </div>
         </div>
       </div>
 
@@ -218,6 +288,16 @@
                   </div>
 
                   <div class="fav-card-meta">
+                    <!-- 5-P1-2 (后缀): 文件夹徽章 (有 folder 时显示) -->
+                    <span
+                      v-if="item.folder_name"
+                      class="fav-card-folder"
+                      :style="{ '--folder-color': item.folder_color || '#5c6ef5' }"
+                      :title="`在文件夹 ${item.folder_name}`"
+                    >
+                      <Folder :size="12" />
+                      {{ item.folder_name }}
+                    </span>
                     <span class="fav-card-category">
                       <SfTag size="sm" type="default">{{ item.material_title || '未分类' }}</SfTag>
                     </span>
@@ -239,6 +319,15 @@
                     <div class="dropdown-item" @click="copySubtitleText(item)">
                       <Copy :size="14" />
                       复制原句
+                    </div>
+                    <!-- 5-P1-2 (后缀): 移动到文件夹 -->
+                    <div v-if="allFolders.length > 0" class="dropdown-item fav-move-to-folder" @click.stop="openMoveToFolder(item)">
+                      <Folder :size="14" />
+                      {{ item.folder_name ? '换文件夹' : '移到文件夹' }}
+                    </div>
+                    <div v-if="item.folder_name" class="dropdown-item" @click="moveBookmarkToFolder(item, null)">
+                      <FolderMinus :size="14" />
+                      移出文件夹
                     </div>
                     <div class="dropdown-item" @click="handleSubtitleCommand('remove', item)">
                       <Trash2 :size="14" />
@@ -412,6 +501,118 @@
         </EmptyState>
       </div>
     </template>
+
+    <!-- 5-P1-2 (后缀): 新建文件夹 / 移动到文件夹 弹层 -->
+    <Teleport to="body">
+      <Transition name="fav-modal">
+        <div v-if="showCreateFolderModal" class="fav-modal-mask" @click.self="closeCreateFolder">
+          <div class="fav-modal" @click.stop>
+            <div class="fav-modal-header">
+              <FolderPlus :size="18" />
+              <span>新建文件夹</span>
+            </div>
+            <div class="fav-modal-body">
+              <label class="fav-modal-label">名称</label>
+              <input
+                v-model="newFolderName"
+                ref="newFolderInput"
+                class="fav-modal-input"
+                placeholder="比如: 商务英语"
+                maxlength="50"
+                @keydown.enter="submitCreateFolder"
+                @keydown.esc="closeCreateFolder"
+              />
+              <label class="fav-modal-label">颜色 (可选)</label>
+              <div class="fav-color-picker">
+                <button
+                  v-for="c in folderColors"
+                  :key="c"
+                  :class="['fav-color-dot', { active: newFolderColor === c }]"
+                  :style="{ background: c }"
+                  @click="newFolderColor = c"
+                  :aria-label="`选择颜色 ${c}`"
+                ></button>
+              </div>
+              <div v-if="createFolderError" class="fav-modal-error">{{ createFolderError }}</div>
+            </div>
+            <div class="fav-modal-actions">
+              <SfButton type="ghost" @click="closeCreateFolder">取消</SfButton>
+              <SfButton type="primary" :disabled="!newFolderName.trim() || creatingFolder" @click="submitCreateFolder">
+                {{ creatingFolder ? '创建中…' : '创建' }}
+              </SfButton>
+            </div>
+          </div>
+        </div>
+      </Transition>
+
+      <!-- 移动到文件夹 picker (per-card 用) -->
+      <Transition name="fav-modal">
+        <div v-if="showMoveFolderFor" class="fav-modal-mask" @click.self="closeMoveToFolder">
+          <div class="fav-modal" @click.stop>
+            <div class="fav-modal-header">
+              <Move :size="18" />
+              <span>移动到文件夹</span>
+            </div>
+            <div class="fav-modal-body">
+              <div
+                class="dropdown-item fav-move-row"
+                v-for="f in allFolders"
+                :key="`mv-${f.id}`"
+                @click="moveBookmarkToFolder(showMoveFolderFor, f.id)"
+              >
+                <span class="folder-dot" :style="{ background: f.color || '#5c6ef5' }"></span>
+                {{ f.name }}
+                <Check v-if="showMoveFolderFor.folder_id === f.id" :size="14" class="fav-move-check" />
+              </div>
+              <div class="dropdown-divider"></div>
+              <div
+                class="dropdown-item fav-move-row"
+                @click="moveBookmarkToFolder(showMoveFolderFor, null)"
+              >
+                <FolderMinus :size="14" />
+                未分类
+                <Check v-if="!showMoveFolderFor.folder_id" :size="14" class="fav-move-check" />
+              </div>
+            </div>
+            <div class="fav-modal-actions">
+              <SfButton type="ghost" @click="closeMoveToFolder">关闭</SfButton>
+            </div>
+          </div>
+        </div>
+      </Transition>
+
+      <!-- 文件夹管理 (删除 / 重命名) -->
+      <Transition name="fav-modal">
+        <div v-if="showManageFolders" class="fav-modal-mask" @click.self="showManageFolders = false">
+          <div class="fav-modal fav-modal-wide" @click.stop>
+            <div class="fav-modal-header">
+              <Folder :size="18" />
+              <span>管理文件夹 ({{ allFolders.length }})</span>
+            </div>
+            <div class="fav-modal-body fav-manage-list">
+              <div v-if="allFolders.length === 0" class="fav-manage-empty">
+                还没有文件夹, 点上方"新建"创建第一个
+              </div>
+              <div v-for="f in allFolders" :key="`mg-${f.id}`" class="fav-manage-row">
+                <span class="folder-dot" :style="{ background: f.color || '#5c6ef5' }"></span>
+                <span class="fav-manage-name">{{ f.name }}</span>
+                <span class="fav-manage-count">{{ f.bookmark_count }} 项</span>
+                <SfButton size="sm" type="ghost" @click="renameFolderPrompt(f)" aria-label="重命名">
+                  <Edit2 :size="13" />
+                </SfButton>
+                <SfButton size="sm" type="danger" @click="deleteFolderConfirm(f)" aria-label="删除">
+                  <Trash2 :size="13" />
+                </SfButton>
+              </div>
+            </div>
+            <div class="fav-modal-actions">
+              <SfButton type="ghost" @click="showManageFolders = false">关闭</SfButton>
+              <SfButton type="primary" @click="openCreateFolder">新建文件夹</SfButton>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -441,7 +642,15 @@ import {
   Plus,
   // P2-1/P2-4: 复制原句 + 快速复习
   Copy,
-  RotateCcw
+  RotateCcw,
+  // 5-P1-2 (后缀): 文件夹
+  Folder,
+  FolderPlus,
+  FolderMinus,
+  Inbox,
+  Move,
+  Check,
+  Settings2
 } from 'lucide-vue-next'
 import SfButton from '@/components/ui/SfButton.vue'
 import SfTag from '@/components/ui/SfTag.vue'
@@ -449,7 +658,7 @@ import SfEmpty from '@/components/ui/SfEmpty.vue'
 import SfDropdown from '@/components/ui/SfDropdown.vue'
 import SfPagination from '@/components/ui/SfPagination.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
-import { favoriteAPI, vocabularyAPI, subtitleBookmarkAPI, materialAPI, bookmarkTagAPI } from '@/api'
+import { favoriteAPI, vocabularyAPI, subtitleBookmarkAPI, materialAPI, bookmarkTagAPI, bookmarkFolderAPI } from '@/api'
 import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
@@ -807,9 +1016,11 @@ const loadSubtitleBookmarks = async () => {
   subtitleLoading.value = true
   try {
     // 4-P1-4: 传 search + material_id 参数
+    // 5-P1-2 (后缀): 加 folder_id 过滤 (null=全部, 0=未分类, 其他=该 folder)
     const params = {}
     if (searchQuery.value.trim()) params.search = searchQuery.value.trim()
     if (filterMaterialId.value) params.material_id = filterMaterialId.value
+    if (filterFolderId.value !== null) params.folder_id = filterFolderId.value
     const res = await subtitleBookmarkAPI.getAll(params)
     const items = Array.isArray(res) ? res : (res.items || [])
     // 字段映射：后端 subtitle_text_en → 前端 text_en
@@ -822,7 +1033,13 @@ const loadSubtitleBookmarks = async () => {
       text_cn: item.subtitle_text_cn || '',
       start_time: item.subtitle_start_time,
       practice_count: item.practice_count || 0,
-      created_at: item.created_at,
+      last_practiced_at: item.last_practiced_at,
+      note: item.note,
+      tags: item.tags || [],
+      // 5-P1-2 (后缀): 文件夹信息
+      folder_id: item.folder_id || null,
+      folder_name: item.folder_name || null,
+      folder_color: item.folder_color || null,
     }))
     subtitleTotal.value = items.length
   } catch (e) {
@@ -899,10 +1116,204 @@ const refreshData = async () => {
     await Promise.all([
     loadSubtitleBookmarks(),
     loadVocabList(),
-    loadVideoFavorites()  // 5-P1-1
+    loadVideoFavorites(),  // 5-P1-1
+    loadFolders()  // 5-P1-2 (后缀): 文件夹
   ])
   } finally {
     refreshing.value = false
+  }
+}
+
+// ==================== 5-P1-2 (后缀): 收藏文件夹 ====================
+// 状态
+const allFolders = ref([])         // [{ id, name, color, icon, bookmark_count }]
+const filterFolderId = ref(null)   // null=全部, 0=未分类, 其他=该 folder
+const uncategorizedCount = computed(() => {
+  // 从当前已加载的 bookmarks 推断未分类数 (无 folder_id)
+  return subtitleBookmarks.value.filter(b => !b.folder_id).length
+})
+
+// 颜色选择器 (7 种主色, 跟用户标签配色一致)
+const folderColors = [
+  '#5c6ef5', '#ef4444', '#f59e0b', '#22c55e',
+  '#06b6d4', '#a855f7', '#ec4899'
+]
+
+// 加载所有文件夹
+const loadFolders = async () => {
+  if (!userStore.isLoggedIn) return
+  try {
+    const res = await bookmarkFolderAPI.list()
+    allFolders.value = res || []
+  } catch (e) {
+    console.error('加载文件夹失败', e)
+    allFolders.value = []
+  }
+}
+
+// 按文件夹筛选
+const filterFolderById = (id) => {
+  filterFolderId.value = id
+  loadSubtitleBookmarks()
+}
+
+// ====== 新建文件夹弹层 ======
+const showCreateFolderModal = ref(false)
+const newFolderName = ref('')
+const newFolderColor = ref('#5c6ef5')
+const creatingFolder = ref(false)
+const createFolderError = ref('')
+const newFolderInput = ref(null)
+
+const openCreateFolder = () => {
+  showCreateFolderModal.value = true
+  newFolderName.value = ''
+  newFolderColor.value = '#5c6ef5'
+  createFolderError.value = ''
+  // nextTick 聚焦
+  setTimeout(() => {
+    if (newFolderInput.value && newFolderInput.value.focus) {
+      newFolderInput.value.focus()
+    }
+  }, 100)
+  // 关闭管理面板 (避免堆叠)
+  showManageFolders.value = false
+}
+
+const closeCreateFolder = () => {
+  showCreateFolderModal.value = false
+  newFolderName.value = ''
+  createFolderError.value = ''
+}
+
+const submitCreateFolder = async () => {
+  const name = newFolderName.value.trim()
+  if (!name) return
+  creatingFolder.value = true
+  createFolderError.value = ''
+  try {
+    const res = await bookmarkFolderAPI.create({ name, color: newFolderColor.value })
+    allFolders.value = [res, ...allFolders.value]
+    toast.success(`已创建文件夹 "${res.name}"`)
+    closeCreateFolder()
+  } catch (e) {
+    // 409 重名
+    if (e?.response?.status === 409) {
+      createFolderError.value = e.response.data?.detail || '文件夹名已存在'
+    } else {
+      createFolderError.value = e?.response?.data?.detail || '创建失败'
+    }
+  } finally {
+    creatingFolder.value = false
+  }
+}
+
+// ====== 移动单个 bookmark 到文件夹 ======
+const showMoveFolderFor = ref(null)  // 当前正在操作的 bookmark 对象
+
+const openMoveToFolder = (item) => {
+  showMoveFolderFor.value = item
+}
+
+const closeMoveToFolder = () => {
+  showMoveFolderFor.value = null
+}
+
+const moveBookmarkToFolder = async (item, folderId) => {
+  try {
+    await bookmarkFolderAPI.moveBookmark(item.id, folderId)
+    // 乐观更新本地
+    const folder = folderId ? allFolders.value.find(f => f.id === folderId) : null
+    item.folder_id = folderId
+    item.folder_name = folder?.name || null
+    item.folder_color = folder?.color || null
+    // 刷新 bookmark_count
+    await loadFolders()
+    toast.success(folderId ? `已移到 "${folder?.name}"` : '已移出文件夹')
+    closeMoveToFolder()
+  } catch (e) {
+    console.error('移动失败', e)
+    toast.error('移动失败')
+  }
+}
+
+// ====== 批量移动 ======
+const batchMoveToFolder = async (folderId, folderName) => {
+  const ids = Array.from(selectedIds.value)
+  if (ids.length === 0) return
+  try {
+    const res = await bookmarkFolderAPI.batchMove(ids, folderId)
+    // 乐观更新本地
+    for (const id of ids) {
+      const bm = subtitleBookmarks.value.find(b => b.id === id)
+      if (bm) {
+        const folder = folderId ? allFolders.value.find(f => f.id === folderId) : null
+        bm.folder_id = folderId
+        bm.folder_name = folder?.name || null
+        bm.folder_color = folder?.color || null
+      }
+    }
+    await loadFolders()
+    toast.success(res.message || '已移动')
+    // 移动后清空选择
+    clearSelection()
+  } catch (e) {
+    console.error('批量移动失败', e)
+    toast.error('批量移动失败')
+  }
+}
+
+// ====== 文件夹管理 (重命名 / 删除) ======
+const showManageFolders = ref(false)
+
+const renameFolderPrompt = async (f) => {
+  // 简单用 prompt 弹一下 (避免再造一个 modal)
+  const newName = window.prompt(`重命名文件夹 "${f.name}"`, f.name)
+  if (!newName || newName === f.name || !newName.trim()) return
+  try {
+    await bookmarkFolderAPI.update(f.id, { name: newName.trim() })
+    f.name = newName.trim()
+    // 同步更新已显示的 bookmark 上的 folder_name
+    for (const bm of subtitleBookmarks.value) {
+      if (bm.folder_id === f.id) bm.folder_name = f.name
+    }
+    toast.success('已重命名')
+  } catch (e) {
+    if (e?.response?.status === 409) {
+      toast.error(e.response.data?.detail || '重名')
+    } else {
+      toast.error('重命名失败')
+    }
+  }
+}
+
+const deleteFolderConfirm = async (f) => {
+  const confirmed = await showConfirm({
+    title: '删除文件夹',
+    message: `确定删除文件夹 "${f.name}"? 里面的 ${f.bookmark_count} 项收藏会变"未分类".`
+  })
+  if (!confirmed) return
+  try {
+    await bookmarkFolderAPI.delete(f.id)
+    // 从本地移除
+    allFolders.value = allFolders.value.filter(x => x.id !== f.id)
+    // 同步: 该 folder 下的 bookmark.folder_id = null
+    for (const bm of subtitleBookmarks.value) {
+      if (bm.folder_id === f.id) {
+        bm.folder_id = null
+        bm.folder_name = null
+        bm.folder_color = null
+      }
+    }
+    // 如果当前正在筛选该 folder, 切回"全部"
+    if (filterFolderId.value === f.id) {
+      filterFolderId.value = null
+      loadSubtitleBookmarks()
+    }
+    toast.success(`已删除 "${f.name}"`)
+  } catch (e) {
+    console.error('删除失败', e)
+    toast.error('删除失败')
   }
 }
 
@@ -912,6 +1323,7 @@ onMounted(() => {
     loadSubtitleBookmarks()
     loadVocabList()
     loadUserTags()
+    loadFolders()
   }
 })
 </script>
@@ -1096,6 +1508,287 @@ onMounted(() => {
   height: 18px;
   cursor: pointer;
   accent-color: var(--color-brand);
+}
+
+/* ==================== 5-P1-2 (后缀): 文件夹 ==================== */
+
+/* 文件夹 chip 行: 横向滚动 */
+.fav-folder-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0 8px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  flex-wrap: nowrap;
+}
+.fav-folder-chips::-webkit-scrollbar {
+  height: 4px;
+}
+.fav-folder-chips::-webkit-scrollbar-thumb {
+  background: var(--color-border, #e5e7eb);
+  border-radius: 2px;
+}
+
+.fav-folder-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--color-border, #e5e7eb);
+  background: var(--color-bg-card, #fff);
+  color: var(--color-text-secondary, #6b7280);
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+.fav-folder-chip:hover {
+  border-color: var(--folder-color, var(--color-brand));
+  color: var(--folder-color, var(--color-brand));
+}
+.fav-folder-chip.active {
+  background: var(--folder-color, var(--color-brand));
+  color: #fff;
+  border-color: var(--folder-color, var(--color-brand));
+}
+.fav-folder-chip.active .fav-folder-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+.fav-folder-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--color-bg-page, #f3f4f6);
+  color: var(--color-text-secondary, #6b7280);
+  font-size: 11px;
+  font-weight: 500;
+}
+.fav-folder-add {
+  border-style: dashed;
+  color: var(--color-text-tertiary, #9ca3af);
+}
+.fav-folder-add:hover {
+  border-style: solid;
+  color: var(--color-brand);
+  border-color: var(--color-brand);
+}
+.fav-folder-manage {
+  color: var(--color-text-tertiary, #9ca3af);
+}
+.fav-folder-manage:hover {
+  color: var(--color-text-primary, #111827);
+  border-color: var(--color-text-tertiary, #9ca3af);
+}
+
+/* 搜索 + 视频筛选行 (从原 .fav-filter-bar 平铺结构改为上下两行) */
+.fav-filter-bar {
+  margin-bottom: 12px;
+}
+.fav-search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* 文件夹徽章 (卡片内显示) */
+.fav-card-folder {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 8px;
+  font-size: 11px;
+  background: color-mix(in srgb, var(--folder-color) 12%, transparent);
+  color: var(--folder-color);
+  border: 1px solid color-mix(in srgb, var(--folder-color) 30%, transparent);
+}
+
+/* 弹层 (新建文件夹 / 移动 / 管理) */
+.fav-modal-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+.fav-modal {
+  background: var(--color-bg-card, #fff);
+  border-radius: 12px;
+  padding: 18px;
+  min-width: 320px;
+  max-width: 90vw;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+}
+.fav-modal-wide {
+  min-width: 400px;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+}
+.fav-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 14px;
+  color: var(--color-text-primary, #111827);
+}
+.fav-modal-body {
+  margin-bottom: 14px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+.fav-modal-label {
+  display: block;
+  font-size: 12px;
+  color: var(--color-text-secondary, #6b7280);
+  margin-bottom: 6px;
+  margin-top: 8px;
+}
+.fav-modal-label:first-child {
+  margin-top: 0;
+}
+.fav-modal-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 8px;
+  font-size: 14px;
+  background: var(--color-bg-page, #f9fafb);
+  color: var(--color-text-primary, #111827);
+  outline: none;
+  box-sizing: border-box;
+}
+.fav-modal-input:focus {
+  border-color: var(--color-brand);
+  background: #fff;
+}
+.fav-modal-error {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #ef4444;
+}
+.fav-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* 颜色选择器 */
+.fav-color-picker {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.fav-color-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.1s;
+}
+.fav-color-dot:hover {
+  transform: scale(1.1);
+}
+.fav-color-dot.active {
+  border-color: #111827;
+  box-shadow: 0 0 0 2px #fff inset;
+}
+
+/* 文件夹选择 (per-card 用) */
+.fav-move-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.fav-move-check {
+  margin-left: auto;
+  color: var(--color-brand);
+}
+.folder-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dropdown-divider {
+  height: 1px;
+  background: var(--color-border, #e5e7eb);
+  margin: 4px 0;
+}
+
+/* 批量移动菜单 */
+.folder-picker-menu {
+  min-width: 180px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.folder-pick-count {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--color-text-tertiary, #9ca3af);
+}
+
+/* 文件夹管理列表 */
+.fav-manage-list {
+  padding: 0;
+}
+.fav-manage-empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--color-text-tertiary, #9ca3af);
+  font-size: 13px;
+}
+.fav-manage-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--color-border, #f3f4f6);
+}
+.fav-manage-row:last-child {
+  border-bottom: none;
+}
+.fav-manage-name {
+  flex: 1;
+  font-size: 14px;
+  color: var(--color-text-primary, #111827);
+}
+.fav-manage-count {
+  font-size: 12px;
+  color: var(--color-text-tertiary, #9ca3af);
+}
+
+/* 弹层过渡 */
+.fav-modal-enter-active, .fav-modal-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fav-modal-enter-from, .fav-modal-leave-to {
+  opacity: 0;
+}
+.fav-modal-enter-active .fav-modal,
+.fav-modal-leave-active .fav-modal {
+  transition: transform 0.2s ease;
+}
+.fav-modal-enter-from .fav-modal,
+.fav-modal-leave-to .fav-modal {
+  transform: scale(0.95) translateY(-10px);
 }
 
 /* 4-P1-5: 批量操作工具栏 */

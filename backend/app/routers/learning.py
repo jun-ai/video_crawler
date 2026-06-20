@@ -14,7 +14,7 @@ import io
 import logging
 
 from app.database import get_db
-from app.models.models import User, LearningRecord, Material, Vocabulary, Subtitle, DictationRecord, SubtitleAnnotation, SubtitleBookmark, VideoInterpretation, UserTag, BookmarkTag
+from app.models.models import User, LearningRecord, Material, Vocabulary, Subtitle, DictationRecord, SubtitleAnnotation, SubtitleBookmark, VideoInterpretation, UserTag, BookmarkTag, BookmarkFolder
 from app.schemas.schemas import (
     LearningRecordCreate,
     LearningRecordResponse,
@@ -47,6 +47,11 @@ from app.schemas.schemas import (
     UserTagResponse,
     UserTagCreateRequest,
     BookmarkTagsRequest,
+    BookmarkFolderResponse,
+    BookmarkFolderCreateRequest,
+    BookmarkFolderUpdateRequest,
+    BookmarkMoveFolderRequest,
+    BatchMoveFolderRequest,
     ReviewSubmitRequest,
     ReviewQueueResponse,
     ReviewStatsResponse
@@ -2037,7 +2042,8 @@ async def add_bookmark(
         user_id=current_user.id,
         material_id=data.material_id,
         subtitle_id=data.subtitle_id,
-        note=data.note
+        note=data.note,
+        folder_id=data.folder_id
     )
     db.add(bookmark)
     await db.commit()
@@ -2086,6 +2092,20 @@ async def update_bookmark(
     if data.note is not None:
         # 5-P1-2: 空字符串视为清除 (前端编辑空笔记发空串)
         bookmark.note = data.note.strip() if data.note.strip() else None
+    # 5-P1-2 (后缀): 移动到文件夹 (folder_id=null 表示移出, 但注意区分 "未提供字段" vs "null"
+    # Pydantic 默认 None = "未提供", 但前端发 null 也会变成 None, 所以用 model_fields_set 区分
+    if "folder_id" in data.model_fields_set:
+        # 验证 folder 存在且属于当前用户
+        if data.folder_id is not None:
+            folder_check = await db.execute(
+                select(BookmarkFolder).where(
+                    BookmarkFolder.id == data.folder_id,
+                    BookmarkFolder.user_id == current_user.id
+                )
+            )
+            if not folder_check.scalar_one_or_none():
+                raise HTTPException(status_code=404, detail="文件夹不存在或无权访问")
+        bookmark.folder_id = data.folder_id
     await db.commit()
     await db.refresh(bookmark)
 
@@ -2295,6 +2315,274 @@ async def set_bookmark_tags(
     )
 
 
+# ==================== 5-P1-2 (后缀): 字幕收藏文件夹 ====================
+# 设计:
+# - 1:N 容器 (一个 bookmark 只属于一个 folder, 或不属于任何 folder)
+# - name 在同一 user_id 内唯一
+# - 删 folder 时 SET NULL (保留 bookmark, 变 "未分类")
+# - 用 sort_order 排序 (越大越靠前, 拖拽排序用)
+
+@router.get("/bookmark-folders", response_model=List[BookmarkFolderResponse])
+async def list_bookmark_folders(
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db)
+):
+    """5-P1-2 (后缀): 列出当前用户所有文件夹 + 每个文件夹下的 bookmark 数量
+
+    按 sort_order desc, created_at desc 排序
+    """
+    folders_result = await db.execute(
+        select(BookmarkFolder)
+        .where(BookmarkFolder.user_id == current_user.id)
+        .order_by(BookmarkFolder.sort_order.desc(), BookmarkFolder.created_at.desc())
+    )
+    folders = folders_result.scalars().all()
+
+    if not folders:
+        return []
+
+    # 一次性统计每个 folder 下的 bookmark 数量
+    folder_ids = [f.id for f in folders]
+    count_result = await db.execute(
+        select(SubtitleBookmark.folder_id, func.count().label('cnt'))
+        .where(
+            SubtitleBookmark.user_id == current_user.id,
+            SubtitleBookmark.folder_id.in_(folder_ids)
+        )
+        .group_by(SubtitleBookmark.folder_id)
+    )
+    count_map = {row.folder_id: row.cnt for row in count_result}
+
+    return [
+        BookmarkFolderResponse(
+            id=f.id,
+            name=f.name,
+            color=f.color or '#5c6ef5',
+            icon=f.icon or 'folder',
+            sort_order=f.sort_order or 0,
+            bookmark_count=count_map.get(f.id, 0),
+            created_at=f.created_at
+        )
+        for f in folders
+    ]
+
+
+@router.post("/bookmark-folders", response_model=BookmarkFolderResponse, status_code=201)
+async def create_bookmark_folder(
+    data: BookmarkFolderCreateRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db)
+):
+    """5-P1-2 (后缀): 创建文件夹 (同 user_id + name 唯一 → 409)"""
+    name = data.name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="文件夹名不能为空")
+    if len(name) > 50:
+        raise HTTPException(status_code=400, detail="文件夹名最多 50 个字符")
+
+    existing = await db.execute(
+        select(BookmarkFolder).where(
+            BookmarkFolder.user_id == current_user.id,
+            BookmarkFolder.name == name
+        )
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail=f"文件夹 '{name}' 已存在")
+
+    folder = BookmarkFolder(
+        user_id=current_user.id,
+        name=name,
+        color=data.color or '#5c6ef5',
+        icon=data.icon or 'folder'
+    )
+    db.add(folder)
+    await db.commit()
+    await db.refresh(folder)
+
+    return BookmarkFolderResponse(
+        id=folder.id,
+        name=folder.name,
+        color=folder.color or '#5c6ef5',
+        icon=folder.icon or 'folder',
+        sort_order=folder.sort_order or 0,
+        bookmark_count=0,
+        created_at=folder.created_at
+    )
+
+
+@router.patch("/bookmark-folders/{folder_id}", response_model=BookmarkFolderResponse)
+async def update_bookmark_folder(
+    folder_id: int,
+    data: BookmarkFolderUpdateRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db)
+):
+    """5-P1-2 (后缀): 更新文件夹 (重命名 / 换色 / 调排序)"""
+    result = await db.execute(
+        select(BookmarkFolder).where(
+            BookmarkFolder.id == folder_id,
+            BookmarkFolder.user_id == current_user.id
+        )
+    )
+    folder = result.scalar_one_or_none()
+    if not folder:
+        raise HTTPException(status_code=404, detail="文件夹不存在")
+
+    if data.name is not None:
+        new_name = data.name.strip()
+        if not new_name:
+            raise HTTPException(status_code=400, detail="文件夹名不能为空")
+        if len(new_name) > 50:
+            raise HTTPException(status_code=400, detail="文件夹名最多 50 个字符")
+        # 检查重名 (排除自己)
+        if new_name != folder.name:
+            dup_check = await db.execute(
+                select(BookmarkFolder).where(
+                    BookmarkFolder.user_id == current_user.id,
+                    BookmarkFolder.name == new_name,
+                    BookmarkFolder.id != folder_id
+                )
+            )
+            if dup_check.scalar_one_or_none():
+                raise HTTPException(status_code=409, detail=f"文件夹 '{new_name}' 已存在")
+        folder.name = new_name
+
+    if data.color is not None:
+        folder.color = data.color
+    if data.icon is not None:
+        folder.icon = data.icon
+    if data.sort_order is not None:
+        folder.sort_order = data.sort_order
+
+    await db.commit()
+    await db.refresh(folder)
+
+    # 计算 bookmark_count
+    count_res = await db.execute(
+        select(func.count()).select_from(SubtitleBookmark).where(
+            SubtitleBookmark.user_id == current_user.id,
+            SubtitleBookmark.folder_id == folder.id
+        )
+    )
+    bookmark_count = count_res.scalar() or 0
+
+    return BookmarkFolderResponse(
+        id=folder.id,
+        name=folder.name,
+        color=folder.color or '#5c6ef5',
+        icon=folder.icon or 'folder',
+        sort_order=folder.sort_order or 0,
+        bookmark_count=bookmark_count,
+        created_at=folder.created_at
+    )
+
+
+@router.delete("/bookmark-folders/{folder_id}", response_model=MessageResponse)
+async def delete_bookmark_folder(
+    folder_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db)
+):
+    """5-P1-2 (后缀): 删除文件夹 (级联 SET NULL 保留 bookmark, 变成 "未分类")
+
+    ondelete=SET NULL 已配置, 直接删 folder 即可
+    """
+    result = await db.execute(
+        select(BookmarkFolder).where(
+            BookmarkFolder.id == folder_id,
+            BookmarkFolder.user_id == current_user.id
+        )
+    )
+    folder = result.scalar_one_or_none()
+    if not folder:
+        raise HTTPException(status_code=404, detail="文件夹不存在")
+
+    await db.delete(folder)
+    await db.commit()
+    return MessageResponse(message=f"已删除文件夹 '{folder.name}'", success=True)
+
+
+@router.put("/bookmarks/{bookmark_id}/folder", response_model=MessageResponse)
+async def move_bookmark_to_folder(
+    bookmark_id: int,
+    data: BookmarkMoveFolderRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db)
+):
+    """5-P1-2 (后缀): 移动 bookmark 到文件夹 (folder_id=null 表示移出文件夹)
+
+    权限: bookmark 必须属于当前用户
+    """
+    bm_result = await db.execute(
+        select(SubtitleBookmark).where(
+            SubtitleBookmark.id == bookmark_id,
+            SubtitleBookmark.user_id == current_user.id
+        )
+    )
+    bookmark = bm_result.scalar_one_or_none()
+    if not bookmark:
+        raise HTTPException(status_code=404, detail="收藏不存在")
+
+    # folder_id=null 表示移出 (变成 "未分类")
+    if data.folder_id is not None:
+        folder_check = await db.execute(
+            select(BookmarkFolder).where(
+                BookmarkFolder.id == data.folder_id,
+                BookmarkFolder.user_id == current_user.id
+            )
+        )
+        if not folder_check.scalar_one_or_none():
+            raise HTTPException(status_code=404, detail="文件夹不存在或无权访问")
+
+    bookmark.folder_id = data.folder_id
+    await db.commit()
+    return MessageResponse(message="已移动", success=True)
+
+
+@router.post("/bookmarks/batch-move-folder", response_model=MessageResponse)
+async def batch_move_bookmarks_to_folder(
+    data: BatchMoveFolderRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db)
+):
+    """5-P1-2 (后缀): 批量移动 bookmarks 到文件夹 (folder_id=null 表示移出)
+
+    一次性 N 个 bookmark 改 folder_id, 减少 N 个 HTTP 请求
+    """
+    if not data.ids:
+        return MessageResponse(message="无选中项", success=False)
+
+    # 验证目标 folder 存在且属于当前用户
+    if data.folder_id is not None:
+        folder_check = await db.execute(
+            select(BookmarkFolder).where(
+                BookmarkFolder.id == data.folder_id,
+                BookmarkFolder.user_id == current_user.id
+            )
+        )
+        if not folder_check.scalar_one_or_none():
+            raise HTTPException(status_code=404, detail="文件夹不存在或无权访问")
+
+    result = await db.execute(
+        select(SubtitleBookmark).where(
+            SubtitleBookmark.id.in_(data.ids),
+            SubtitleBookmark.user_id == current_user.id  # 权限隔离
+        )
+    )
+    bookmarks = result.scalars().all()
+    moved_count = 0
+    for b in bookmarks:
+        b.folder_id = data.folder_id
+        moved_count += 1
+    await db.commit()
+
+    folder_label = f"文件夹 #{data.folder_id}" if data.folder_id else "未分类"
+    return MessageResponse(
+        message=f"已移动 {moved_count} 项到 {folder_label}",
+        success=True
+    )
+
+
 @router.post("/bookmarks/batch-delete", response_model=MessageResponse)
 async def batch_delete_bookmarks(
     data: BatchIdsRequest,
@@ -2379,6 +2667,7 @@ async def get_all_user_bookmarks(
     current_user: Annotated[User, Depends(get_current_user)],
     search: str = Query(None, description="4-P1-4: 搜索字幕 text_en/text_cn"),
     material_id: int = Query(None, description="4-P1-4: 按视频筛选"),
+    folder_id: Optional[int] = Query(None, description="5-P1-2 (后缀): 按文件夹筛选, 0=仅未分类, 其他=该 folder"),
     db: AsyncSession = Depends(get_db)
 ):
     """获取用户所有字幕收藏（join Subtitle + Material, 单次查询解决 N+1）
@@ -2387,6 +2676,7 @@ async def get_all_user_bookmarks(
     按 created_at desc 排序，最新收藏在前。
 
     4-P1-4: 支持搜索 (text_en/text_cn 模糊匹配) + 按视频筛选
+    5-P1-2 (后缀): 支持按文件夹筛选 (folder_id=0 → 未分类, folder_id=N → 该 folder)
     """
     query = (
         select(SubtitleBookmark, Subtitle, Material)
@@ -2397,6 +2687,13 @@ async def get_all_user_bookmarks(
 
     if material_id is not None:
         query = query.where(SubtitleBookmark.material_id == material_id)
+
+    if folder_id is not None:
+        # folder_id=0 是哨兵值, 表示"仅未分类" (前端传 0 避免 null 歧义)
+        if folder_id == 0:
+            query = query.where(SubtitleBookmark.folder_id.is_(None))
+        else:
+            query = query.where(SubtitleBookmark.folder_id == folder_id)
 
     if search:
         # 4-P1-4: 模糊搜索字幕英中文 (大小写不敏感)
@@ -2418,6 +2715,12 @@ async def get_all_user_bookmarks(
     )
     user_tag_map = {t.id: t for t in all_user_tags_result.scalars()}
 
+    # 5-P1-2 (后缀): 一次性加载当前用户所有 folders (避免 N+1)
+    all_user_folders_result = await db.execute(
+        select(BookmarkFolder).where(BookmarkFolder.user_id == current_user.id)
+    )
+    user_folder_map = {f.id: f for f in all_user_folders_result.scalars()}
+
     bookmark_ids = [b.id for b, _, _ in rows]
     bookmark_tag_map = {}  # bookmark_id -> [tag_id, ...]
     if bookmark_ids:
@@ -2435,6 +2738,8 @@ async def get_all_user_bookmarks(
             t = user_tag_map.get(tid)
             if t:
                 tags_data.append({"id": t.id, "name": t.name, "color": t.color or '#5c6ef5'})
+        # 5-P1-2 (后缀): 文件夹信息
+        folder = user_folder_map.get(bookmark.folder_id) if bookmark.folder_id else None
         response.append(SubtitleBookmarkResponse(
             id=bookmark.id,
             user_id=bookmark.user_id,
@@ -2450,6 +2755,9 @@ async def get_all_user_bookmarks(
             material_title=material.title,
             material_cover=get_file_url(material.cover_path) if material else None,
             tags=tags_data,
+            folder_id=bookmark.folder_id,
+            folder_name=folder.name if folder else None,
+            folder_color=folder.color if folder else None,
         ))
     return response
 

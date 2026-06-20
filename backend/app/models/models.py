@@ -48,6 +48,7 @@ class User(Base):
     subtitle_annotations = relationship("SubtitleAnnotation", back_populates="user", cascade="all, delete-orphan")
     subtitle_bookmarks = relationship("SubtitleBookmark", back_populates="user", cascade="all, delete-orphan")
     user_tags = relationship("UserTag", back_populates="user", cascade="all, delete-orphan")
+    bookmark_folders = relationship("BookmarkFolder", back_populates="user", cascade="all, delete-orphan")
 
 
 class Material(Base):
@@ -286,9 +287,10 @@ class SubtitleBookmark(Base):
     __tablename__ = "subtitle_bookmarks"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    material_id = Column(Integer, ForeignKey("materials.id"), nullable=False, index=True)
-    subtitle_id = Column(Integer, ForeignKey("subtitles.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    material_id = Column(Integer, ForeignKey("materials.id", ondelete="CASCADE"), nullable=False, index=True)
+    subtitle_id = Column(Integer, ForeignKey("subtitles.id", ondelete="CASCADE"), nullable=False, index=True)
+    folder_id = Column(Integer, ForeignKey("bookmark_folders.id", ondelete="SET NULL"), nullable=True, index=True)  # 5-P1-2 文件夹 (nullable, 删文件夹保留 bookmark)
     note = Column(Text, nullable=True)                   # 用户备注
     practice_count = Column(Integer, default=0)          # 跟读练习次数
     last_practiced_at = Column(DateTime(timezone=True), nullable=True)  # P2-4: 最后练习时间
@@ -298,6 +300,7 @@ class SubtitleBookmark(Base):
     user = relationship("User", back_populates="subtitle_bookmarks")
     subtitle = relationship("Subtitle", back_populates="bookmarks")
     material = relationship("Material")
+    folder = relationship("BookmarkFolder", back_populates="bookmarks")
     tag_links = relationship("BookmarkTag", back_populates="bookmark", cascade="all, delete-orphan")
 
 
@@ -351,6 +354,33 @@ class BookmarkTag(Base):
     # 关联
     bookmark = relationship("SubtitleBookmark", back_populates="tag_links")
     tag = relationship("UserTag", back_populates="bookmark_links")
+
+
+class BookmarkFolder(Base):
+    """5-P1-2 (后缀): 字幕收藏文件夹 (顶层分组)
+
+    与 UserTag 区分:
+    - UserTag 是多对多细粒度标签 (一个 bookmark 可有多个 tag)
+    - BookmarkFolder 是 1:N 容器 (一个 bookmark 只属于一个 folder, 或不属于任何 folder)
+
+    设计:
+    - name 在同一 user_id 内唯一 (跨用户允许同名)
+    - 删 folder 时 SET NULL 保留 bookmark (不级联删 bookmark)
+    - sort_order 越大越靠前 (用户拖拽排序用)
+    """
+    __tablename__ = "bookmark_folders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(50), nullable=False)
+    color = Column(String(20), default='#5c6ef5')
+    icon = Column(String(30), default='folder')        # Iconify icon name, 默认 folder
+    sort_order = Column(Integer, default=0)            # 越大越靠前
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # 关联
+    user = relationship("User", back_populates="bookmark_folders")
+    bookmarks = relationship("SubtitleBookmark", back_populates="folder")
 
 
 class Announcement(Base):
