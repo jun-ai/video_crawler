@@ -351,7 +351,8 @@
                     <span v-if="item.practice_count > 0" class="fav-practice-count" :title="'已练习 ' + item.practice_count + ' 次'">
                       练习 {{ item.practice_count }} 次{{ formatLastPracticed(item.last_practiced_at) }}
                     </span>
-                    <span v-else class="fav-practice-count fav-practice-zero">未练习</span>
+                    <!-- P2-6: 移动端隐藏"未练习"灰色标签 (避免拥挤) -->
+                    <span v-else class="fav-practice-count fav-practice-zero fav-practice-zero-mobile-hidden">未练习</span>
                   </div>
                 </div>
                 <div class="fav-card-actions">
@@ -2796,6 +2797,11 @@ onMounted(() => {
 
   .vocab-context {
     font-size: 11px;
+  }
+
+  /* P2-6: 移动端隐藏"未练习"标签 */
+  .fav-practice-zero-mobile-hidden {
+    display: none;
   }
 }
 

@@ -128,8 +128,7 @@
               { value: 'oldest', label: '最早添加' },
               { value: 'word_asc', label: 'A → Z' },
               { value: 'word_desc', label: 'Z → A' },
-              { value: 'next_review_desc', label: '最不急' },
-              { value: 'review_count', label: '复习最多' }
+              { value: 'next_review_desc', label: '最不急' }
             ]" />
           </div>
 
