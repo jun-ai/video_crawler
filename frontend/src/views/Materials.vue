@@ -173,7 +173,7 @@
                   :key="tag.id"
                   :class="['filter-pill tag-pill', { active: selectedTagId === tag.id }]"
                   :style="selectedTagId === tag.id
-                    ? { background: tag.color || 'var(--yt-cta-gradient)', color: '#fff', borderColor: 'transparent' }
+                    ? { background: tag.color || 'var(--sf-cta-gradient)', color: '#fff', borderColor: 'transparent' }
                     : {}"
                   @click="toggleTag(tag.id)"
                 >{{ tag.name }}</span>
@@ -912,7 +912,7 @@ onMounted(() => {
 }
 
 .filter-pill.active {
-  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
+  background: var(--sf-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   border-color: transparent;
   color: #fff;
   font-weight: 600;
@@ -1087,7 +1087,7 @@ onMounted(() => {
 }
 
 .mobile-chip.active {
-  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
+  background: var(--sf-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   border-color: transparent;
   color: #fff;
   font-weight: 600;

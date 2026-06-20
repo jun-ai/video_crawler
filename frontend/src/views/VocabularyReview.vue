@@ -648,7 +648,7 @@ onUnmounted(() => {
 }
 
 .summary-actions .sf-btn--primary {
-  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
+  background: var(--sf-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   border-color: var(--color-brand-bright);
 }
 

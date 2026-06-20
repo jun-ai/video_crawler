@@ -156,7 +156,7 @@ const goHome = () => {
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: var(--yt-cta-gradient);
+  background: var(--sf-cta-gradient);
   color: #fff;
   font-weight: 700;
   font-size: 15px;
@@ -312,7 +312,7 @@ const goHome = () => {
     width: 30px;
     height: 30px;
     border-radius: 8px;
-    background: var(--yt-cta-gradient);
+    background: var(--sf-cta-gradient);
     color: #fff;
     font-weight: 700;
     font-size: 13px;

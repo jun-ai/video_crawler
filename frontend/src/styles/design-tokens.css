@@ -174,8 +174,11 @@
   --transition-normal: var(--sf-duration-normal);
   --transition-slow: var(--sf-duration-slow);
   --yt-brand-gradient: linear-gradient(135deg, #2563EB 0%, #3B82F6 50%, #F59E0B 100%);
-  --yt-cta-gradient: linear-gradient(#3B82F6 0%, #2563EB 100%);  /* CTA 按钮渐变 */
+  --yt-cta-gradient: linear-gradient(#3B82F6 0%, #2563EB 100%);  /* CTA 按钮渐变 (兼容旧名) */
+  --sf-cta-gradient: linear-gradient(#3B82F6 0%, #2563EB 100%); /* 5-P0 (UI 统一): 替代 --yt-cta-gradient */
+  --sf-brand-gradient: linear-gradient(135deg, #2563EB 0%, #3B82F6 50%, #F59E0B 100%); /* 5-P0 (UI 统一): 替代 --yt-brand-gradient */
   --yt-bg-gradient: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 25%, #F8FAFC 100%);
+  --sf-bg-gradient: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 25%, #F8FAFC 100%); /* 5-P0 (UI 统一): 替代 --yt-bg-gradient */
   --glass-bg: rgba(255, 255, 255, 0.9);
   --glass-blur: blur(12px);
   --glass-border: 1px solid rgba(37, 99, 235, 0.1);
@@ -218,6 +221,8 @@
   --color-bg-mask: rgba(0, 0, 0, 0.7);
   --yt-brand-gradient: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
   --yt-bg-gradient: linear-gradient(180deg, #1a1a2e 0%, #252540 15%, #1a1a2e 100%);  /* P2: 暗色背景渐变 */
+  --sf-brand-gradient: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);  /* 5-P0 (UI 统一): 暗色 */
+  --sf-bg-gradient: linear-gradient(180deg, #1a1a2e 0%, #252540 15%, #1a1a2e 100%);  /* 5-P0 (UI 统一): 暗色 */
   --glass-bg: rgba(37, 37, 64, 0.9);  /* P2: 暗色玻璃背景 */
   --glass-border: 1px solid rgba(255, 255, 255, 0.08);
 

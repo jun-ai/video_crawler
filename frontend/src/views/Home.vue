@@ -826,7 +826,7 @@ onMounted(async () => {
   font-size: 15px;
   font-weight: 700;
   color: #fff;
-  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
+  background: var(--sf-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   border: none;
   border-radius: 999px;
   cursor: pointer;
@@ -1453,7 +1453,7 @@ onMounted(async () => {
 }
 
 .tag-chip.active {
-  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
+  background: var(--sf-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   color: #fff;
   border-color: transparent;
   box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);

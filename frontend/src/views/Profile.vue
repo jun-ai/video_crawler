@@ -247,7 +247,7 @@ onMounted(() => {
 /* ── Hero 用户信息 ── */
 .profile-hero {
   margin-bottom: 24px;
-  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
+  background: var(--sf-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   border-radius: var(--radius-lg);
   padding: 28px 32px;
   color: #fff;

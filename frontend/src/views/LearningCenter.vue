@@ -470,7 +470,7 @@ onMounted(() => {
   align-items: center;
   gap: 4px;
   padding: 6px 12px;
-  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
+  background: var(--sf-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   color: #fff;
   border-radius: var(--radius-full);
   font-size: 13px;
@@ -675,7 +675,7 @@ onMounted(() => {
 .tab-item.active {
   color: #fff;
   font-weight: 600;
-  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
+  background: var(--sf-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   border-color: var(--color-brand-bright);
 }
 

@@ -552,7 +552,7 @@ watch(() => props.currentIndex, () => {
   left: 0;
   right: 0;
   height: 4px;
-  background: var(--yt-brand-gradient);
+  background: var(--sf-brand-gradient);
 }
 
 /* ====== Progress ====== */
@@ -598,7 +598,7 @@ watch(() => props.currentIndex, () => {
 
 .sf-dictation-progress__fill {
   height: 100%;
-  background: var(--yt-brand-gradient);
+  background: var(--sf-brand-gradient);
   border-radius: inherit;
   transition: width var(--sf-duration-slower) var(--ease-bounce, cubic-bezier(0.34, 1.56, 0.64, 1));
 }
@@ -630,7 +630,7 @@ watch(() => props.currentIndex, () => {
 .sf-dictation-audio__icon {
   width: 80px;
   height: 80px;
-  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
+  background: var(--sf-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -829,7 +829,7 @@ watch(() => props.currentIndex, () => {
 }
 
 .sf-dictation-choice-btn.selected {
-  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
+  background: var(--sf-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   border-color: var(--color-brand-bright);
   color: #fff;
 }

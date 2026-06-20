@@ -260,7 +260,7 @@ const handleLogin = async () => {
   height: 48px !important;
   font-size: 16px;
   font-weight: 600;
-  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%)) !important;
+  background: var(--sf-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%)) !important;
   border: none;
   border-radius: var(--radius-full, 9999px);
   box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);

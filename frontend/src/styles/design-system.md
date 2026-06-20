@@ -301,7 +301,7 @@ color: var(--color-text-primary);
 | 渐变 | 值 | 用途 |
 |------|-----|------|
 | `--yt-brand-gradient` | `linear-gradient(135deg, #2563EB 0%, #3B82F6 50%, #F59E0B 100%)` | Hero 背景渐变 |
-| `--yt-cta-gradient` | `linear-gradient(#60A5FA 0%, #3B82F6 100%)` | CTA 按钮渐变（新增，Blue 同款） |
+| `--sf-cta-gradient` | `linear-gradient(#60A5FA 0%, #3B82F6 100%)` | CTA 按钮渐变（5-P0 UI 统一, 替代旧名 --yt-cta-gradient） |
 | `--yt-bg-gradient` | `linear-gradient(180deg, #FAFAF7 0%, #F5F5F0 25%, #FAFAF7 100%)` | 页面背景 |
 
 ---

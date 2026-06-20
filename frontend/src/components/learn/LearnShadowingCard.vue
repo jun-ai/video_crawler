@@ -262,7 +262,7 @@ const getScoreClass = (score) => {
   left: 0;
   width: 48px;
   height: 3px;
-  background: var(--yt-cta-gradient, linear-gradient(90deg, #60A5FA, #3B82F6));
+  background: var(--sf-cta-gradient, linear-gradient(90deg, #60A5FA, #3B82F6));
   border-radius: 2px;
 }
 
@@ -361,7 +361,7 @@ const getScoreClass = (score) => {
   border: none;
   cursor: pointer;
   transition: all var(--sf-duration-fast) var(--sf-ease-standard);
-  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
+  background: var(--sf-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   color: #fff;
   font-family: inherit;
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
@@ -416,7 +416,7 @@ const getScoreClass = (score) => {
   font-family: inherit;
 }
 .sf-eval-btn:hover {
-  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
+  background: var(--sf-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   border-color: transparent;
   color: #fff;
   transform: translateY(-1px);
@@ -443,7 +443,7 @@ const getScoreClass = (score) => {
   color: var(--color-brand-bright);
 }
 .sf-tool-btn.active {
-  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
+  background: var(--sf-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   border-color: transparent;
   color: #fff;
 }

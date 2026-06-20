@@ -662,7 +662,7 @@ onMounted(() => {
 .ec-tab.active {
   color: #fff;
   font-weight: 600;
-  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
+  background: var(--sf-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   border-color: var(--color-brand-bright);
 }
 
@@ -803,7 +803,7 @@ onMounted(() => {
 }
 
 .ec-speak-btn:hover {
-  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
+  background: var(--sf-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   color: #fff;
 }
 
@@ -1010,7 +1010,7 @@ onMounted(() => {
   font-size: 12px;
   font-weight: 600;
   color: #fff;
-  background: var(--yt-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
+  background: var(--sf-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
   border: none;
   border-radius: 14px;
   cursor: pointer;
