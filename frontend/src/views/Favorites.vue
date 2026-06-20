@@ -53,6 +53,15 @@
             <X :size="14" />
             取消
           </SfButton>
+          <!-- 5-P2 (后缀): 多选删除 - 全选/反选当前筛选 -->
+          <SfButton size="sm" type="ghost" @click="selectAllCurrent" :title="`全选当前 ${visibleBookmarkIds.length} 项`">
+            <CheckCheck :size="14" />
+            全选
+          </SfButton>
+          <SfButton size="sm" type="ghost" @click="invertSelection" :title="`反选当前 ${visibleBookmarkIds.length} 项`">
+            <ArrowLeftRight :size="14" />
+            反选
+          </SfButton>
           <!-- 5-P1-2 (后缀): 批量移动到文件夹 -->
           <SfDropdown v-if="allFolders.length > 0">
             <template #trigger>
@@ -611,22 +620,40 @@
         </div>
       </Transition>
 
-      <!-- 文件夹管理 (删除 / 重命名) -->
+      <!-- 文件夹管理 (删除 / 重命名 / 5-P2 (后缀) 拖拽排序) -->
       <Transition name="fav-modal">
         <div v-if="showManageFolders" class="fav-modal-mask" @click.self="showManageFolders = false">
           <div class="fav-modal fav-modal-wide" @click.stop>
             <div class="fav-modal-header">
               <Folder :size="18" />
               <span>管理文件夹 ({{ allFolders.length }})</span>
+              <span class="fav-manage-tip">拖拽或点 ↑↓ 排序</span>
             </div>
             <div class="fav-modal-body fav-manage-list">
               <div v-if="allFolders.length === 0" class="fav-manage-empty">
-                还没有文件夹, 点上方"新建"创建第一个
+                还没有文件夹, 点下方"新建文件夹"创建第一个
               </div>
-              <div v-for="f in allFolders" :key="`mg-${f.id}`" class="fav-manage-row">
+              <div
+                v-for="(f, idx) in allFolders"
+                :key="`mg-${f.id}`"
+                class="fav-manage-row"
+                :draggable="true"
+                @dragstart="onFolderDragStart($event, idx)"
+                @dragover.prevent="onFolderDragOver($event, idx)"
+                @dragend="onFolderDragEnd"
+                :class="{ 'fav-drag-over': dragOverIndex === idx }"
+              >
+                <GripVertical :size="14" class="fav-drag-handle" />
                 <span class="folder-dot" :style="{ background: f.color || '#5c6ef5' }"></span>
                 <span class="fav-manage-name">{{ f.name }}</span>
                 <span class="fav-manage-count">{{ f.bookmark_count }} 项</span>
+                <!-- 5-P2 (后缀): 上下移动按钮 -->
+                <SfButton size="sm" type="ghost" @click="moveFolderOrder(f, -1)" :disabled="idx === 0" aria-label="上移">
+                  <ChevronUp :size="13" />
+                </SfButton>
+                <SfButton size="sm" type="ghost" @click="moveFolderOrder(f, 1)" :disabled="idx === allFolders.length - 1" aria-label="下移">
+                  <ChevronDown :size="13" />
+                </SfButton>
                 <SfButton size="sm" type="ghost" @click="renameFolderPrompt(f)" aria-label="重命名">
                   <Edit2 :size="13" />
                 </SfButton>
@@ -680,7 +707,14 @@ import {
   Inbox,
   Move,
   Check,
-  Settings2
+  Settings2,
+  // 5-P2 (后缀): 多选删除增强 (全选/反选)
+  CheckCheck,
+  ArrowLeftRight,
+  // 5-P2 (后缀): 文件夹拖拽排序
+  GripVertical,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-vue-next'
 import SfButton from '@/components/ui/SfButton.vue'
 import SfTag from '@/components/ui/SfTag.vue'
@@ -974,21 +1008,72 @@ const clearSelection = () => {
   selectedIds.value = new Set()
 }
 
-// 4-P1-5: 批量删除 + Undo
+// 5-P2 (后缀): 当前筛选可见的 bookmark id 列表 (用于全选/反选)
+const visibleBookmarkIds = computed(() => {
+  // subtitleBookmarks 已经按当前筛选 (folder/tag/search) 过滤了
+  return subtitleBookmarks.value.map(b => b.id)
+})
+
+const selectAllCurrent = () => {
+  // 合并当前可见 + 已选
+  const next = new Set(selectedIds.value)
+  for (const id of visibleBookmarkIds.value) {
+    next.add(id)
+  }
+  selectedIds.value = next
+}
+
+const invertSelection = () => {
+  // 可见项中, 已选 → 反选未选, 未选 → 选上
+  const visible = new Set(visibleBookmarkIds.value)
+  const next = new Set()
+  for (const id of visible) {
+    if (!selectedIds.value.has(id)) {
+      next.add(id)
+    }
+  }
+  // 已选但不可见 (筛选变了) 的保留
+  for (const id of selectedIds.value) {
+    if (!visible.has(id)) {
+      next.add(id)
+    }
+  }
+  selectedIds.value = next
+}
+
+// 4-P1-5: 批量删除 + Undo (5-P2 后缀增强: 真实撤销 + 显示文件夹信息)
 const batchDelete = async () => {
   const ids = Array.from(selectedIds.value)
   if (ids.length === 0) return
+
+  // 5-P2 (后缀): 统计涉及多少个文件夹 (让用户知道会丢失哪些组织)
+  const itemsToDelete = subtitleBookmarks.value.filter(b => ids.includes(b.id))
+  const folderNames = new Set()
+  let untaggedCount = 0
+  for (const item of itemsToDelete) {
+    if (item.folder_name) folderNames.add(item.folder_name)
+    else untaggedCount++
+  }
+  const folderHint = folderNames.size > 0
+    ? ` (涉及 ${folderNames.size} 个文件夹${untaggedCount > 0 ? ` + ${untaggedCount} 项未分类` : ''})`
+    : (untaggedCount > 0 ? ` (都是未分类)` : '')
+
   const confirmed = await showConfirm({
     title: '批量删除',
-    message: `确定删除选中的 ${ids.length} 项字幕收藏？`
+    message: `确定删除选中的 ${ids.length} 项字幕收藏？${folderHint}`
   })
   if (!confirmed) return
 
-  // 备份被删的 items (用于撤销)
-  const backupItems = subtitleBookmarks.value.filter(b => ids.includes(b.id))
+  // 备份被删的 items (用于真实撤销: 重新 add 回来)
+  const backupItems = itemsToDelete.map(b => ({
+    material_id: b.material_id,
+    subtitle_id: b.subtitle_id,
+    note: b.note,
+    folder_id: b.folder_id
+  }))
   try {
     const res = await subtitleBookmarkAPI.batchDelete(ids)
-    const deletedCount = res.message.match(/\d+/)?.[0] || ids.length
+    const deletedCount = parseInt(res.message.match(/\d+/)?.[0] || ids.length)
     clearSelection()
     loadSubtitleBookmarks()
     toast.withAction(
@@ -996,12 +1081,33 @@ const batchDelete = async () => {
       {
         label: '撤销',
         onClick: async () => {
-          // 字幕收藏没有 batch-create, 只能逐个调 add (字幕收藏 = SubtitleBookmark)
-          // 由于后端不支持批量撤销, 提示用户手动重新收藏
-          toast.warning(`请重新收藏这 ${backupItems.length} 句 (subtitles 旁星标)`)
+          // 5-P2 (后缀): 真实撤销 - 逐个 add 回来 (note/folder 保留)
+          let restored = 0
+          let failed = 0
+          toast.info(`恢复中… 0/${backupItems.length}`)
+          for (const item of backupItems) {
+            try {
+              await subtitleBookmarkAPI.add({
+                material_id: item.material_id,
+                subtitle_id: item.subtitle_id,
+                note: item.note,
+                folder_id: item.folder_id
+              })
+              restored++
+            } catch (e) {
+              // 重复收藏 (字幕已重新收藏) → 跳过
+              failed++
+            }
+          }
+          await loadSubtitleBookmarks()
+          if (failed > 0) {
+            toast.success(`已恢复 ${restored} 项, ${failed} 项跳过 (已存在)`)
+          } else {
+            toast.success(`已恢复 ${restored} 项`)
+          }
         }
       },
-      { type: 'success', duration: 5000 }
+      { type: 'success', duration: 6000 }
     )
   } catch (e) {
     console.error('批量删除失败', e)
@@ -1352,6 +1458,73 @@ const deleteFolderConfirm = async (f) => {
   } catch (e) {
     console.error('删除失败', e)
     toast.error('删除失败')
+  }
+}
+
+// ==================== 5-P2 (后缀): 文件夹拖拽排序 ====================
+// 用原生 HTML5 拖拽 + 上下按钮 (双方案)
+// 后端 bookmark_folders.sort_order 越大越靠前, 列表 desc 排序
+// 策略: 移动后给所有 folder 重新分配连续的 sort_order (gap 100, 留扩展空间)
+const dragFromIndex = ref(null)
+const dragOverIndex = ref(null)
+
+const onFolderDragStart = (e, idx) => {
+  dragFromIndex.value = idx
+  // 设置拖拽数据 (required for Firefox)
+  e.dataTransfer.effectAllowed = 'move'
+  e.dataTransfer.setData('text/plain', String(idx))
+}
+
+const onFolderDragOver = (e, idx) => {
+  e.preventDefault()
+  e.dataTransfer.dropEffect = 'move'
+  dragOverIndex.value = idx
+}
+
+const onFolderDragEnd = async () => {
+  const from = dragFromIndex.value
+  const to = dragOverIndex.value
+  dragFromIndex.value = null
+  dragOverIndex.value = null
+  if (from === null || to === null || from === to) return
+  // 重新排序 allFolders
+  const next = [...allFolders.value]
+  const [moved] = next.splice(from, 1)
+  next.splice(to, 0, moved)
+  allFolders.value = next
+  await persistFolderOrder(next)
+}
+
+// 上下按钮: direction -1=上移, 1=下移
+const moveFolderOrder = async (f, direction) => {
+  const idx = allFolders.value.findIndex(x => x.id === f.id)
+  if (idx === -1) return
+  const newIdx = idx + direction
+  if (newIdx < 0 || newIdx >= allFolders.value.length) return
+  const next = [...allFolders.value]
+  const [moved] = next.splice(idx, 1)
+  next.splice(newIdx, 0, moved)
+  allFolders.value = next
+  await persistFolderOrder(next)
+}
+
+// 持久化: 给每个 folder 分配 sort_order (gap 100, desc → 越后越大)
+const persistFolderOrder = async (orderedList) => {
+  try {
+    // 逐个 PATCH sort_order (N 个请求, 但 folder 数量小 ≤ 30)
+    const total = orderedList.length
+    for (let i = 0; i < total; i++) {
+      const f = orderedList[i]
+      const newOrder = (total - i) * 100  // 第一项最大
+      await bookmarkFolderAPI.update(f.id, { sort_order: newOrder })
+    }
+    // 刷新确保后端顺序一致
+    await loadFolders()
+  } catch (e) {
+    console.error('保存排序失败', e)
+    toast.error('保存排序失败')
+    // 回滚
+    await loadFolders()
   }
 }
 
@@ -1806,9 +1979,28 @@ onMounted(() => {
   gap: 10px;
   padding: 8px 4px;
   border-bottom: 1px solid var(--color-border, #f3f4f6);
+  transition: background 0.15s;
 }
 .fav-manage-row:last-child {
   border-bottom: none;
+}
+.fav-manage-row.fav-drag-over {
+  background: color-mix(in srgb, var(--color-brand) 8%, transparent);
+  border-top: 2px solid var(--color-brand);
+}
+.fav-drag-handle {
+  color: var(--color-text-tertiary, #9ca3af);
+  cursor: grab;
+  flex-shrink: 0;
+}
+.fav-drag-handle:active {
+  cursor: grabbing;
+}
+.fav-manage-tip {
+  font-size: 11px;
+  color: var(--color-text-tertiary, #9ca3af);
+  font-weight: normal;
+  margin-left: auto;
 }
 .fav-manage-name {
   flex: 1;
