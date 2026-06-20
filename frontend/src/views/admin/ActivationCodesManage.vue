@@ -236,7 +236,7 @@ onMounted(() => {
 
 /* -- Table Card -- */
 .list-card {
-  background: #F8FAF8;
+  background: var(--sf-admin-bg);
   border: 1px solid var(--sf-admin-border);
   border-radius: 16px;
   padding: 4px;
@@ -257,7 +257,7 @@ onMounted(() => {
   border-radius: 6px;
   font-size: 13px;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  color: #2563EB;
+  color: var(--sf-brand);
   letter-spacing: 0.5px;
   border: 1px solid rgba(96, 165, 250, 0.15);
 }
@@ -282,7 +282,7 @@ onMounted(() => {
 }
 
 .expire-text.permanent {
-  color: #2563EB;
+  color: var(--sf-brand);
   font-weight: 600;
 }
 
@@ -329,7 +329,7 @@ onMounted(() => {
   font-size: 15px;
   font-weight: 600;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  color: #2563EB;
+  color: var(--sf-brand);
   letter-spacing: 1px;
 }
 

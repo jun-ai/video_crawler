@@ -255,7 +255,7 @@ onMounted(() => {
 /* ── Filter Card ── */
 .filter-card {
   margin-bottom: 24px;
-  background: #FFFFFF;
+  background: var(--sf-admin-bg-card);
   border-color: var(--sf-admin-border);
 }
 
@@ -273,7 +273,7 @@ onMounted(() => {
 
 /* ── Table Card ── */
 .card-container {
-  background: #FFFFFF;
+  background: var(--sf-admin-bg-card);
   border-color: var(--sf-admin-border);
 }
 
@@ -293,7 +293,7 @@ onMounted(() => {
 }
 
 .card-container :deep(.sf-table td) {
-  color: #3A4A40;
+  color: var(--sf-admin-text-primary);
   border-bottom-color: rgba(255, 255, 255, 0.04);
   padding: 14px 16px;
 }
@@ -319,7 +319,7 @@ onMounted(() => {
 }
 
 .action-cell :deep(.sf-btn--danger):hover {
-  background: #DC2626;
+  background: var(--sf-danger);
 }
 
 /* ── Pagination ── */
@@ -387,7 +387,7 @@ onMounted(() => {
     flex-wrap: wrap;
     gap: 8px;
     padding: 16px;
-    background: #FFFFFF;
+    background: var(--sf-admin-bg-card);
     border-radius: 12px;
     border: 1px solid var(--sf-admin-border);
     align-items: center;
@@ -405,7 +405,7 @@ onMounted(() => {
 
   .card-container :deep(.sf-table tbody tr td:first-child) {
     font-weight: 600;
-    color: #2563EB;
+    color: var(--sf-brand);
     font-size: 12px;
     opacity: 0.7;
   }

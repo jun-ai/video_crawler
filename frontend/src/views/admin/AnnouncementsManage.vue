@@ -299,7 +299,7 @@ onMounted(() => {
 
 /* -- Card -- */
 .announcement-card {
-  background: #F8FAF8;
+  background: var(--sf-admin-bg);
   border-radius: 14px;
   padding: 18px 22px;
   border: 1px solid var(--sf-admin-border);
@@ -344,13 +344,13 @@ onMounted(() => {
 
 .priority-badge.urgent {
   background: rgba(220, 38, 38, 0.15);
-  color: #E8827A;
+  color: var(--sf-admin-accent);
   border: 1px solid rgba(220, 38, 38, 0.25);
 }
 
 .priority-badge.important {
   background: rgba(245, 158, 11, 0.15);
-  color: #FBBF24;
+  color: var(--sf-warning);
   border: 1px solid rgba(245, 158, 11, 0.25);
 }
 
@@ -397,7 +397,7 @@ onMounted(() => {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   overflow: hidden;
-  background: #F8FAF8;
+  background: var(--sf-admin-bg);
 }
 
 .radio-btn {
@@ -418,11 +418,11 @@ onMounted(() => {
 
 .radio-btn:hover {
   background: rgba(96, 165, 250, 0.08);
-  color: #C5D9CC;
+  color: var(--sf-admin-bg-hover);
 }
 
 .radio-btn.active {
-  background: #2563EB;
+  background: var(--sf-brand);
   color: #fff;
 }
 
@@ -446,7 +446,7 @@ onMounted(() => {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #2563EB;
+  background: var(--sf-brand);
   cursor: pointer;
   border: 2px solid #2563EB;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
@@ -456,7 +456,7 @@ onMounted(() => {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #2563EB;
+  background: var(--sf-brand);
   cursor: pointer;
   border: 2px solid #2563EB;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
@@ -471,7 +471,7 @@ onMounted(() => {
 }
 
 .priority-labels span.active {
-  color: #2563EB;
+  color: var(--sf-brand);
   font-weight: 600;
 }
 

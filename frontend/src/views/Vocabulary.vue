@@ -122,8 +122,8 @@
           <div class="filter-section">
             <span class="filter-label">排序：</span>
             <SfSelect v-model="sortBy" :options="[
-              { value: 'starred_first', label: '⭐ 星标优先' },
-              { value: 'next_review_asc', label: '🔥 最该复习' },
+              { value: 'starred_first', label: '星标优先' },
+              { value: 'next_review_asc', label: '最该复习' },
               { value: 'newest', label: '最近添加' },
               { value: 'oldest', label: '最早添加' },
               { value: 'word_asc', label: 'A → Z' },

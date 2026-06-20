@@ -333,7 +333,7 @@ onMounted(() => {
 }
 
 .delete-btn:hover {
-  color: #F87171;
+  color: var(--sf-danger);
   border-color: rgba(220, 38, 38, 0.4);
   background: rgba(220, 38, 38, 0.12);
 }

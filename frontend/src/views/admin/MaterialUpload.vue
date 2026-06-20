@@ -338,7 +338,7 @@ const goBack = () => {
 }
 
 .star-btn.active {
-  color: #F59E0B;
+  color: var(--sf-warning);
 }
 
 .star-label {

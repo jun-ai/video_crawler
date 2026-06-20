@@ -35,7 +35,11 @@
 -每句话不超过 15 个字
 
 ### 图片系统
--图标：使用 Iconify 图标库（https://iconify.design）
--占位图：使用 Picsum Photos（https://picsum.photos）
--真实图片：使用 Pexels 搜索（https://www.pexels.com）
--插画：使用 unDraw（https://undraw.co）
+- 图标：使用 **lucide-vue-next** 图标库（项目惯例, 5-P0 UI 统一: 替代原 Iconify 规则, 实际 100% 文件用 lucide）
+- 占位图：使用 Picsum Photos（https://picsum.photos）
+- 真实图片：使用 Pexels 搜索（https://www.pexels.com）
+- 插画：使用 unDraw（https://undraw.co）
+
+### 设计令牌 (5-P0 统一)
+- 渐变: 用 `--sf-cta-gradient` / `--sf-brand-gradient` / `--sf-bg-gradient` (替代旧名 `--yt-*`)
+- 颜色: 用 `--sf-*` 前缀变量 (与 Tailwind `@theme` 兼容)
