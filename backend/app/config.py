@@ -50,9 +50,24 @@ class Settings(BaseSettings):
     cors_origins: str = "*"  # 逗号分隔的域名，或 "*" 表示全部
 
     # ==================== AI API配置 ====================
-    # DeepSeek API
+    # 多个 provider,按优先级 fallback(OpenAI 兼容协议)
+    # DeepSeek (默认)
     deepseek_api_key: str = ""
     deepseek_base_url: str = "https://api.deepseek.com"
+    deepseek_model: str = "deepseek-chat"
+
+    # 智谱 GLM — Anthropic 兼容协议(https://open.bigmodel.cn/api/anthropic)
+    # 用 ccswitch 同款 5.1 key 直连也可(实测 200 OK)
+    glm_api_key: str = ""
+    glm_base_url: str = "https://open.bigmodel.cn/api/anthropic"
+    glm_model: str = "glm-4.5"
+
+    # 月之暗面 MiniMax / Moonshot — Anthropic 兼容协议(https://api.minimaxi.com/anthropic)
+    # ccswitch 的 sk-cp- key 需要走 ccswitch 代理,直连 401
+    # 留空此字段 = 自动跳过这个 provider
+    minimax_api_key: str = ""
+    minimax_base_url: str = "https://api.minimaxi.com/anthropic"
+    minimax_model: str = "MiniMax-M3"
 
     # 讯飞语音识别 API
     xunfei_app_id: str = ""

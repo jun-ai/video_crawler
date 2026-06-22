@@ -60,6 +60,15 @@ class FetchURLRequest(BaseModel):
     subtitle_langs: Optional[List[str]] = None
 
 
+@router.get("/ai-providers")
+async def get_ai_providers_status(
+    current_admin: User = Depends(get_current_admin),
+):
+    """查看 AI provider 状态(用于诊断熔断 / 配置)"""
+    from app.services.deepseek import get_ai_providers_status
+    return get_ai_providers_status()
+
+
 @router.post("/materials/fetch-url")
 async def fetch_material_from_url(
     req: FetchURLRequest,
