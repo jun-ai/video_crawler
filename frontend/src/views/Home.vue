@@ -735,10 +735,10 @@ onMounted(async () => {
   position: relative;
   background: var(--yt-brand-gradient, linear-gradient(135deg, #2563EB 0%, #3B82F6 50%, #F59E0B 100%));
   border-radius: 0; /* 全宽：去掉圆角包裹 */
-  padding: 88px 48px 64px;
+  padding: 48px 48px 32px;
   margin-bottom: 0;
   overflow: hidden;
-  min-height: 420px;
+  min-height: 320px;
   display: flex;
   align-items: center;
 }
@@ -770,7 +770,7 @@ onMounted(async () => {
   color: rgba(255, 255, 255, 0.7);
   letter-spacing: 2px;
   text-transform: lowercase;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
   padding: 6px 14px;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -785,7 +785,7 @@ onMounted(async () => {
   font-weight: 800;
   line-height: 1.05;
   letter-spacing: -2px;
-  margin: 0 0 18px;
+  margin: 0 0 12px;
   text-shadow: 0 2px 20px rgba(0, 0, 0, 0.15);
 }
 
@@ -804,7 +804,7 @@ onMounted(async () => {
   font-size: 18px;
   font-weight: 400;
   color: rgba(255, 255, 255, 0.85);
-  margin: 0 0 32px;
+  margin: 0 0 20px;
   line-height: 1.5;
   letter-spacing: 0.3px;
   max-width: 480px;
@@ -1069,7 +1069,7 @@ onMounted(async () => {
 /* ====== 两栏布局 ====== */
 .home-layout {
   display: flex;
-  gap: 24px;
+  gap: 12px;
   align-items: flex-start;
 }
 
@@ -1461,15 +1461,15 @@ onMounted(async () => {
 
 /* ====== 学习功能清单 — SpeakVlog 风格 ====== */
 .features-section {
-  padding: 80px 32px;
+  padding: 48px 32px;
   background: var(--color-bg-pale);
-  margin: 32px 0;
+  margin: 16px 0;
   border-radius: 24px;
 }
 
 .features-head {
   max-width: 600px;
-  margin: 0 auto 48px;
+  margin: 0 auto 32px;
   text-align: center;
 }
 
