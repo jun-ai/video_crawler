@@ -461,7 +461,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from '@/composables/useToast'
 import { useTTS } from '@/composables/useTTS'
