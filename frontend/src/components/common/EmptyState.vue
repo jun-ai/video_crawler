@@ -59,10 +59,8 @@
       <!-- 默认图标 -->
       <div v-else class="empty-icon-default">
         <svg viewBox="0 0 64 41" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <g>
-            <path d="M32 0C14.327 0 0 9.192 0 20.5S14.327 41 32 41s32-9.192 32-20.5S49.673 0 32 0zm0 38c-16.542 0-30-7.851-30-17.5S13.458 3 30 10.851 30 17.5S48.542 38 32 38z" fill="currentColor" fill-opacity="0.25"/>
-            <path d="M22 18h20v2H22v-2zm0 6h14v2H22v-2z" fill="currentColor" fill-opacity="0.5"/>
-          </g>
+          <ellipse cx="32" cy="20.5" rx="32" ry="20.5" fill="currentColor" fill-opacity="0.25"/>
+          <path d="M22 18h20v2H22v-2zm0 6h14v2H22v-2z" fill="currentColor" fill-opacity="0.5"/>
         </svg>
       </div>
     </div>
