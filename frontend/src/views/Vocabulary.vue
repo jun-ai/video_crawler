@@ -202,7 +202,11 @@
 </template>
 
 <script setup>
+<<<<<<< HEAD
 import { ref, reactive, onMounted } from 'vue'
+=======
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
+>>>>>>> 9624dba (fix(frontend): import computed in Vocabulary.vue)
 import { useRouter } from 'vue-router'
 import { toast } from '@/composables/useToast'
 import { useTTS } from '@/composables/useTTS'
