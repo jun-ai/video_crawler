@@ -62,11 +62,10 @@ class Settings(BaseSettings):
     glm_base_url: str = "https://open.bigmodel.cn/api/anthropic"
     glm_model: str = "glm-4.5"
 
-    # 月之暗面 MiniMax / Moonshot — Anthropic 兼容协议(https://api.minimaxi.com/anthropic)
-    # ccswitch 的 sk-cp- key 需要走 ccswitch 代理,直连 401
-    # 留空此字段 = 自动跳过这个 provider
+    # 月之暗面 MiniMax — OpenAI 兼容协议 (https://api.minimaxi.com/v1)
+    # ccswitch 同款 sk-cp- key 直连可用(实测 200 OK),Authorization Bearer 头
     minimax_api_key: str = ""
-    minimax_base_url: str = "https://api.minimaxi.com/anthropic"
+    minimax_base_url: str = "https://api.minimaxi.com/v1"
     minimax_model: str = "MiniMax-M3"
 
     # 讯飞语音识别 API

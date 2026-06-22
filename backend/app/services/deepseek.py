@@ -41,7 +41,7 @@ PROVIDERS = [
     },
     {
         "name": "minimax",
-        "protocol": "anthropic",
+        "protocol": "openai",  # MiniMax 走 OpenAI 协议 (Authorization Bearer)
         "base_url": settings.minimax_base_url,
         "api_key": settings.minimax_api_key,
         "model": settings.minimax_model,
