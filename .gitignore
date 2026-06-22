@@ -1,0 +1,28 @@
+# Sensitive: 真实 .env (含阿里云/DB 密钥)
+.env
+backend/.env
+
+# Old backups that are NOT 关键修复证据 (只留今天的)
+*.bak.*
+!*.env.bak.*
+!backend/app/main.py.bak.20260622_104323
+
+# Generated / large data
+data/
+logs/
+mysql_data/
+*.tar
+*.tar.gz
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Node
+node_modules/
+dist-cache/
+
+# Whisper models
+whisper_models/

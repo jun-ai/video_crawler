@@ -1,0 +1,19 @@
+tunnel: 7e649649-f007-4281-81df-f11571bb8294
+credentials-file: /opt/english-learning/deploy/cloudflared/credentials.json
+protocol: http2
+
+originRequest:
+  noHappyEyeballs: true
+  connectTimeout: 10s
+  tlsTimeout: 10s
+  keepAliveConnections: 10
+  keepAliveTimeout: 30s
+
+ingress:
+  - hostname: api.fluenty.cn
+    service: http://localhost:8000
+    originRequest:
+      connectTimeout: 10s
+      keepAliveConnections: 10
+      keepAliveTimeout: 30s
+  - service: http_status:404
