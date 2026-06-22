@@ -282,7 +282,35 @@
           </div>
         </div>
 
-        <!-- 学习功能清单 — SpeakVlog 风格（Phase 0+） -->
+        <!-- 视频网格 -->
+        <div class="video-grid" v-loading="loading">
+          <VideoCard
+            v-for="item in materials"
+            :key="item.id"
+            :id="item.id"
+            :title="item.title"
+            :cover="item.cover_path"
+            :duration="item.duration"
+            :progress="getProgress(item.id)"
+            :difficulty="item.difficulty"
+            :view-count="item.view_count || 0"
+            :category="item.category"
+            :description="item.description"
+            :tags="item.tags || []"
+            :favorited="isMaterialFavorited(item.id)"
+            :completed="isMaterialCompleted(item.id)"
+            @click="goLearn"
+          />
+        </div>
+
+        <!-- 加载更多 -->
+        <div class="load-more" v-if="hasMore && !loading">
+          <SfButton @click="loadMore" :loading="loadingMore">
+            加载更多
+          </SfButton>
+        </div>
+
+        <!-- 学习功能清单 — 移到视频后 (Phase 6 布局优化) -->
         <section class="features-section">
           <div class="features-head">
             <div class="features-eyebrow">为什么选 Fluenty</div>
@@ -311,34 +339,6 @@
             <ChevronDown :size="14" :class="{ rotated: showAllFeatures }" />
           </button>
         </section>
-
-        <!-- 视频网格 -->
-        <div class="video-grid" v-loading="loading">
-          <VideoCard
-            v-for="item in materials"
-            :key="item.id"
-            :id="item.id"
-            :title="item.title"
-            :cover="item.cover_path"
-            :duration="item.duration"
-            :progress="getProgress(item.id)"
-            :difficulty="item.difficulty"
-            :view-count="item.view_count || 0"
-            :category="item.category"
-            :description="item.description"
-            :tags="item.tags || []"
-            :favorited="isMaterialFavorited(item.id)"
-            :completed="isMaterialCompleted(item.id)"
-            @click="goLearn"
-          />
-        </div>
-
-        <!-- 加载更多 -->
-        <div class="load-more" v-if="hasMore && !loading">
-          <SfButton @click="loadMore" :loading="loadingMore">
-            加载更多
-          </SfButton>
-        </div>
 
         <!-- 空状态 -->
         <EmptyState
@@ -735,10 +735,10 @@ onMounted(async () => {
   position: relative;
   background: var(--yt-brand-gradient, linear-gradient(135deg, #2563EB 0%, #3B82F6 50%, #F59E0B 100%));
   border-radius: 0; /* 全宽：去掉圆角包裹 */
-  padding: 48px 48px 32px;
+  padding: 32px 48px 24px;
   margin-bottom: 0;
   overflow: hidden;
-  min-height: 320px;
+  min-height: 240px;
   display: flex;
   align-items: center;
 }
@@ -781,11 +781,11 @@ onMounted(async () => {
 
 /* 大标题 — 分色 */
 .hero-title {
-  font-size: var(--text-hero, clamp(48px, 6vw, 84px));
+  font-size: var(--text-hero, clamp(36px, 5vw, 60px));
   font-weight: 800;
   line-height: 1.05;
   letter-spacing: -2px;
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   text-shadow: 0 2px 20px rgba(0, 0, 0, 0.15);
 }
 
@@ -801,10 +801,10 @@ onMounted(async () => {
 }
 
 .hero-subtitle {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 400;
   color: rgba(255, 255, 255, 0.85);
-  margin: 0 0 20px;
+  margin: 0 0 14px;
   line-height: 1.5;
   letter-spacing: 0.3px;
   max-width: 480px;
@@ -813,16 +813,16 @@ onMounted(async () => {
 /* CTA 按钮组 */
 .hero-actions {
   display: flex;
-  gap: 14px;
+  gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 56px;
+  margin-bottom: 18px;
 }
 
 .hero-cta-primary {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 14px 32px;
+  padding: 11px 26px;
   font-size: 15px;
   font-weight: 700;
   color: #fff;
@@ -832,7 +832,7 @@ onMounted(async () => {
   cursor: pointer;
   box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
   transition: transform var(--sf-duration-normal) cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow var(--sf-duration-normal) ease;
-  min-height: 48px;
+  min-height: 42px;
 }
 
 .hero-cta-primary:hover {
@@ -935,7 +935,7 @@ onMounted(async () => {
 }
 
 .hero-stat-value {
-  font-size: 36px;
+  font-size: 28px;
   font-weight: 800;
   color: #fff;
   line-height: 1;
@@ -981,16 +981,18 @@ onMounted(async () => {
 /* Hero 装饰图标 */
 .hero-decor {
   position: absolute;
-  right: 60px;
+  right: 48px;
   top: 50%;
   transform: translateY(-50%);
   z-index: 1;
   pointer-events: none;
+  width: 240px;
+  height: 200px;
 }
 
 .decor-icon {
   position: absolute;
-  color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.18);
 }
 
 .decor-icon-1 {
@@ -999,14 +1001,14 @@ onMounted(async () => {
 }
 
 .decor-icon-2 {
-  right: 130px;
-  top: 30px;
+  right: 110px;
+  top: 20px;
   animation: float-slow 6s ease-in-out infinite;
 }
 
 .decor-icon-3 {
   right: 30px;
-  top: 80px;
+  top: 70px;
   animation: float-slow 5s ease-in-out infinite reverse;
 }
 
@@ -1385,16 +1387,16 @@ onMounted(async () => {
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   z-index: 10;
-  padding: 16px 0;
-  margin-bottom: 24px;
+  padding: 12px 0;
+  margin-bottom: 16px;
   border-bottom: 1px solid var(--color-border);
 }
 
 .filter-chips {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   overflow-x: auto;
-  padding: 2px 4px;
+  padding: 2px 0;
   scrollbar-width: none;
 }
 
@@ -1406,8 +1408,8 @@ onMounted(async () => {
 .tag-filter-section {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 8px;
+  margin-top: 8px;
 }
 
 .tag-filter-label {
@@ -1461,15 +1463,15 @@ onMounted(async () => {
 
 /* ====== 学习功能清单 — SpeakVlog 风格 ====== */
 .features-section {
-  padding: 48px 32px;
+  padding: 28px 24px;
   background: var(--color-bg-pale);
-  margin: 16px 0;
-  border-radius: 24px;
+  margin: 16px 0 8px;
+  border-radius: 20px;
 }
 
 .features-head {
   max-width: 600px;
-  margin: 0 auto 32px;
+  margin: 0 auto 24px;
   text-align: center;
 }
 
@@ -1509,16 +1511,16 @@ onMounted(async () => {
 /* 4 核心功能 — 大卡片 */
 .core-features {
   max-width: 1100px;
-  margin: 0 auto 40px;
+  margin: 0 auto 28px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  gap: 16px;
 }
 
 .core-feature-card {
-  padding: 28px 22px;
+  padding: 22px 18px;
   background: var(--color-bg-card);
-  border-radius: 18px;
+  border-radius: 16px;
   border: 1px solid var(--color-border);
   text-align: center;
   transition: transform var(--sf-duration-slow) cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow var(--sf-duration-slow) ease;
@@ -1530,9 +1532,9 @@ onMounted(async () => {
 }
 
 .core-feature-icon {
-  width: 56px;
-  height: 56px;
-  margin: 0 auto 16px;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 12px;
   display: flex;
   align-items: center;
   justify-content: center;
