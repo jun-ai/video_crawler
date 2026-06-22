@@ -217,6 +217,7 @@ async def get_materials(
             difficulty=m.difficulty,
             duration=m.duration,
             view_count=m.view_count,
+            interpretation_status=m.interpretation_status or 'pending',
             tags=tags,
             created_at=m.created_at
         )

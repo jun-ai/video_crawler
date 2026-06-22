@@ -1,6 +1,7 @@
 """
 英语口语学习网站 - 后端 API
 """
+import asyncio
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -10,6 +11,7 @@ from pathlib import Path
 import os
 import re
 import httpx
+import oss2
 from urllib.parse import urlencode
 import logging
 import time
@@ -162,70 +164,99 @@ async def stream_video(filename: str, request: Request):
 
 
 # OSS 代理端点 - 解决跨域问题
-# 从配置读取 OSS 基础地址，支持 CDN 域名和直接 OSS 地址
-def _get_oss_base_url() -> str:
-    if settings.cdn_domain:
-        return f"https://{settings.cdn_domain}"
-    if settings.aliyun_oss_endpoint:
-        return f"https://{settings.aliyun_oss_bucket_name}.{settings.aliyun_oss_endpoint}"
-    return ""
+# Lazy-init OSS bucket client for proxy (private bucket, use SDK signed request)
+_oss_proxy_bucket = None
+
+
+def _get_oss_proxy_bucket():
+    """获取 OSS Bucket 客户端 (用于 proxy, 用 SDK 签名访问私有 bucket)"""
+    global _oss_proxy_bucket
+    if _oss_proxy_bucket is None:
+        auth = oss2.Auth(
+            settings.aliyun_oss_access_key_id,
+            settings.aliyun_oss_access_key_secret,
+        )
+        _oss_proxy_bucket = oss2.Bucket(
+            auth,
+            settings.aliyun_oss_endpoint,
+            settings.aliyun_oss_bucket_name,
+        )
+    return _oss_proxy_bucket
+
+
+def _parse_range_header(range_header: str):
+    """解析 Range 头 (e.g. 'bytes=0-1023') -> (start, end) 或 None"""
+    try:
+        if not range_header.startswith("bytes="):
+            return None
+        spec = range_header[6:].strip()
+        if "," in spec:
+            return None  # 多段 range, 不支持
+        if "-" not in spec:
+            return None
+        start_s, end_s = spec.split("-", 1)
+        start = int(start_s) if start_s else None
+        end = int(end_s) if end_s else None
+        if start is None and end is not None:
+            # suffix 模式: last N bytes, oss2 不直接支持, 退化
+            return None
+        if start is not None and end is not None:
+            return (start, end)
+        if start is not None:
+            return (start,)
+    except Exception:
+        return None
+    return None
 
 
 @app.api_route("/oss-proxy/{path:path}", methods=["GET", "HEAD"])
 async def proxy_oss(path: str, request: Request):
     """
-    代理 OSS 资源请求，解决 CORS 问题
-    支持 Range 请求用于视频流
+    代理 OSS 资源请求 (私有 bucket)
+    - 使用 oss2 SDK 签名访问 (避免 CDN/匿名访问 403)
+    - 支持 Range 请求 (视频拖动)
+    - 流式返回
     """
-    # 构建完整的 OSS URL
-    query_params = dict(request.query_params)
-    oss_url = f"{_get_oss_base_url()}/{path}"
-    if query_params:
-        oss_url += "?" + urlencode(query_params)
-
-    # 准备请求头
-    headers = {}
     range_header = request.headers.get("range")
-    if range_header:
-        headers["Range"] = range_header
+    byte_range = _parse_range_header(range_header) if range_header else None
 
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        try:
-            # 使用流式请求
-            async with client.stream("GET", oss_url, headers=headers, follow_redirects=True) as response:
-                if response.status_code == 404:
-                    return Response(status_code=404)
+    loop = asyncio.get_event_loop()
+    try:
+        result = await loop.run_in_executor(
+            None,
+            lambda: _get_oss_proxy_bucket().get_object(path, byte_range=byte_range),
+        )
+    except oss2.exceptions.NoSuchKey:
+        return Response(status_code=404)
+    except Exception as e:
+        logger.error(f"OSS proxy error: {e}")
+        return Response(status_code=502, content=f"Failed to fetch from OSS: {e}")
 
-                # 准备响应头
-                response_headers = dict(response.headers)
-                # 只保留必要的头
-                allowed_headers = [
-                    "content-type", "content-length", "content-range",
-                    "accept-ranges", "etag", "last-modified", "cache-control"
-                ]
-                filtered_headers = {
-                    k: v for k, v in response_headers.items()
-                    if k.lower() in allowed_headers
-                }
-                # 添加 CORS 头
-                filtered_headers["Access-Control-Allow-Origin"] = "*"
-                filtered_headers["Access-Control-Allow-Methods"] = "GET, HEAD, OPTIONS"
-                filtered_headers["Access-Control-Allow-Headers"] = "Range, Content-Type"
+    # 准备响应头
+    allowed_headers = [
+        "content-type", "content-length", "content-range",
+        "accept-ranges", "etag", "last-modified", "cache-control",
+    ]
+    response_headers = dict(result.headers)
+    filtered_headers = {
+        k: v for k, v in response_headers.items() if k.lower() in allowed_headers
+    }
+    filtered_headers["Access-Control-Allow-Origin"] = "*"
+    filtered_headers["Access-Control-Allow-Methods"] = "GET, HEAD, OPTIONS"
+    filtered_headers["Access-Control-Allow-Headers"] = "Range, Content-Type"
 
-                # 流式返回
-                async def stream_response():
-                    async for chunk in response.aiter_bytes(chunk_size=8192):
-                        yield chunk
+    async def stream_response():
+        # result.stream 是同步生成器; 每次读一块后让出 event loop
+        for chunk in result.stream(8192):
+            yield chunk
+            await asyncio.sleep(0)
 
-                return StreamingResponse(
-                    stream_response(),
-                    status_code=response.status_code,
-                    headers=filtered_headers,
-                    media_type=response.headers.get("content-type", "application/octet-stream")
-                )
-        except httpx.RequestError as e:
-            logger.error(f"OSS proxy error: {e}")
-            return Response(status_code=502, content=f"Failed to fetch from OSS: {str(e)}")
+    return StreamingResponse(
+        stream_response(),
+        status_code=result.status,
+        headers=filtered_headers,
+        media_type=result.headers.get("content-type", "application/octet-stream"),
+    )
 
 
 app.mount("/static", StaticFiles(directory=str(PROJECT_ROOT)), name="static")
