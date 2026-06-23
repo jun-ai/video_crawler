@@ -24,6 +24,11 @@ api.interceptors.request.use(
 // 响应拦截器
 api.interceptors.response.use(
   (response) => {
+    // 5-P1-4 fix: blob 下载需要保留 headers (Content-Disposition 拿文件名),
+    // 不能像 JSON 那样只返回 response.data (Blob 对象没 .data 属性, 会炸)
+    if (response.config.responseType === 'blob') {
+      return response
+    }
     return response.data
   },
   (error) => {
