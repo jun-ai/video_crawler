@@ -50,130 +50,144 @@
         </div>
       </div>
 
-      <!-- 2. Featured 视频 hero（大缩略图主视觉） -->
-      <section
-        v-if="featuredVideo"
-        class="featured-hero"
-        @click="goLearn(featuredVideo.id)"
-      >
-        <div class="featured-cover">
-          <img
-            v-if="featuredVideo.cover_path"
-            :src="featuredVideo.cover_path"
-            :alt="featuredVideo.title"
-          />
-          <div v-else class="featured-placeholder">
-            <Play :size="64" />
-          </div>
-          <div class="featured-overlay"></div>
-          <div class="featured-play"><Play :size="26" /></div>
-          <span class="featured-duration" v-if="featuredVideo.duration">{{ featuredVideo.duration }}</span>
-        </div>
-        <div class="featured-info">
-          <div class="featured-eyebrow">精选推荐</div>
-          <h2 class="featured-title">{{ featuredVideo.title || '未命名视频' }}</h2>
-          <div class="featured-meta">
-            <span class="featured-tag" v-if="featuredVideo.category">{{ getCategoryLabel(featuredVideo.category) }}</span>
-            <span class="featured-hint">点击开始学习 →</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- 3. 4 个统计小卡 + 月历（一行） -->
-      <section class="stats-calendar-row" v-if="userStore.isLoggedIn">
-        <div class="stat-mini-card">
-          <div class="stat-mini-value">{{ stats.total }}</div>
-          <div class="stat-mini-label">总期数</div>
-        </div>
-        <div class="stat-mini-card stat-mini-learned">
-          <div class="stat-mini-value">{{ stats.learned }}</div>
-          <div class="stat-mini-label">已学习</div>
-        </div>
-        <div class="stat-mini-card stat-mini-unlearned">
-          <div class="stat-mini-value">{{ stats.unlearned }}</div>
-          <div class="stat-mini-label">未学习</div>
-        </div>
-        <div class="stat-mini-card stat-mini-streak">
-          <div class="stat-mini-value">
-            {{ calendarData.streak }}<span class="stat-mini-unit">天</span>
-          </div>
-          <div class="stat-mini-label">连续打卡</div>
-        </div>
-
-        <div class="mini-calendar-card">
-          <div class="cal-card-header">
-            <span class="cal-card-month">
-              <Calendar :size="16" />
-              {{ currentMonth }}
-            </span>
-            <span class="cal-card-count">共 {{ calendarData.total_days }} 天</span>
-          </div>
-          <div class="mini-calendar">
-            <div class="cal-header">
-              <span v-for="d in weekDays" :key="d" class="cal-weekday">{{ d }}</span>
+      <!-- 2+3+4. 两栏布局: 左侧 stats 框 (固定不随筛选变) | 右侧 视频区 -->
+      <div class="home-main">
+        <!-- 左侧: 我的学习 stats 框 -->
+        <aside class="stats-side" v-if="userStore.isLoggedIn">
+          <div class="stats-box">
+            <div class="stats-box-header">
+              <BarChart3 :size="18" />
+              <span>我的学习</span>
             </div>
-            <div class="cal-body">
-              <SfTooltip
-                v-for="(day, idx) in calendarDays"
-                :key="idx"
-                :content="getDayTooltip(day)"
-                placement="top"
-              >
-                <span
-                  :class="['cal-day', {
-                    'other-month': !day.currentMonth,
-                    'today': day.isToday,
-                    'has-record': day.hasRecord
-                  }]"
-                >{{ day.date }}</span>
-              </SfTooltip>
+            <div class="stats-grid">
+              <div class="stat-mini-card">
+                <div class="stat-mini-value">{{ stats.total }}</div>
+                <div class="stat-mini-label">总期数</div>
+              </div>
+              <div class="stat-mini-card stat-mini-learned">
+                <div class="stat-mini-value">{{ stats.learned }}</div>
+                <div class="stat-mini-label">已学习</div>
+              </div>
+              <div class="stat-mini-card stat-mini-unlearned">
+                <div class="stat-mini-value">{{ stats.unlearned }}</div>
+                <div class="stat-mini-label">未学习</div>
+              </div>
+              <div class="stat-mini-card stat-mini-streak">
+                <div class="stat-mini-value">
+                  {{ calendarData.streak }}<span class="stat-mini-unit">天</span>
+                </div>
+                <div class="stat-mini-label">连续打卡</div>
+              </div>
+            </div>
+
+            <div class="mini-calendar-card">
+              <div class="cal-card-header">
+                <span class="cal-card-month">
+                  <Calendar :size="16" />
+                  {{ currentMonth }}
+                </span>
+                <span class="cal-card-count">共 {{ calendarData.total_days }} 天</span>
+              </div>
+              <div class="mini-calendar">
+                <div class="cal-header">
+                  <span v-for="d in weekDays" :key="d" class="cal-weekday">{{ d }}</span>
+                </div>
+                <div class="cal-body">
+                  <SfTooltip
+                    v-for="(day, idx) in calendarDays"
+                    :key="idx"
+                    :content="getDayTooltip(day)"
+                    placement="top"
+                  >
+                    <span
+                      :class="['cal-day', {
+                        'other-month': !day.currentMonth,
+                        'today': day.isToday,
+                        'has-record': day.hasRecord
+                      }]"
+                    >{{ day.date }}</span>
+                  </SfTooltip>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </aside>
 
-      <!-- 4. 视频网格 3 列 -->
-      <section class="video-grid-section">
-        <div class="section-head">
-          <h3 class="section-title">视频库</h3>
-          <span class="section-count">共 {{ total }} 个视频</span>
-        </div>
+        <!-- 右侧: featured + 视频网格 -->
+        <div class="videos-side">
+          <!-- Featured 视频 hero（大缩略图主视觉） -->
+          <section
+            v-if="featuredVideo"
+            class="featured-hero"
+            @click="goLearn(featuredVideo.id)"
+          >
+            <div class="featured-cover">
+              <img
+                v-if="featuredVideo.cover_path"
+                :src="featuredVideo.cover_path"
+                :alt="featuredVideo.title"
+              />
+              <div v-else class="featured-placeholder">
+                <Play :size="64" />
+              </div>
+              <div class="featured-overlay"></div>
+              <div class="featured-play"><Play :size="26" /></div>
+              <span class="featured-duration" v-if="featuredVideo.duration">{{ featuredVideo.duration }}</span>
+            </div>
+            <div class="featured-info">
+              <div class="featured-eyebrow">精选推荐</div>
+              <h2 class="featured-title">{{ featuredVideo.title || '未命名视频' }}</h2>
+              <div class="featured-meta">
+                <span class="featured-tag" v-if="featuredVideo.category">{{ getCategoryLabel(featuredVideo.category) }}</span>
+                <span class="featured-hint">点击开始学习 →</span>
+              </div>
+            </div>
+          </section>
 
-        <div class="video-grid" v-loading="loading">
-          <VideoCard
-            v-for="item in gridVideos"
-            :key="item.id"
-            :id="item.id"
-            :title="item.title"
-            :cover="item.cover_path"
-            :duration="item.duration"
-            :progress="getProgress(item.id)"
-            :difficulty="item.difficulty"
-            :view-count="item.view_count || 0"
-            :category="item.category"
-            :description="item.description"
-            :tags="item.tags || []"
-            :favorited="isMaterialFavorited(item.id)"
-            :completed="isMaterialCompleted(item.id)"
-            @click="goLearn"
-          />
-        </div>
+          <!-- 视频网格 3 列 -->
+          <section class="video-grid-section">
+            <div class="section-head">
+              <h3 class="section-title">视频库</h3>
+              <span class="section-count">共 {{ total }} 个视频</span>
+            </div>
 
-        <EmptyState
-          v-if="!loading && materials.length === 0"
-          type="welcome"
-          title="开始你的学习之旅"
-          description="浏览语料库，选择感兴趣的视频开始学习吧"
-        >
-          <template #actions>
-            <SfButton type="primary" @click="$router.push('/materials')">浏览全部视频</SfButton>
-          </template>
-        </EmptyState>
+            <div class="video-grid" v-loading="loading">
+              <VideoCard
+                v-for="item in gridVideos"
+                :key="item.id"
+                :id="item.id"
+                :title="item.title"
+                :cover="item.cover_path"
+                :duration="item.duration"
+                :progress="getProgress(item.id)"
+                :difficulty="item.difficulty"
+                :view-count="item.view_count || 0"
+                :category="item.category"
+                :description="item.description"
+                :tags="item.tags || []"
+                :favorited="isMaterialFavorited(item.id)"
+                :completed="isMaterialCompleted(item.id)"
+                @click="goLearn"
+              />
+            </div>
 
-        <div class="load-more" v-if="hasMore && !loading">
-          <SfButton @click="loadMore" :loading="loadingMore">加载更多</SfButton>
+            <EmptyState
+              v-if="!loading && materials.length === 0"
+              type="welcome"
+              title="开始你的学习之旅"
+              description="浏览语料库，选择感兴趣的视频开始学习吧"
+            >
+              <template #actions>
+                <SfButton type="primary" @click="$router.push('/materials')">浏览全部视频</SfButton>
+              </template>
+            </EmptyState>
+
+            <div class="load-more" v-if="hasMore && !loading">
+              <SfButton @click="loadMore" :loading="loadingMore">加载更多</SfButton>
+            </div>
+          </section>
         </div>
-      </section>
+      </div>
 
       <!-- 5. 底部（学习消息 / 学习指南 / 联系） -->
       <footer class="home-footer">
@@ -245,7 +259,8 @@ const selectedCreatorTag = ref(null)
 const selectedTopicTag = ref(null)
 const page = ref(1)
 const pageSize = 12
-const total = ref(0)
+const total = ref(0)            // 当前筛选下的视频数 (跟筛选走)
+const globalTotal = ref(0)      // 全部视频总数 (不跟筛选走, 用于 stats.total)
 const learningProgress = ref({})
 const learningRecords = ref({})  // materialId -> record（含 completed 等完整信息）
 const favoritedMaterialIds = ref(new Set())  // 已收藏的材料ID集合
@@ -259,10 +274,12 @@ const calendarData = ref({
 })
 const dailyCounts = ref({})  // { 'YYYY-MM-DD': count }
 
+// stats 用 globalTotal (固定不变), 不跟当前筛选走
+const learnedCount = computed(() => Object.values(learningProgress.value).filter(p => p >= 80).length)
 const stats = computed(() => ({
-  total: total.value,
-  learned: Object.values(learningProgress.value).filter(p => p >= 80).length,
-  unlearned: total.value - Object.values(learningProgress.value).filter(p => p >= 80).length
+  total: globalTotal.value,
+  learned: learnedCount.value,
+  unlearned: Math.max(0, globalTotal.value - learnedCount.value)
 }))
 
 const currentMonth = computed(() => {
@@ -471,6 +488,11 @@ const loadMaterials = async () => {
       materials.value = [...materials.value, ...res.items]
     }
     total.value = res.total
+    // 首次无筛选加载时快照全库总数 — 之后筛选变化不影响 globalTotal
+    const noFilter = !selectedCategory.value && !selectedCreatorTag.value && !selectedTopicTag.value
+    if (globalTotal.value === 0 && noFilter && page.value === 1) {
+      globalTotal.value = res.total
+    }
 
     if (userStore.isLoggedIn) {
       await loadLearningProgress()
@@ -792,12 +814,90 @@ onMounted(async () => {
   color: rgba(255, 255, 255, 0.88);
 }
 
-/* ====== 3. 4 统计小卡 + 月历 ====== */
-.stats-calendar-row {
+/* ====== 2+3+4. 两栏布局: 左侧 stats 框 (固定不随筛选变) | 右侧 视频区 ====== */
+.home-main {
   display: grid;
-  grid-template-columns: repeat(4, 1fr) 1.7fr;
-  gap: 16px;
+  grid-template-columns: 320px 1fr;
+  gap: 24px;
+  align-items: start;
   margin-bottom: 32px;
+}
+
+/* 左侧 stats 框 (sticky 让滚动视频时一直可见) */
+.stats-side {
+  position: sticky;
+  top: 16px;
+}
+
+.stats-box {
+  background: var(--color-bg-card);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.stats-box-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border, rgba(15, 23, 42, 0.06));
+}
+
+/* 4 个 stat 改成 2x2 grid (左侧窄) */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.stats-grid .stat-mini-card {
+  padding: 16px 14px;
+  border-radius: 12px;
+  box-shadow: none;
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  background: var(--color-bg, #FAFBF8);
+}
+
+.stats-grid .stat-mini-value {
+  font-size: 24px;
+}
+
+.stats-grid .stat-mini-label {
+  font-size: 12px;
+}
+
+/* 月历卡在 stats 框内, 去掉外层 box-shadow/border (已有 .stats-box 容器) */
+.stats-box .mini-calendar-card {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+  padding: 0;
+}
+
+.stats-box .mini-calendar {
+  font-size: 12px;
+}
+
+.stats-box .cal-weekday {
+  font-size: 10px;
+}
+
+.stats-box .cal-day {
+  font-size: 11px;
+  padding: 4px 0;
+}
+
+/* 右侧视频区 */
+.videos-side {
+  min-width: 0;  /* 防止 grid 子项溢出 */
 }
 
 .stat-mini-card {
@@ -991,15 +1091,22 @@ onMounted(async () => {
 
 /* ====== 响应式 ====== */
 @media (max-width: 1100px) {
-  .stats-calendar-row {
-    grid-template-columns: repeat(4, 1fr);
+  .home-main {
+    grid-template-columns: 280px 1fr;
+    gap: 20px;
   }
-  .mini-calendar-card {
-    grid-column: 1 / -1;
+  .video-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 900px) {
+  .home-main {
+    grid-template-columns: 1fr;  /* 窄屏堆叠, stats 框在上 */
+  }
+  .stats-side {
+    position: static;  /* 堆叠时不再 sticky */
+  }
   .video-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1012,9 +1119,9 @@ onMounted(async () => {
 @media (max-width: 640px) {
   .home-container { padding: 0 16px; }
   .filter-label { min-width: auto; }
-  .stats-calendar-row {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
   }
   .video-grid {
     grid-template-columns: 1fr;
