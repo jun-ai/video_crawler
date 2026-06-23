@@ -144,36 +144,7 @@
             </div>
           </div>
 
-          <!-- Featured 视频 hero（大缩略图主视觉） -->
-          <section
-            v-if="featuredVideo"
-            class="featured-hero"
-            @click="goLearn(featuredVideo.id)"
-          >
-            <div class="featured-cover">
-              <img
-                v-if="featuredVideo.cover_path"
-                :src="featuredVideo.cover_path"
-                :alt="featuredVideo.title"
-              />
-              <div v-else class="featured-placeholder">
-                <Play :size="64" />
-              </div>
-              <div class="featured-overlay"></div>
-              <div class="featured-play"><Play :size="26" /></div>
-              <span class="featured-duration" v-if="featuredVideo.duration">{{ featuredVideo.duration }}</span>
-            </div>
-            <div class="featured-info">
-              <div class="featured-eyebrow">精选推荐</div>
-              <h2 class="featured-title">{{ featuredVideo.title || '未命名视频' }}</h2>
-              <div class="featured-meta">
-                <span class="featured-tag" v-if="featuredVideo.category">{{ getCategoryLabel(featuredVideo.category) }}</span>
-                <span class="featured-hint">点击开始学习 →</span>
-              </div>
-            </div>
-          </section>
-
-          <!-- 视频网格 3 列 -->
+          <!-- 视频网格 3 列 (砍掉 featured hero, 避免重复展示) -->
           <section class="video-grid-section">
             <div class="section-head">
               <h3 class="section-title">视频库</h3>
@@ -863,67 +834,64 @@ onMounted(async () => {
   top: 16px;
 }
 
-/* ============ 单 panel, 去嵌套 ============ */
+/* ============ 单 panel, 去嵌套, 轻量设计 ============ */
 .stats-panel {
   background: var(--color-bg-card);
   border-radius: 18px;
-  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
   border: 1px solid rgba(15, 23, 42, 0.05);
   overflow: hidden;
 }
 
-/* 顶部 header (品牌色渐变条 + 标题 + tag) */
+/* 顶部 header (轻量: 浅底 + 图标 + 标题 + 期数 tag) */
 .panel-header {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 14px 18px;
-  background: linear-gradient(135deg, #0F4C3A 0%, #1A6B52 100%);
-  color: #fff;
-  position: relative;
-}
-.panel-header::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(255,255,255,0.08), transparent);
-  pointer-events: none;
+  background: var(--color-bg-base, #F8FAFC);
+  border-bottom: 1px solid rgba(15,23,42,0.04);
 }
 .panel-header-icon {
   display: flex;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   align-items: center;
   justify-content: center;
-  background: rgba(255,255,255,0.18);
-  border-radius: 8px;
+  background: linear-gradient(135deg, #0F4C3A, #1A6B52);
+  color: #fff;
+  border-radius: 9px;
   flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(15, 76, 58, 0.2);
 }
 .panel-header-title {
   font-size: 15px;
   font-weight: 700;
-  letter-spacing: 0.3px;
+  color: var(--color-text-primary);
   flex: 1;
+  letter-spacing: 0.2px;
 }
 .panel-header-tag {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  padding: 3px 10px;
-  background: rgba(255,255,255,0.2);
+  padding: 3px 9px;
+  background: rgba(15, 76, 58, 0.08);
+  color: #0F4C3A;
   border-radius: 999px;
   letter-spacing: 0.3px;
 }
 
-/* 主进度区 */
+/* 主进度区 (hero) */
 .panel-progress {
-  padding: 20px 18px 18px;
-  border-bottom: 1px dashed rgba(15,23,42,0.08);
+  padding: 22px 18px 20px;
+  border-bottom: 1px solid rgba(15,23,42,0.05);
+  background: linear-gradient(180deg, var(--color-bg-card), #FAFBF8);
 }
 .progress-top {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 .progress-label {
   font-size: 13px;
@@ -931,7 +899,7 @@ onMounted(async () => {
   color: var(--color-text-secondary);
 }
 .progress-value {
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 800;
   color: var(--color-text-primary);
   letter-spacing: -0.5px;
@@ -944,23 +912,35 @@ onMounted(async () => {
   margin: 0 2px;
 }
 .progress-total {
-  font-size: 16px;
+  font-size: 17px;
   color: var(--color-text-muted);
   font-weight: 600;
 }
 .progress-track {
-  height: 8px;
-  background: rgba(15,23,42,0.06);
+  height: 10px;
+  background: rgba(15,23,42,0.05);
   border-radius: 999px;
   overflow: hidden;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #10B981 0%, #34D399 100%);
+  background: linear-gradient(90deg, #0F4C3A 0%, #10B981 60%, #34D399 100%);
   border-radius: 999px;
   transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.35);
+  box-shadow: 0 0 0 1px rgba(15, 76, 58, 0.1), 0 0 12px rgba(16, 185, 129, 0.4);
+  position: relative;
+}
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+  animation: shimmer 2.4s linear infinite;
+}
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 .progress-bottom {
   display: flex;
@@ -968,26 +948,34 @@ onMounted(async () => {
   font-size: 12px;
 }
 .progress-pct {
-  color: #10B981;
+  color: #0F4C3A;
   font-weight: 700;
 }
 .progress-hint {
   color: var(--color-text-muted);
 }
 
-/* 3 列紧凑 stats */
+/* 3 列紧凑 stats (浅色填充卡片) */
 .panel-quick-stats {
   display: flex;
   align-items: stretch;
-  padding: 16px 18px;
+  padding: 14px 14px;
+  gap: 8px;
 }
 .qs-item {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   text-align: center;
+  padding: 12px 6px;
+  border-radius: 12px;
+  background: #FAFBF8;
+  transition: transform 0.18s ease;
+}
+.qs-item:hover {
+  transform: translateY(-1px);
 }
 .qs-icon {
   width: 28px;
@@ -998,14 +986,15 @@ onMounted(async () => {
   border-radius: 8px;
   margin-bottom: 2px;
 }
-.qs-icon-total { background: rgba(15, 76, 58, 0.08); color: #0F4C3A; }
-.qs-icon-unlearned { background: rgba(245, 158, 11, 0.10); color: #D97706; }
+.qs-icon-total { background: rgba(15, 76, 58, 0.10); color: #0F4C3A; }
+.qs-icon-unlearned { background: rgba(217, 119, 6, 0.10); color: #D97706; }
 .qs-icon-streak { background: rgba(239, 68, 68, 0.10); color: #EF4444; }
 .qs-value {
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 700;
   color: var(--color-text-primary);
   line-height: 1.1;
+  letter-spacing: -0.3px;
 }
 .qs-unit {
   font-size: 11px;
@@ -1018,10 +1007,9 @@ onMounted(async () => {
   color: var(--color-text-muted);
   font-weight: 500;
 }
+/* 去掉分隔线 (卡片各自有底色, 不需要分隔) */
 .qs-divider {
-  width: 1px;
-  background: linear-gradient(180deg, transparent, rgba(15,23,42,0.08), transparent);
-  margin: 4px 0;
+  display: none;
 }
 
 /* 分割线 */
@@ -1030,15 +1018,15 @@ onMounted(async () => {
   background: rgba(15,23,42,0.05);
 }
 
-/* 月历 */
+/* 月历 (紧凑) */
 .panel-calendar {
-  padding: 14px 18px 18px;
+  padding: 14px 18px 16px;
 }
 .cal-row-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 .cal-title {
   display: inline-flex;
@@ -1068,7 +1056,7 @@ onMounted(async () => {
 .cal-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 .cal-weekday {
   text-align: center;
@@ -1098,18 +1086,15 @@ onMounted(async () => {
   color: rgba(15,23,42,0.18);
 }
 .cal-day.has-record {
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(16, 185, 129, 0.14);
   color: #047857;
   font-weight: 700;
 }
 .cal-day.today {
-  background: #0F4C3A;
+  background: linear-gradient(135deg, #0F4C3A, #10B981);
   color: #fff;
   font-weight: 700;
   box-shadow: 0 2px 6px rgba(15, 76, 58, 0.3);
-}
-.cal-day.today.has-record {
-  background: linear-gradient(135deg, #0F4C3A, #10B981);
 }
 
 /* 右侧视频区 */
