@@ -52,47 +52,76 @@
 
       <!-- 2+3+4. 两栏布局: 左侧 stats 框 (固定不随筛选变) | 右侧 视频区 -->
       <div class="home-main">
-        <!-- 左侧: 我的学习 stats 框 -->
+        <!-- 左侧: 我的学习 stats 面板 -->
         <aside class="stats-side" v-if="userStore.isLoggedIn">
-          <div class="stats-box">
-            <div class="stats-box-header">
-              <BarChart3 :size="18" />
-              <span>我的学习</span>
+          <div class="stats-panel">
+            <!-- 顶部带渐变条 + 标题 -->
+            <div class="panel-header">
+              <div class="panel-header-icon"><BarChart3 :size="18" /></div>
+              <span class="panel-header-title">我的学习</span>
+              <span class="panel-header-tag">{{ stats.total }} 期</span>
             </div>
-            <div class="stats-grid">
-              <div class="stat-mini-card">
-                <div class="stat-mini-value">{{ stats.total }}</div>
-                <div class="stat-mini-label">总期数</div>
+
+            <!-- 主进度: 已学习 / 总数 + 进度条 -->
+            <div class="panel-progress">
+              <div class="progress-top">
+                <span class="progress-label">已学习</span>
+                <span class="progress-value">
+                  {{ stats.learned }}<span class="progress-sep">/</span><span class="progress-total">{{ stats.total }}</span>
+                </span>
               </div>
-              <div class="stat-mini-card stat-mini-learned">
-                <div class="stat-mini-value">{{ stats.learned }}</div>
-                <div class="stat-mini-label">已学习</div>
+              <div class="progress-track">
+                <div class="progress-fill" :style="{ width: progressPct + '%' }"></div>
               </div>
-              <div class="stat-mini-card stat-mini-unlearned">
-                <div class="stat-mini-value">{{ stats.unlearned }}</div>
-                <div class="stat-mini-label">未学习</div>
-              </div>
-              <div class="stat-mini-card stat-mini-streak">
-                <div class="stat-mini-value">
-                  {{ calendarData.streak }}<span class="stat-mini-unit">天</span>
-                </div>
-                <div class="stat-mini-label">连续打卡</div>
+              <div class="progress-bottom">
+                <span class="progress-pct">{{ progressPct }}%</span>
+                <span class="progress-hint">还差 {{ stats.unlearned }} 期</span>
               </div>
             </div>
 
-            <div class="mini-calendar-card">
-              <div class="cal-card-header">
-                <span class="cal-card-month">
-                  <Calendar :size="16" />
+            <!-- 3 列紧凑 stats -->
+            <div class="panel-quick-stats">
+              <div class="qs-item">
+                <div class="qs-icon qs-icon-total"><BookOpen :size="14" /></div>
+                <div class="qs-value">{{ stats.total }}</div>
+                <div class="qs-label">总期数</div>
+              </div>
+              <div class="qs-divider"></div>
+              <div class="qs-item">
+                <div class="qs-icon qs-icon-unlearned"><Clock :size="14" /></div>
+                <div class="qs-value">{{ stats.unlearned }}</div>
+                <div class="qs-label">未学</div>
+              </div>
+              <div class="qs-divider"></div>
+              <div class="qs-item">
+                <div class="qs-icon qs-icon-streak"><Flame :size="14" /></div>
+                <div class="qs-value">
+                  {{ calendarData.streak }}<span class="qs-unit">天</span>
+                </div>
+                <div class="qs-label">连续打卡</div>
+              </div>
+            </div>
+
+            <!-- 分割线 -->
+            <div class="panel-divider"></div>
+
+            <!-- 月历 -->
+            <div class="panel-calendar">
+              <div class="cal-row-head">
+                <span class="cal-title">
+                  <Calendar :size="14" />
                   {{ currentMonth }}
                 </span>
-                <span class="cal-card-count">共 {{ calendarData.total_days }} 天</span>
+                <span class="cal-stat">
+                  <span class="cal-stat-dot"></span>
+                  已学 {{ calendarData.total_days }} 天
+                </span>
               </div>
               <div class="mini-calendar">
-                <div class="cal-header">
+                <div class="cal-weekdays">
                   <span v-for="d in weekDays" :key="d" class="cal-weekday">{{ d }}</span>
                 </div>
-                <div class="cal-body">
+                <div class="cal-days">
                   <SfTooltip
                     v-for="(day, idx) in calendarDays"
                     :key="idx"
@@ -281,6 +310,11 @@ const stats = computed(() => ({
   learned: learnedCount.value,
   unlearned: Math.max(0, globalTotal.value - learnedCount.value)
 }))
+// 已学习进度百分比 — 左侧 panel 进度条用
+const progressPct = computed(() => {
+  if (!globalTotal.value) return 0
+  return Math.round((learnedCount.value / globalTotal.value) * 100)
+})
 
 const currentMonth = computed(() => {
   const now = new Date()
@@ -814,7 +848,7 @@ onMounted(async () => {
   color: rgba(255, 255, 255, 0.88);
 }
 
-/* ====== 2+3+4. 两栏布局: 左侧 stats 框 (固定不随筛选变) | 右侧 视频区 ====== */
+/* ====== 2+3+4. 两栏布局: 左侧 stats 面板 (固定不随筛选变) | 右侧 视频区 ====== */
 .home-main {
   display: grid;
   grid-template-columns: 320px 1fr;
@@ -823,76 +857,259 @@ onMounted(async () => {
   margin-bottom: 32px;
 }
 
-/* 左侧 stats 框 (sticky 让滚动视频时一直可见) */
+/* 左侧 sticky */
 .stats-side {
   position: sticky;
   top: 16px;
 }
 
-.stats-box {
+/* ============ 单 panel, 去嵌套 ============ */
+.stats-panel {
   background: var(--color-bg-card);
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
   border: 1px solid rgba(15, 23, 42, 0.05);
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  overflow: hidden;
 }
 
-.stats-box-header {
+/* 顶部 header (品牌色渐变条 + 标题 + tag) */
+.panel-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, #0F4C3A 0%, #1A6B52 100%);
+  color: #fff;
+  position: relative;
+}
+.panel-header::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), transparent);
+  pointer-events: none;
+}
+.panel-header-icon {
+  display: flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.18);
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+.panel-header-title {
   font-size: 15px;
   font-weight: 700;
+  letter-spacing: 0.3px;
+  flex: 1;
+}
+.panel-header-tag {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 999px;
+  letter-spacing: 0.3px;
+}
+
+/* 主进度区 */
+.panel-progress {
+  padding: 20px 18px 18px;
+  border-bottom: 1px dashed rgba(15,23,42,0.08);
+}
+.progress-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+.progress-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+.progress-value {
+  font-size: 26px;
+  font-weight: 800;
   color: var(--color-text-primary);
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--color-border, rgba(15, 23, 42, 0.06));
+  letter-spacing: -0.5px;
+  line-height: 1;
 }
-
-/* 4 个 stat 改成 2x2 grid (左侧窄) */
-.stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+.progress-sep {
+  font-size: 18px;
+  color: var(--color-text-muted);
+  font-weight: 400;
+  margin: 0 2px;
 }
-
-.stats-grid .stat-mini-card {
-  padding: 16px 14px;
-  border-radius: 12px;
-  box-shadow: none;
-  border: 1px solid rgba(15, 23, 42, 0.05);
-  background: var(--color-bg, #FAFBF8);
+.progress-total {
+  font-size: 16px;
+  color: var(--color-text-muted);
+  font-weight: 600;
 }
-
-.stats-grid .stat-mini-value {
-  font-size: 24px;
+.progress-track {
+  height: 8px;
+  background: rgba(15,23,42,0.06);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 8px;
 }
-
-.stats-grid .stat-mini-label {
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10B981 0%, #34D399 100%);
+  border-radius: 999px;
+  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.35);
+}
+.progress-bottom {
+  display: flex;
+  justify-content: space-between;
   font-size: 12px;
 }
-
-/* 月历卡在 stats 框内, 去掉外层 box-shadow/border (已有 .stats-box 容器) */
-.stats-box .mini-calendar-card {
-  background: transparent;
-  box-shadow: none;
-  border: none;
-  padding: 0;
+.progress-pct {
+  color: #10B981;
+  font-weight: 700;
+}
+.progress-hint {
+  color: var(--color-text-muted);
 }
 
-.stats-box .mini-calendar {
-  font-size: 12px;
+/* 3 列紧凑 stats */
+.panel-quick-stats {
+  display: flex;
+  align-items: stretch;
+  padding: 16px 18px;
 }
-
-.stats-box .cal-weekday {
-  font-size: 10px;
+.qs-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
 }
-
-.stats-box .cal-day {
+.qs-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  margin-bottom: 2px;
+}
+.qs-icon-total { background: rgba(15, 76, 58, 0.08); color: #0F4C3A; }
+.qs-icon-unlearned { background: rgba(245, 158, 11, 0.10); color: #D97706; }
+.qs-icon-streak { background: rgba(239, 68, 68, 0.10); color: #EF4444; }
+.qs-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.1;
+}
+.qs-unit {
   font-size: 11px;
-  padding: 4px 0;
+  color: var(--color-text-muted);
+  font-weight: 500;
+  margin-left: 1px;
+}
+.qs-label {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+.qs-divider {
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(15,23,42,0.08), transparent);
+  margin: 4px 0;
+}
+
+/* 分割线 */
+.panel-divider {
+  height: 1px;
+  background: rgba(15,23,42,0.05);
+}
+
+/* 月历 */
+.panel-calendar {
+  padding: 14px 18px 18px;
+}
+.cal-row-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.cal-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+.cal-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+.cal-stat-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10B981;
+}
+
+.mini-calendar {
+  width: 100%;
+}
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 4px;
+}
+.cal-weekday {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  padding: 2px 0;
+}
+.cal-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  border-radius: 6px;
+  cursor: default;
+  transition: all 0.15s ease;
+}
+.cal-day.other-month {
+  color: rgba(15,23,42,0.18);
+}
+.cal-day.has-record {
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+  font-weight: 700;
+}
+.cal-day.today {
+  background: #0F4C3A;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(15, 76, 58, 0.3);
+}
+.cal-day.today.has-record {
+  background: linear-gradient(135deg, #0F4C3A, #10B981);
 }
 
 /* 右侧视频区 */
@@ -1119,9 +1336,17 @@ onMounted(async () => {
 @media (max-width: 640px) {
   .home-container { padding: 0 16px; }
   .filter-label { min-width: auto; }
-  .stats-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
+  .panel-quick-stats {
+    padding: 12px 14px;
+  }
+  .qs-value {
+    font-size: 18px;
+  }
+  .panel-progress {
+    padding: 16px 14px 14px;
+  }
+  .progress-value {
+    font-size: 22px;
   }
   .video-grid {
     grid-template-columns: 1fr;
