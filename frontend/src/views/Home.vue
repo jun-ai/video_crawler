@@ -1,56 +1,7 @@
 <template>
   <div class="home-page">
     <div class="home-container">
-      <!-- 1. 筛选条 row（speakvlog 风格 chip 分组） -->
-      <div class="filter-row" ref="filterBar">
-        <div class="filter-group" v-if="categories.length > 0">
-          <span class="filter-label">分类</span>
-          <div class="chip-list">
-            <FilterChip
-              :model-value="selectedCategory"
-              :value="null"
-              label="全部"
-              @update:model-value="selectCategory"
-            />
-            <FilterChip
-              v-for="cat in categories"
-              :key="cat.name"
-              :model-value="selectedCategory"
-              :value="cat.name"
-              :label="getCategoryLabel(cat.name)"
-              @update:model-value="selectCategory"
-            />
-          </div>
-        </div>
-
-        <div class="filter-group" v-if="creatorTags.length > 0">
-          <span class="filter-label">视频博主</span>
-          <div class="chip-list">
-            <div
-              v-for="tag in creatorTags"
-              :key="'c-' + tag.id"
-              :class="['tag-chip', { active: selectedCreatorTag === tag.id }]"
-              :style="{ '--chip-color': tag.color || 'var(--color-brand)' }"
-              @click="toggleCreatorTag(tag.id)"
-            >{{ tag.name }}</div>
-          </div>
-        </div>
-
-        <div class="filter-group" v-if="topicTags.length > 0">
-          <span class="filter-label">视频话题</span>
-          <div class="chip-list">
-            <div
-              v-for="tag in topicTags"
-              :key="'t-' + tag.id"
-              :class="['tag-chip', { active: selectedTopicTag === tag.id }]"
-              :style="{ '--chip-color': tag.color || 'var(--color-success)' }"
-              @click="toggleTopicTag(tag.id)"
-            >{{ tag.name }}</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 2+3+4. 两栏布局: 左侧 stats 框 (固定不随筛选变) | 右侧 视频区 -->
+      <!-- 2+3+4. 两栏布局: 左侧 stats 面板 (固定不随筛选变) | 右侧 视频区 (含筛选) -->
       <div class="home-main">
         <!-- 左侧: 我的学习 stats 面板 -->
         <aside class="stats-side" v-if="userStore.isLoggedIn">
@@ -142,8 +93,57 @@
           </div>
         </aside>
 
-        <!-- 右侧: featured + 视频网格 -->
+        <!-- 右侧: 筛选 + featured + 视频网格 -->
         <div class="videos-side">
+          <!-- 筛选条 (放在视频上方, 用户筛选视频用) -->
+          <div class="filter-row" ref="filterBar">
+            <div class="filter-group" v-if="categories.length > 0">
+              <span class="filter-label">分类</span>
+              <div class="chip-list">
+                <FilterChip
+                  :model-value="selectedCategory"
+                  :value="null"
+                  label="全部"
+                  @update:model-value="selectCategory"
+                />
+                <FilterChip
+                  v-for="cat in categories"
+                  :key="cat.name"
+                  :model-value="selectedCategory"
+                  :value="cat.name"
+                  :label="getCategoryLabel(cat.name)"
+                  @update:model-value="selectCategory"
+                />
+              </div>
+            </div>
+
+            <div class="filter-group" v-if="creatorTags.length > 0">
+              <span class="filter-label">视频博主</span>
+              <div class="chip-list">
+                <div
+                  v-for="tag in creatorTags"
+                  :key="'c-' + tag.id"
+                  :class="['tag-chip', { active: selectedCreatorTag === tag.id }]"
+                  :style="{ '--chip-color': tag.color || 'var(--color-brand)' }"
+                  @click="toggleCreatorTag(tag.id)"
+                >{{ tag.name }}</div>
+              </div>
+            </div>
+
+            <div class="filter-group" v-if="topicTags.length > 0">
+              <span class="filter-label">视频话题</span>
+              <div class="chip-list">
+                <div
+                  v-for="tag in topicTags"
+                  :key="'t-' + tag.id"
+                  :class="['tag-chip', { active: selectedTopicTag === tag.id }]"
+                  :style="{ '--chip-color': tag.color || 'var(--color-success)' }"
+                  @click="toggleTopicTag(tag.id)"
+                >{{ tag.name }}</div>
+              </div>
+            </div>
+          </div>
+
           <!-- Featured 视频 hero（大缩略图主视觉） -->
           <section
             v-if="featuredVideo"
@@ -632,7 +632,7 @@ onMounted(async () => {
 
 .home-page {
   min-height: 100vh;
-  background: #F5F7F2;  /* 米色背景（speakvlog 风格） */
+  background: var(--color-bg-base);  /* 跟视频库 (Materials.vue) 一致, 不再覆写米色 */
   padding: 24px 0 48px;
 }
 
