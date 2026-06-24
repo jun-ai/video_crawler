@@ -74,7 +74,7 @@ class Material(Base):
 
     # 关联
     subtitles = relationship("Subtitle", back_populates="material", cascade="all, delete-orphan")
-    learning_records = relationship("LearningRecord", back_populates="material")
+    learning_records = relationship("LearningRecord", back_populates="material", cascade="all, delete-orphan")
     favorites = relationship("Favorite", back_populates="material", cascade="all, delete-orphan")
     interpretations = relationship("VideoInterpretation", back_populates="material", cascade="all, delete-orphan")
     vocabularies = relationship("Vocabulary", back_populates="material")
