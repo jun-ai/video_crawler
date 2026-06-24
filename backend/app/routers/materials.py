@@ -23,7 +23,11 @@ from app.schemas.schemas import (
     InterpretationResponse,
     InterpretationListResponse,
     InterpretationStatusResponse,
-    TagResponse
+    TagResponse,
+    PresignUploadRequest,
+    PresignUploadResponse,
+    PresignedFileInfo,
+    FinalizeUploadRequest,
 )
 from app.config import settings
 from app.services.subtitle_parser import parse_srt_file
@@ -401,6 +405,105 @@ async def generate_interpretation_endpoint(
     asyncio.create_task(generate_interpretations_for_material(material_id))
 
     return {"message": "已开始生成", "status": "generating", "material_id": material_id}
+
+
+@router.post("/presign-upload", response_model=PresignUploadResponse)
+async def presign_upload(
+    req: PresignUploadRequest,
+    current_admin: User = Depends(get_current_admin),
+):
+    """生成 OSS PUT presigned URL,前端用这个直接上传到 OSS(绕过 backend)
+
+    用途:解决大文件上传慢的问题(200MB 视频经 backend 中转要 5+ 分钟)
+    流程:
+      1. 前端调这个接口,得到 3 个 presigned URL
+      2. 前端用 PUT 直接上传 3 个文件到 OSS,带 onUploadProgress 真实进度
+      3. 上传完成调 /finalize-upload 创建 Material 记录
+
+    需要管理员权限
+    """
+    storage = get_storage_service()
+    expires = 3600  # 1 小时有效
+
+    video_key = generate_object_key('video', req.video_name)
+    subtitle_key = generate_object_key('subtitle', req.subtitle_name)
+    cover_key = generate_object_key('cover', req.cover_name)
+
+    video_url = await storage.sign_put_url(video_key, "video/mp4", expires)
+    subtitle_url = await storage.sign_put_url(subtitle_key, "text/plain", expires)
+    cover_url = await storage.sign_put_url(cover_key, "image/jpeg", expires)
+
+    return PresignUploadResponse(
+        video=PresignedFileInfo(url=video_url, key=video_key, content_type="video/mp4"),
+        subtitle=PresignedFileInfo(url=subtitle_url, key=subtitle_key, content_type="text/plain"),
+        cover=PresignedFileInfo(url=cover_url, key=cover_key, content_type="image/jpeg"),
+    )
+
+
+@router.post("/finalize-upload", response_model=MessageResponse)
+async def finalize_upload(
+    req: FinalizeUploadRequest,
+    current_admin: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """前端直传 OSS 完成后,调这个接口创建 Material 记录
+
+    验证 3 个文件都已上传到 OSS,然后:
+    1. 创建 Material 记录
+    2. 下载并解析字幕
+    3. 触发后台 AI 解读生成
+    """
+    storage = get_storage_service()
+
+    # 验证文件都已存在
+    if not await storage.file_exists(req.video_key):
+        raise HTTPException(status_code=404, detail="视频文件未上传到 OSS")
+    if not await storage.file_exists(req.subtitle_key):
+        raise HTTPException(status_code=404, detail="字幕文件未上传到 OSS")
+    if not await storage.file_exists(req.cover_key):
+        raise HTTPException(status_code=404, detail="封面文件未上传到 OSS")
+
+    # 创建 Material
+    material = Material(
+        title=req.title,
+        description=req.description,
+        video_path=req.video_key,
+        subtitle_path=req.subtitle_key,
+        cover_path=req.cover_key,
+        category=req.category,
+        difficulty=req.difficulty,
+        is_active=False,
+    )
+    db.add(material)
+    await db.flush()
+
+    # 下载字幕到临时文件,解析入库
+    try:
+        tmp_path = f"/tmp/subtitle_{material.id}_{int(time.time())}.srt"
+        downloaded = await storage.download_file(req.subtitle_key, tmp_path)
+        if downloaded:
+            subtitles = await parse_srt_file(tmp_path, material.id)
+            for sub in subtitles:
+                db.add(Subtitle(**sub.model_dump()))
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
+        else:
+            print(f"[WARN] 字幕文件下载失败: {req.subtitle_key}")
+    except Exception as e:
+        print(f"字幕解析失败: {e}")
+
+    await db.commit()
+
+    # 触发后台解读
+    try:
+        from app.services.interpretation_tasks import generate_interpretations_for_material
+        asyncio.create_task(generate_interpretations_for_material(material.id))
+    except Exception as e:
+        print(f"[WARN] 触发解读生成失败: {e}")
+
+    return MessageResponse(message="语料创建成功", success=True)
 
 
 @router.post("", response_model=MessageResponse)

@@ -3,7 +3,7 @@
     <div class="page-header">
       <div class="header-left">
         <h1>上传语料</h1>
-        <span class="header-desc">添加新的学习视频素材</span>
+        <span class="header-desc">添加新的学习视频素材 · 也可以 <a href="/admin/upload/fetch-url" class="link">通过 URL 抓取</a></span>
       </div>
       <SfButton @click="goBack" class="back-btn">返回列表</SfButton>
     </div>
@@ -51,14 +51,22 @@
           <div class="section-label">文件上传</div>
 
           <!-- 视频文件 -->
-          <div class="drop-zone" :class="{ 'has-file': files.video }" @click="$refs.videoInput.click()">
-            <input type="file" ref="videoInput" accept=".mp4,.webm,.mov" @change="handleVideoChange" class="file-input" />
+          <div
+            class="drop-zone"
+            :class="{ 'has-file': files.video, 'is-dragging': dragging.video }"
+            @click="$refs.videoInput.click()"
+            @dragover.prevent="dragging.video = true"
+            @dragenter.prevent="dragging.video = true"
+            @dragleave.prevent="dragging.video = false"
+            @drop.prevent="handleDrop($event, 'video')"
+          >
+            <input type="file" ref="videoInput" accept=".mp4,.webm,.mov,.mkv,.m4v" @change="handleVideoChange" class="file-input" />
             <div class="drop-zone-content">
               <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               <div v-if="files.video" class="drop-file-name">{{ files.video.name }}</div>
               <template v-else>
-                <div class="drop-title">点击上传视频</div>
-                <div class="drop-hint">MP4, WebM, MOV 格式</div>
+                <div class="drop-title">拖拽或点击上传视频</div>
+                <div class="drop-hint">MP4, WebM, MOV, MKV, M4V</div>
               </template>
             </div>
             <div class="drop-zone-tag">视频文件 *</div>
@@ -66,25 +74,41 @@
 
           <!-- 字幕 + 封面 -->
           <div class="upload-row">
-            <div class="drop-zone drop-zone-sm" :class="{ 'has-file': files.subtitle }" @click="$refs.subtitleInput.click()">
+            <div
+              class="drop-zone drop-zone-sm"
+              :class="{ 'has-file': files.subtitle, 'is-dragging': dragging.subtitle }"
+              @click="$refs.subtitleInput.click()"
+              @dragover.prevent="dragging.subtitle = true"
+              @dragenter.prevent="dragging.subtitle = true"
+              @dragleave.prevent="dragging.subtitle = false"
+              @drop.prevent="handleDrop($event, 'subtitle')"
+            >
               <input type="file" ref="subtitleInput" accept=".srt,.vtt" @change="handleSubtitleChange" class="file-input" />
               <div class="drop-zone-content">
                 <svg class="drop-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                 <div v-if="files.subtitle" class="drop-file-name-sm">{{ files.subtitle.name }}</div>
                 <template v-else>
-                  <div class="drop-title-sm">字幕文件</div>
+                  <div class="drop-title-sm">拖拽字幕</div>
                   <div class="drop-hint-sm">SRT / VTT</div>
                 </template>
               </div>
             </div>
-            <div class="drop-zone drop-zone-sm" :class="{ 'has-file': files.cover }" @click="$refs.coverInput.click()">
-              <input type="file" ref="coverInput" accept=".jpg,.jpeg,.png" @change="handleCoverChange" class="file-input" />
+            <div
+              class="drop-zone drop-zone-sm"
+              :class="{ 'has-file': files.cover, 'is-dragging': dragging.cover }"
+              @click="$refs.coverInput.click()"
+              @dragover.prevent="dragging.cover = true"
+              @dragenter.prevent="dragging.cover = true"
+              @dragleave.prevent="dragging.cover = false"
+              @drop.prevent="handleDrop($event, 'cover')"
+            >
+              <input type="file" ref="coverInput" accept=".jpg,.jpeg,.png,.webp" @change="handleCoverChange" class="file-input" />
               <div class="drop-zone-content">
                 <svg class="drop-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                 <div v-if="files.cover" class="drop-file-name-sm">{{ files.cover.name }}</div>
                 <template v-else>
-                  <div class="drop-title-sm">封面图片</div>
-                  <div class="drop-hint-sm">JPG / PNG</div>
+                  <div class="drop-title-sm">拖拽封面</div>
+                  <div class="drop-hint-sm">JPG / PNG / WebP</div>
                 </template>
               </div>
             </div>
@@ -169,6 +193,47 @@ const handleCoverChange = (e) => {
   files.cover = e.target.files[0] || null
 }
 
+// 拖拽上传支持
+const dragging = reactive({
+  video: false,
+  subtitle: false,
+  cover: false
+})
+
+const VIDEO_EXTS = ['.mp4', '.webm', '.mov', '.mkv', '.m4v', '.avi', '.flv']
+const SUBTITLE_EXTS = ['.srt', '.vtt']
+const IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
+
+const getExt = (name) => {
+  const idx = name.lastIndexOf('.')
+  return idx >= 0 ? name.slice(idx).toLowerCase() : ''
+}
+
+const handleDrop = (e, target) => {
+  // 关闭 drag 视觉
+  dragging[target] = false
+  const droppedFiles = Array.from(e.dataTransfer?.files || [])
+  if (!droppedFiles.length) return
+
+  // 根据目标类型过滤
+  let matched = null
+  for (const f of droppedFiles) {
+    const ext = getExt(f.name)
+    if (target === 'video' && VIDEO_EXTS.includes(ext)) { matched = f; break }
+    if (target === 'subtitle' && SUBTITLE_EXTS.includes(ext)) { matched = f; break }
+    if (target === 'cover' && IMAGE_EXTS.includes(ext)) { matched = f; break }
+  }
+
+  if (!matched) {
+    const expected = target === 'video' ? VIDEO_EXTS : target === 'subtitle' ? SUBTITLE_EXTS : IMAGE_EXTS
+    toast.error(`不支持的文件类型,请上传 ${expected.join('/')} 格式`)
+    return
+  }
+
+  files[target] = matched
+  toast.success(`已选择: ${matched.name}`)
+}
+
 const submitForm = async () => {
   if (!form.title) {
     toast.error('请输入标题')
@@ -197,23 +262,76 @@ const submitForm = async () => {
   uploadText.value = '准备上传...'
 
   try {
-    const formData = new FormData()
-    formData.append('title', form.title)
-    formData.append('description', form.description || '')
-    formData.append('category', form.category)
-    formData.append('difficulty', form.difficulty)
-    formData.append('video', files.video)
-    formData.append('subtitle', files.subtitle)
-    formData.append('cover', files.cover)
+    // ==================== Plan B: 浏览器直传 OSS ====================
+    // 1) 拿 presigned URL (3 个文件)
+    uploadText.value = '获取上传凭证...'
+    uploadProgress.value = 2
+    const presign = await materialAPI.presignUpload({
+      video_name: files.video.name,
+      subtitle_name: files.subtitle.name,
+      cover_name: files.cover.name
+    })
+    // 2) 直接 PUT 到 OSS,带真实进度
+    // 总权重: video 85% + subtitle 10% + cover 5%
+    const totalBytes = files.video.size + files.subtitle.size + files.cover.size
+    let uploadedBytes = 0
 
-    uploadProgress.value = 30
-    uploadText.value = '正在上传文件到云存储...'
+    const putToOSS = async (file, info, label) => {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('PUT', info.url)
+        xhr.setRequestHeader('Content-Type', info.content_type)
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const fileLoaded = e.loaded
+            const fileTotal = e.total
+            const filePercent = fileLoaded / fileTotal
+            // 整个上传进度: (之前完成 + 当前文件已上传) / 总字节
+            const overallLoaded = uploadedBytes + fileLoaded
+            const overallPercent = Math.floor((overallLoaded / totalBytes) * 95)  // 0-95%
+            uploadProgress.value = Math.min(95, overallPercent)
+            uploadText.value = `${label} ${Math.floor(filePercent * 100)}% (${(fileLoaded/1024/1024).toFixed(1)}MB / ${(fileTotal/1024/1024).toFixed(1)}MB)`
+          }
+        }
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            uploadedBytes += file.size
+            resolve()
+          } else {
+            reject(new Error(`${label} 上传失败: HTTP ${xhr.status} ${xhr.responseText?.slice(0,200)}`))
+          }
+        }
+        xhr.onerror = () => reject(new Error(`${label} 网络错误`))
+        xhr.send(file)
+      })
+    }
 
-    await materialAPI.create(formData)
+    // 视频最大先传 (失败成本最高)
+    uploadText.value = '上传视频到云存储...'
+    await putToOSS(files.video, presign.video, '视频')
+
+    uploadText.value = '上传字幕...'
+    await putToOSS(files.subtitle, presign.subtitle, '字幕')
+
+    uploadText.value = '上传封面...'
+    await putToOSS(files.cover, presign.cover, '封面')
+
+    // 3) finalize: 创建 Material 记录
+    uploadProgress.value = 96
+    uploadText.value = '正在保存...'
+    await materialAPI.finalizeUpload({
+      title: form.title,
+      description: form.description || '',
+      category: form.category,
+      difficulty: form.difficulty,
+      video_key: presign.video.key,
+      subtitle_key: presign.subtitle.key,
+      cover_key: presign.cover.key
+    })
 
     uploadProgress.value = 100
     uploadStatus.value = 'success'
-    uploadText.value = '上传成功！'
+    uploadText.value = '上传成功！AI 解读正在后台生成...'
 
     toast.success('语料上传成功')
     setTimeout(() => {
@@ -221,8 +339,10 @@ const submitForm = async () => {
     }, 1500)
   } catch (e) {
     uploadStatus.value = 'exception'
-    uploadText.value = '上传失败: ' + (e.response?.data?.detail || e.message)
-    toast.error('上传失败')
+    const errMsg = e.response?.data?.detail || e.message
+    uploadText.value = '上传失败: ' + errMsg
+    toast.error('上传失败: ' + errMsg)
+    console.error('Upload error:', e)
   } finally {
     uploading.value = false
   }
@@ -272,6 +392,15 @@ const goBack = () => {
   color: var(--color-text-muted);
   margin-top: 4px;
   display: block;
+}
+.header-desc .link {
+  color: var(--sf-admin-accent, #60a5fa);
+  text-decoration: none;
+  font-weight: 500;
+  border-bottom: 1px dashed currentColor;
+}
+.header-desc .link:hover {
+  border-bottom-style: solid;
 }
 
 .back-btn {
@@ -371,6 +500,14 @@ const goBack = () => {
 .drop-zone:hover {
   border-color: var(--sf-admin-accent);
   background: var(--sf-admin-accent-light);
+}
+
+.drop-zone.is-dragging {
+  border-color: var(--sf-admin-accent);
+  border-style: solid;
+  background: var(--sf-admin-accent-light);
+  transform: scale(1.01);
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
 }
 
 .drop-zone.has-file {

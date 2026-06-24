@@ -64,7 +64,14 @@ export const materialAPI = {
   generateInterpretation: (id) => api.post(`/materials/${id}/interpretation/generate`, {}),
   translateSubtitles: (id, subtitles) => api.post(`/materials/${id}/translate`, { subtitles }, { timeout: 120000 }),
   translateText: (text) => api.post('/materials/translate-text', { text }, { timeout: 30000 }),
-  // 创建语料（管理员）
+  // 创建语料（管理员）- Plan B: 浏览器直传 OSS
+  // 1. 先调 presignUpload 拿 3 个 presigned URL
+  // 2. PUT 3 个文件直接到 OSS (带 onUploadProgress 真实进度)
+  // 3. 调 finalizeUpload 创建 Material 记录
+  presignUpload: (fileNames) => api.post('/materials/presign-upload', fileNames),
+  finalizeUpload: (data) => api.post('/materials/finalize-upload', data),
+
+  // 旧接口保留兼容 (走 backend 中转,慢)
   create: (formData) => api.post('/materials', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
     timeout: 300000
@@ -231,6 +238,24 @@ export const adminAPI = {
   batchUpload: (formData) => api.post('/admin/materials/batch-upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
     timeout: 300000
+  }),
+
+  // 编辑
+  updateMaterial: (id, data) => api.put(`/admin/materials/${id}`, data),
+
+  // 批量操作
+  batchDelete: (ids, deleteFiles = false) => api.post('/admin/materials/batch-delete',
+    { ids }, { params: { delete_files: deleteFiles } }),
+  batchUpdateStatus: (ids, isActive) => api.post('/admin/materials/batch-status', { ids, is_active: isActive }),
+
+  // 重新生成字幕 / 重新解读
+  retranscribe: (id, params = {}) => api.post(`/admin/materials/${id}/retranscribe`, null, { params, timeout: 30000 }),
+  reinterpret: (id) => api.post(`/admin/materials/${id}/reinterpret`, null, { timeout: 30000 }),
+
+  // CSV 导出 (blob 下载, 跟词汇导出用同套路)
+  exportMaterials: (params) => api.get('/admin/materials/export', {
+    params,
+    responseType: 'blob'
   }),
 
   // 通过 URL 抓取语料 (B站自动,YouTube手动)

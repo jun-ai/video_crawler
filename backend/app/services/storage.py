@@ -36,6 +36,11 @@ class StorageService(ABC):
         """检查文件是否存在"""
         pass
 
+    @abstractmethod
+    async def download_file(self, object_key: str, dest_path: str) -> bool:
+        """下载文件到本地路径"""
+        pass
+
 
 class LocalStorageService(StorageService):
     """本地存储服务（开发环境）"""
@@ -75,6 +80,17 @@ class LocalStorageService(StorageService):
         """检查本地文件是否存在"""
         return (self.base_path / object_key).exists()
 
+    async def download_file(self, object_key: str, dest_path: str) -> bool:
+        """本地存储: 复制文件到目标路径"""
+        import shutil
+        src = self.base_path / object_key
+        if not src.exists():
+            return False
+        Path(dest_path).parent.mkdir(parents=True, exist_ok=True)
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, shutil.copyfile, str(src), dest_path)
+        return True
+
 
 class AliyunOSSService(StorageService):
     """阿里云OSS存储服务"""
@@ -103,22 +119,16 @@ class AliyunOSSService(StorageService):
         """上传文件到OSS，返回对象键（不是签名URL）"""
         bucket = self._get_bucket()
 
-        # 设置文件头
         headers = {}
         if content_type:
             headers['Content-Type'] = content_type
 
-        # 异步上传
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(
             None,
-            bucket.put_object,
-            object_key,
-            file_data,
-            headers
+            lambda: bucket.put_object(object_key, file_data, headers=headers)
         )
 
-        # 返回对象键，而不是签名URL
         return object_key
 
     async def get_file_url(self, object_key: str, expires: int = None) -> str:
@@ -148,6 +158,26 @@ class AliyunOSSService(StorageService):
         )
         return url
 
+    async def sign_put_url(self, object_key: str, content_type: str = None, expires: int = 3600) -> str:
+        """
+        生成 PUT presigned URL,前端可直接 PUT 文件到 OSS(绕过 backend)
+        用于浏览器直传,大幅加速大文件上传
+
+        :param content_type: 如果传了,会签进 signature,前端必须用同样的 Content-Type header
+        """
+        bucket = self._get_bucket()
+        headers = {'Content-Type': content_type} if content_type else None
+        loop = asyncio.get_event_loop()
+        url = await loop.run_in_executor(
+            None,
+            bucket.sign_url,
+            'PUT',
+            object_key,
+            expires,
+            headers
+        )
+        return url
+
     async def delete_file(self, object_key: str) -> bool:
         """删除OSS文件"""
         bucket = self._get_bucket()
@@ -160,13 +190,31 @@ class AliyunOSSService(StorageService):
             return False
 
     async def file_exists(self, object_key: str) -> bool:
-        """检查文件是否存在"""
+        """检查文件是否存在
+
+        注意:oss2.bucket.object_exists 对不存在的 key 返 False(NoSuchKey 被内部 catch),
+        对其他错误 (如 NoSuchBucket) 才抛异常
+        """
         bucket = self._get_bucket()
         loop = asyncio.get_event_loop()
         try:
-            await loop.run_in_executor(None, bucket.object_exists, object_key)
+            exists = await loop.run_in_executor(None, bucket.object_exists, object_key)
+            return bool(exists)  # 必须根据实际返回值,不能无条件 return True
+        except Exception:
+            return False
+
+    async def download_file(self, object_key: str, dest_path: str) -> bool:
+        """从 OSS 下载文件到本地"""
+        bucket = self._get_bucket()
+        Path(dest_path).parent.mkdir(parents=True, exist_ok=True)
+        loop = asyncio.get_event_loop()
+        try:
+            await loop.run_in_executor(
+                None, lambda: bucket.get_object_to_file(object_key, dest_path)
+            )
             return True
-        except:
+        except Exception as e:
+            print(f"[OSS] download_file 失败 ({object_key}): {e}")
             return False
 
 
@@ -259,6 +307,24 @@ class TencentCOSService(StorageService):
             )
             return True
         except:
+            return False
+
+    async def download_file(self, object_key: str, dest_path: str) -> bool:
+        """从 COS 下载文件到本地"""
+        client = self._get_client()
+        Path(dest_path).parent.mkdir(parents=True, exist_ok=True)
+        loop = asyncio.get_event_loop()
+        try:
+            await loop.run_in_executor(
+                None,
+                client.get_object_to_file,
+                self.bucket_name,
+                object_key,
+                dest_path
+            )
+            return True
+        except Exception as e:
+            print(f"[COS] download_file 失败 ({object_key}): {e}")
             return False
 
 

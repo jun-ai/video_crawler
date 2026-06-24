@@ -21,13 +21,14 @@
 <script setup>
 import { useRoute, useRouter } from 'vue-router'
 import { computed } from 'vue'
-import { Upload, Mic } from 'lucide-vue-next'
+import { Upload, Mic, Link2 } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
 
 const tabs = [
   { path: '/admin/upload', label: '直接上传', icon: Upload },
+  { path: '/admin/upload/fetch-url', label: '通过 URL 抓取', icon: Link2 },
   { path: '/admin/upload/transcribe', label: '视频转字幕', icon: Mic }
 ]
 

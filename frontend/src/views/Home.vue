@@ -582,8 +582,9 @@ const featuredVideo = computed(() => {
   return materials.value[0] || null
 })
 const gridVideos = computed(() => {
-  if (!featuredVideo.value) return materials.value
-  return materials.value.slice(1)
+  // featured hero 已在模板里移除(避免重复展示),这里直接返回全部
+  // 如以后恢复 featured hero,改回: if (!featuredVideo.value) return materials.value; return materials.value.slice(1)
+  return materials.value
 })
 
 onMounted(async () => {

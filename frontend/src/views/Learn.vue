@@ -973,7 +973,10 @@ const updateProgress = () => {
   if (progressTimer) clearTimeout(progressTimer)
   progressTimer = setTimeout(async () => {
     if (!videoRef.value) return
-    const progress = Math.floor((videoRef.value.currentTime / videoRef.value.duration) * 100)
+    // 视频元数据未加载完时 duration = NaN, JSON.stringify(NaN) = "null" 会让后端 Pydantic 校验炸
+    const dur = videoRef.value.duration
+    if (!isFinite(dur) || dur <= 0) return
+    const progress = Math.floor((videoRef.value.currentTime / dur) * 100)
     learningProgress.value = progress
     try {
       await learningAPI.updateProgress({
@@ -994,6 +997,9 @@ const startWatchDurationTimer = () => {
   stopWatchDurationTimer()
   watchDurationTimer = setInterval(async () => {
     if (!videoRef.value || videoRef.value.paused || !material.value) return
+    // 视频元数据未加载完时不要发,避免发送 0 进度噪音
+    const dur = videoRef.value.duration
+    if (!isFinite(dur) || dur <= 0) return
     try {
       await learningAPI.updateProgress({
         material_id: material.value.id,
@@ -2181,7 +2187,7 @@ onUnmounted(() => {
 /* ==================== 主内容区 ==================== */
 .sf-main-content {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) 220px;
+  grid-template-columns: minmax(0, 2.6fr) minmax(0, 1fr) 200px;
   gap: 16px;
   align-items: start;
   animation: fadeSlideIn 0.3s var(--sf-easing-standard);

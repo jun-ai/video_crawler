@@ -89,6 +89,11 @@ const routes = [
             component: () => import('@/views/admin/MaterialUpload.vue')
           },
           {
+            path: 'fetch-url',
+            name: 'AdminUploadFetchUrl',
+            component: () => import('@/views/admin/upload/FetchFromUrl.vue')
+          },
+          {
             path: 'transcribe',
             name: 'AdminUploadTranscribe',
             component: () => import('@/views/admin/upload/Transcribe.vue')
