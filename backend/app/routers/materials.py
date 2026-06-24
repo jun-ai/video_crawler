@@ -588,8 +588,13 @@ async def translate_subtitles_endpoint(
     request: dict,
     db: AsyncSession = Depends(get_db)
 ):
-    """翻译字幕"""
-    # 获取字幕
+    """翻译字幕 — 分批 + 渐进保存
+
+    长字幕(>40 条)按 BATCH=40 分批调 AI, 每批单独 commit。
+    - 增量重试: 已翻译的字幕跳过, 失败批次再调会只重试 pending 部分
+    - 单批失败不影响前面已 commit 的批次
+    - 返回 translated_count / total / failed_batches 方便前端展示进度
+    """
     result = await db.execute(
         select(Subtitle)
         .where(Subtitle.material_id == material_id)
@@ -603,34 +608,59 @@ async def translate_subtitles_endpoint(
             detail="该视频没有字幕"
         )
 
-    # 检查是否已有翻译
-    has_translation = any(sub.text_cn for sub in subtitles)
-    if has_translation:
-        # 已有翻译，直接返回
+    # 全部已翻译 → 短路
+    if all(sub.text_cn for sub in subtitles):
         return {
             "success": True,
             "subtitles": [{"text_en": sub.text_en, "text_cn": sub.text_cn} for sub in subtitles],
             "message": "字幕已有翻译"
         }
 
-    # 调用翻译
+    # 只翻译未翻译的 (增量重试友好)
+    pending = [(idx, sub) for idx, sub in enumerate(subtitles) if not sub.text_cn]
+    total_pending = len(pending)
+    BATCH = 40
+    translated_count = 0
+    failed_batches = []
+
     try:
-        subtitle_list = [{"text_en": sub.text_en} for sub in subtitles]
-        translated = await translate_subtitles(subtitle_list)
+        for batch_start in range(0, total_pending, BATCH):
+            batch = pending[batch_start:batch_start + BATCH]
+            batch_lo = batch_start + 1
+            batch_hi = min(batch_start + BATCH, total_pending)
+            inputs = [{"text_en": sub.text_en} for _, sub in batch]
+            print(f"[TRANSLATE] material {material_id}: batch {batch_lo}-{batch_hi}/{total_pending}")
 
-        # 更新数据库中的字幕翻译
-        for i, sub in enumerate(subtitles):
-            if i < len(translated) and translated[i].get("text_cn"):
-                sub.text_cn = translated[i]["text_cn"]
+            translated_batch = await translate_subtitles(inputs)
 
-        await db.commit()
+            batch_ok = 0
+            for i, (orig_idx, sub) in enumerate(batch):
+                if i < len(translated_batch) and translated_batch[i].get("text_cn"):
+                    subtitles[orig_idx].text_cn = translated_batch[i]["text_cn"]
+                    batch_ok += 1
+                    translated_count += 1
 
+            await db.commit()
+
+            if batch_ok == 0:
+                failed_batches.append(f"{batch_lo}-{batch_hi}")
+                print(f"[TRANSLATE] material {material_id}: batch {batch_lo}-{batch_hi} 全部失败 (AI 返回空)")
+            else:
+                print(f"[TRANSLATE] material {material_id}: batch {batch_lo}-{batch_hi} ok {batch_ok}/{len(batch)}")
+
+        msg = f"翻译完成 {translated_count}/{total_pending}"
+        if failed_batches:
+            msg += f", 失败批次: {','.join(failed_batches)}"
         return {
             "success": True,
+            "translated_count": translated_count,
+            "total": total_pending,
+            "failed_batches": failed_batches,
+            "message": msg,
             "subtitles": [{"text_en": sub.text_en, "text_cn": sub.text_cn} for sub in subtitles]
         }
     except Exception as e:
-        print(f"[ERROR] 翻译失败: {e}")
+        print(f"[ERROR] 翻译失败 material {material_id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"翻译失败: {str(e)}"

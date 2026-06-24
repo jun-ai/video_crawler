@@ -1973,6 +1973,8 @@ const translateSubtitles = async () => {
   if (!material.value) return
 
   translationLoading.value = true
+  // 长字幕(>40 条)分批翻译 5-10 分钟, 给用户一个持久提示避免重复点击
+  const translatingToast = toast.info('翻译中,字幕较多请稍候…', { duration: 0 })
   try {
     const subList = subtitles.value.map(sub => ({
       text_en: sub.text_en,
@@ -1987,9 +1989,17 @@ const translateSubtitles = async () => {
         }
       }
     }
-    toast.success('翻译完成')
+    toast.close(translatingToast)
+    if (result && result.failed_batches && result.failed_batches.length > 0) {
+      toast.warning(`部分翻译失败 (${result.translated_count}/${result.total}),失败批次 ${result.failed_batches.join(',')},稍后重试`)
+    } else if (result && result.translated_count !== undefined) {
+      toast.success(`翻译完成 ${result.translated_count}/${result.total}`)
+    } else {
+      toast.success('翻译完成')
+    }
   } catch (e) {
     console.error('翻译失败', e)
+    toast.close(translatingToast)
     toast.error('翻译失败')
   } finally {
     translationLoading.value = false

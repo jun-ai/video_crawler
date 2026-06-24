@@ -62,7 +62,8 @@ export const materialAPI = {
   getInterpretation: (id) => api.get(`/materials/${id}/interpretation`),
   getInterpretationStatus: (id) => api.get(`/materials/${id}/interpretation/status`),
   generateInterpretation: (id) => api.post(`/materials/${id}/interpretation/generate`, {}),
-  translateSubtitles: (id, subtitles) => api.post(`/materials/${id}/translate`, { subtitles }, { timeout: 120000 }),
+  // 长字幕分批翻译 (后端 BATCH=40, 每批单独 commit), 405 条字幕约 5-10 分钟
+  translateSubtitles: (id, subtitles) => api.post(`/materials/${id}/translate`, { subtitles }, { timeout: 600000 }),
   translateText: (text) => api.post('/materials/translate-text', { text }, { timeout: 30000 }),
   // 创建语料（管理员）- Plan B: 浏览器直传 OSS
   // 1. 先调 presignUpload 拿 3 个 presigned URL
