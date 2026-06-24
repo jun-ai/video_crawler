@@ -264,7 +264,7 @@ const goHome = () => {
 .admin-main {
   flex: 1;
   margin-left: 240px;
-  padding: 32px;
+  padding: 28px 32px;
   background: var(--sf-admin-bg);
   min-height: 100vh;
 }

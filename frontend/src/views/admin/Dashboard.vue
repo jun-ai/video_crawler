@@ -181,12 +181,12 @@ onMounted(() => {
    ======================================== */
 
 .dashboard {
-  max-width: 1200px;
+  max-width: 1600px;
 }
 
 .page-title {
   margin: 0 0 28px;
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 600;
   color: var(--sf-admin-text-primary);
   letter-spacing: -0.3px;
@@ -196,19 +196,19 @@ onMounted(() => {
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 28px;
+  gap: 24px;
+  margin-bottom: 32px;
 }
 
 .stat-card {
   position: relative;
   overflow: hidden;
   background: var(--sf-admin-bg-card);
-  border-radius: 14px;
-  padding: 22px 20px;
+  border-radius: 16px;
+  padding: 28px 26px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 18px;
   border: 1px solid var(--sf-admin-border);
   transition: transform var(--sf-duration-normal) cubic-bezier(0.34, 1.56, 0.64, 1),
               border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -220,9 +220,9 @@ onMounted(() => {
 }
 
 .stat-icon-wrap {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
   background: color-mix(in srgb, var(--accent) 12%, transparent);
   display: flex;
   align-items: center;
@@ -237,7 +237,7 @@ onMounted(() => {
 }
 
 .stat-value {
-  font-size: 30px;
+  font-size: 36px;
   font-weight: 800;
   color: var(--sf-admin-text-primary);
   line-height: 1.1;
@@ -246,9 +246,9 @@ onMounted(() => {
 }
 
 .stat-label {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--sf-admin-text-muted);
-  margin-top: 4px;
+  margin-top: 6px;
   font-weight: 400;
 }
 
@@ -264,13 +264,13 @@ onMounted(() => {
 .info-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: 24px;
 }
 
 .info-card {
   background: var(--sf-admin-bg-card);
-  border-radius: 14px;
-  padding: 22px;
+  border-radius: 16px;
+  padding: 28px;
   border: 1px solid var(--sf-admin-border);
 }
 

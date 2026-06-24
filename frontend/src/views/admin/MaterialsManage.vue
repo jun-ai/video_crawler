@@ -233,7 +233,7 @@ onMounted(() => {
    ======================================== */
 
 .materials-manage {
-  max-width: 1400px;
+  max-width: 1600px;
 }
 
 /* ── Page Header ── */
