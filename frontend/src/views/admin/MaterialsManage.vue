@@ -6,6 +6,38 @@
         <span class="header-sub">{{ pagination.total }} 个语料 · 已选 {{ selectedIds.length }} 个</span>
       </div>
       <div class="header-actions">
+        <!-- 列设置按钮: 控制每列显隐 + 重置列宽 -->
+        <SfDropdown placement="bottom" :menu-style="{ right: 0, left: 'auto', minWidth: '220px', padding: '8px' }">
+          <template #trigger>
+            <SfButton type="ghost">
+              <Settings :size="16" style="margin-right: 4px;" />
+              列设置
+            </SfButton>
+          </template>
+          <div class="col-picker" @click.stop>
+            <div class="col-picker-header">
+              <span>显示列</span>
+              <button class="col-picker-reset" @click="resetColumnPrefs">重置默认</button>
+            </div>
+            <label
+              v-for="col in allColumns"
+              :key="col.key"
+              class="col-picker-row"
+              :class="{ 'col-picker-row-disabled': col.required }"
+            >
+              <input
+                type="checkbox"
+                :checked="!hiddenKeys.includes(col.key)"
+                :disabled="col.required"
+                @change="toggleColumn(col.key)"
+              />
+              <span class="col-picker-label">{{ col.label || '(无标题)' }}</span>
+            </label>
+            <div class="col-picker-hint">
+              列宽也可直接拖拽表头右边调节
+            </div>
+          </div>
+        </SfDropdown>
         <SfButton @click="exportCsv" :loading="exporting" type="ghost">
           <Download :size="16" style="margin-right: 4px;" />
           导出CSV
@@ -64,7 +96,13 @@
 
     <!-- 语料列表 -->
     <div class="card-container">
-      <SfTable :columns="columns" :data="materials">
+      <SfTable
+        :columns="columns"
+        :data="materials"
+        :width-overrides="colWidths"
+        :hidden-keys="hiddenKeys"
+        @column-resize="onColumnResize"
+      >
         <template #select="{ row }">
           <input
             type="checkbox"
@@ -247,12 +285,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from '@/composables/useToast'
 import {
-  Plus, Pencil, Eye, EyeOff, Download, Server,
-  MoreHorizontal, FileText, Sparkles
+  Download, Plus, Pencil, Eye, EyeOff, MoreHorizontal, Settings
 } from 'lucide-vue-next'
 import { adminAPI, materialAPI } from '@/api'
 import SfButton from '@/components/ui/SfButton.vue'
@@ -264,9 +301,9 @@ import SfTable from '@/components/ui/SfTable.vue'
 import SfTag from '@/components/ui/SfTag.vue'
 import SfSwitch from '@/components/ui/SfSwitch.vue'
 import SfPopconfirm from '@/components/ui/SfPopconfirm.vue'
+import SfDropdown from '@/components/ui/SfDropdown.vue'
 import SfPagination from '@/components/ui/SfPagination.vue'
 import SfDialog from '@/components/ui/SfDialog.vue'
-import SfDropdown from '@/components/ui/SfDropdown.vue'
 
 const router = useRouter()
 
@@ -291,18 +328,66 @@ const ossModal = reactive({
   row: null
 })
 
-const columns = [
-  { key: 'select', label: '', width: '40px' },
-  { key: 'id', label: 'ID', width: '60px' },
-  { key: 'title', label: '标题' },
-  { key: 'category', label: '分类', width: '100px' },
-  { key: 'difficulty', label: '难度', width: '80px' },
-  { key: 'duration', label: '时长', width: '80px' },
-  { key: 'view_count', label: '观看', width: '70px' },
-  { key: 'is_active', label: '状态', width: '140px' },
-  { key: 'created_at', label: '创建时间', width: '170px' },
-  { key: 'actions', label: '操作', width: '220px' }
+// 表格列定义 — title 列给默认 280px,避免默认被挤窄看不清
+// 字段 order 决定列设置 popover 里的顺序
+const allColumns = [
+  { key: 'select', label: '', width: 40, required: true },
+  { key: 'id', label: 'ID', width: 70 },
+  { key: 'title', label: '标题', width: 280, minWidth: 160 },
+  { key: 'category', label: '分类', width: 100, minWidth: 70 },
+  { key: 'difficulty', label: '难度', width: 80, minWidth: 60 },
+  { key: 'duration', label: '时长', width: 90, minWidth: 60 },
+  { key: 'view_count', label: '观看', width: 80, minWidth: 60 },
+  { key: 'is_active', label: '状态', width: 150, minWidth: 110 },
+  { key: 'created_at', label: '创建时间', width: 180, minWidth: 120 },
+  { key: 'actions', label: '操作', width: 200, minWidth: 160, required: true }
 ]
+// SfTable 用的 columns (px 数字)
+const columns = allColumns.map(c => ({ key: c.key, label: c.label, width: c.width + 'px', minWidth: c.minWidth }))
+
+// ==================== 列设置 (用户偏好, localStorage 持久化) ====================
+const PREFS_KEY = 'fluenty.admin.materials.tablePrefs.v1'
+const columnPickerOpen = ref(false)
+
+const loadPrefs = () => {
+  try {
+    const raw = localStorage.getItem(PREFS_KEY)
+    if (!raw) return { hidden: [], widths: {} }
+    const p = JSON.parse(raw)
+    return {
+      hidden: Array.isArray(p.hidden) ? p.hidden : [],
+      widths: p.widths && typeof p.widths === 'object' ? p.widths : {}
+    }
+  } catch { return { hidden: [], widths: {} } }
+}
+
+const initialPrefs = loadPrefs()
+const hiddenKeys = ref(initialPrefs.hidden)        // 隐藏的列 key
+const colWidths = ref(initialPrefs.widths)         // 用户拖拽后的列宽 (px)
+
+watch([hiddenKeys, colWidths], () => {
+  try {
+    localStorage.setItem(PREFS_KEY, JSON.stringify({
+      hidden: hiddenKeys.value,
+      widths: colWidths.value
+    }))
+  } catch {}
+}, { deep: true })
+
+const toggleColumn = (key) => {
+  const i = hiddenKeys.value.indexOf(key)
+  if (i >= 0) hiddenKeys.value.splice(i, 1)
+  else hiddenKeys.value.push(key)
+}
+
+const resetColumnPrefs = () => {
+  hiddenKeys.value = []
+  colWidths.value = {}
+}
+
+const onColumnResize = ({ key, width }) => {
+  colWidths.value = { ...colWidths.value, [key]: width }
+}
 
 const categoryOptions = computed(() => {
   const opts = categories.value.map(cat => ({ label: cat.name, value: cat.name }))
@@ -981,5 +1066,70 @@ onMounted(() => {
   .card-container {
     padding: 12px;
   }
+}
+
+/* ── 列设置 Popover ── */
+.col-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  user-select: none;
+}
+.col-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  padding: 4px 6px 8px;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 4px;
+}
+.col-picker-reset {
+  background: transparent;
+  border: none;
+  color: var(--color-brand);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+.col-picker-reset:hover {
+  background: var(--color-bg-elevated);
+}
+.col-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--color-text-primary);
+}
+.col-picker-row:hover {
+  background: var(--color-bg-elevated);
+}
+.col-picker-row-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.col-picker-row input[type="checkbox"] {
+  cursor: pointer;
+}
+.col-picker-row-disabled input[type="checkbox"] {
+  cursor: not-allowed;
+}
+.col-picker-label {
+  flex: 1;
+}
+.col-picker-hint {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  padding: 6px 6px 0;
+  border-top: 1px solid var(--color-border);
+  margin-top: 4px;
+  line-height: 1.4;
 }
 </style>

@@ -17,7 +17,7 @@
       <div
         v-if="opened"
         class="sf-dropdown-menu"
-        :style="{ [placement]: 'calc(100% + 4px)' }"
+        :style="[placementStyle, menuStyle]"
         role="menu"
       >
         <slot />
@@ -27,14 +27,24 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 
-defineProps({
+const props = defineProps({
   placement: { type: String, default: 'top' },
+  menuStyle: { type: Object, default: () => ({}) }
 })
 
 const opened = ref(false)
 const dropdownRef = ref(null)
+
+// placement 解析 — 'top'/'bottom' 控制上下,'-end' 控制右对齐
+const placementStyle = computed(() => {
+  const isEnd = props.placement.endsWith('-end')
+  const side = props.placement.replace(/-end$/, '')
+  const style = { [side]: 'calc(100% + 4px)' }
+  if (isEnd) { style.left = 'auto'; style.right = '0' }
+  return style
+})
 
 function toggle() {
   opened.value = !opened.value
