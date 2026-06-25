@@ -178,6 +178,20 @@
   --animate-pulse-subtle: pulse-subtle 2s var(--ease-standard) infinite;
 }
 
+@theme inline {
+  /* ========== shadcn 颜色 → Tailwind utility 桥接 ==========
+     shadcn Button cva 用 `bg-primary` `text-primary-foreground` `bg-destructive` 等
+     Tailwind v4 解析 `bg-{name}` 找的是 `--color-{name}`,而 :root 用的命名是
+     `--primary` `--destructive` (无 --color- 前缀),所以 utility 解析失败 fallback transparent
+     这里把 shadcn 命名桥接到 Tailwind utility,这样 button/弹窗/卡片 等组件能正确渲染。
+     用 @theme inline (而非 @theme) — 保留 var() 引用,跟随 :root/.dark 主题切换,
+     不会被 Tailwind 编译器判定为循环引用而跳过生成 utility */
+  --color-primary: var(--primary);
+  --color-primary-foreground: #ffffff;
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: #ffffff;
+}
+
 @keyframes fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
