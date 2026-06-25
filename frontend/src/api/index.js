@@ -222,11 +222,13 @@ export const bookmarkExportAPI = {
 }
 
 // ==================== 标签 API ====================
+// 后端路由: GET/POST /api/tags, PUT/DELETE /api/tags/{id} (tags.py router prefix=/api/tags)
+// create/update/delete 内部有 admin role 校验 (current_user.role != 1 → 403)
 export const tagsAPI = {
   getList: (params) => api.get('/tags', { params }),
-  create: (data) => api.post('/admin/tags', data),
-  update: (id, data) => api.put(`/admin/tags/${id}`, data),
-  delete: (id) => api.delete(`/admin/tags/${id}`),
+  create: (data) => api.post('/tags', data),
+  update: (id, data) => api.put(`/tags/${id}`, data),
+  delete: (id) => api.delete(`/tags/${id}`),
   assignTags: (materialId, tagIds) => api.post(`/admin/materials/${materialId}/tags`, { tag_ids: tagIds })
 }
 
