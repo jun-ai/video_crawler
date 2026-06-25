@@ -41,16 +41,19 @@ import { confirmState } from '@/composables/useConfirm'
 .sf-confirm-dialog {
   background: var(--color-bg-card);
   border-radius: 16px;
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18), 0 4px 8px rgba(0, 0, 0, 0.10);
   padding: 24px;
   width: 400px;
   max-width: 90vw;
-  animation: scale-in 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  max-height: 80vh;
+  overflow-y: auto;
+  /* 单一 scale 动画,去掉 opacity 避免双层透明叠加造成的"虚化"感 */
+  animation: sf-confirm-scale-in 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-@keyframes scale-in {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+@keyframes sf-confirm-scale-in {
+  from { transform: scale(0.95); }
+  to { transform: scale(1); }
 }
 
 .sf-confirm-title {
@@ -74,13 +77,17 @@ import { confirmState } from '@/composables/useConfirm'
 }
 
 .sf-confirm-btn {
-  padding: 8px 18px;
+  padding: 9px 20px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
+  min-height: 38px;
   transition: all var(--sf-duration-fast);
+}
+.sf-confirm-btn:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .sf-confirm-btn--cancel {
@@ -103,12 +110,13 @@ import { confirmState } from '@/composables/useConfirm'
 }
 .sf-confirm-btn--danger:hover { background: #dc2626; }
 
+/* Overlay 用纯背景淡入,不再动 dialog 本身 opacity (避免双层透明) */
 .sf-confirm-enter-active,
 .sf-confirm-leave-active {
-  transition: opacity var(--sf-duration-normal);
+  transition: background-color var(--sf-duration-normal);
 }
 .sf-confirm-enter-from,
 .sf-confirm-leave-to {
-  opacity: 0;
+  background-color: rgba(0, 0, 0, 0);
 }
 </style>
