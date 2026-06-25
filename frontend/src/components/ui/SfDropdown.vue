@@ -30,7 +30,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 
 const props = defineProps({
-  placement: { type: String, default: 'top' },
+  placement: { type: String, default: 'bottom' },
   menuStyle: { type: Object, default: () => ({}) }
 })
 
@@ -38,10 +38,14 @@ const opened = ref(false)
 const dropdownRef = ref(null)
 
 // placement 解析 — 'top'/'bottom' 控制上下,'-end' 控制右对齐
+// 注意: placement 表示菜单相对触发器的方向。CSS 定位用相反边:
+//   placement='top'    → 菜单在上方 → 用 bottom:100% 把菜单底边贴到触发器顶部
+//   placement='bottom' → 菜单在下方 → 用 top:100% 把菜单顶边贴到触发器底部
 const placementStyle = computed(() => {
   const isEnd = props.placement.endsWith('-end')
   const side = props.placement.replace(/-end$/, '')
-  const style = { [side]: 'calc(100% + 4px)' }
+  const offsetSide = side === 'top' ? 'bottom' : 'top'
+  const style = { [offsetSide]: 'calc(100% + 4px)' }
   if (isEnd) { style.left = 'auto'; style.right = '0' }
   return style
 })
