@@ -35,8 +35,12 @@
         <div class="progress-fill" :style="{ width: progress + '%' }"></div>
       </div>
 
-      <!-- 难度色块 -->
-      <div class="difficulty-badge" v-if="difficulty">
+      <!-- 难度色块 — 用实色 + 难度专属色,清楚可读,不再 blur 虚化图片 -->
+      <div
+        class="difficulty-badge"
+        v-if="difficulty"
+        :style="{ '--diff-color': difficultyColors[difficulty] || 'var(--color-brand)' }"
+      >
         {{ difficultyLabel }}
       </div>
 
@@ -143,28 +147,10 @@ const handleClick = () => {
   position: relative;
 }
 
-.video-card::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: linear-gradient(180deg, var(--color-brand) 0%, var(--color-accent) 100%);
-  opacity: 0;
-  transition: opacity var(--sf-duration-slow) ease;
-  border-radius: 3px 0 0 3px;
-  z-index: 4;
-}
-
 .video-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 16px 40px rgba(37, 99, 235, 0.15), 0 4px 12px rgba(0, 0, 0, 0.06);
   border-color: var(--color-brand);
-}
-
-.video-card:hover::before {
-  opacity: 1;
 }
 
 /* ====== 缩略图 ====== */
@@ -293,9 +279,10 @@ const handleClick = () => {
   line-height: 1;
   z-index: 3;
   letter-spacing: 0.3px;
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--color-brand);
-  backdrop-filter: blur(4px);
+  /* 改用实色 (按难度色) + 白字,删 backdrop-filter blur,避免图片左上被虚化 */
+  background: var(--diff-color, var(--color-brand));
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
 /* 进度条 */
