@@ -22,9 +22,10 @@
           @click="selectMaterial(item)"
         >
           <img
-            :src="item.thumbnail_path || '/default-thumb.png'"
+            :src="item.cover_path || defaultThumb"
             :alt="item.title"
             class="ec-sidebar-thumb"
+            @error="onThumbError($event, item)"
           />
           <div class="ec-sidebar-info">
             <div class="ec-sidebar-title">{{ item.title }}</div>
@@ -205,6 +206,23 @@ import EnglishCardItem from '@/components/learn/EnglishCardItem.vue'
 const userStore = useUserStore()
 const router = useRouter()
 const { speakWord, preloadVoices } = useTTS()
+
+// 默认缩略图 — 灰底 + Video icon SVG (data URI),避免 /default-thumb.png 404
+const defaultThumb =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+      <rect width="48" height="48" rx="6" fill="#E2E8F0"/>
+      <path d="M19 16 L33 24 L19 32 Z" fill="#94A3B8"/>
+    </svg>`
+  )
+// 缩略图加载失败时,把 src 替换成 defaultThumb(防止 OSS 404 后 img 空白)
+const failedThumbs = new Set()
+const onThumbError = (e, item) => {
+  if (failedThumbs.has(item.id)) return
+  failedThumbs.add(item.id)
+  e.target.src = defaultThumb
+}
 
 // ==================== State ====================
 const searchQuery = ref('')
