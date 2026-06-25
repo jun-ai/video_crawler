@@ -48,7 +48,7 @@ onBeforeUnmount(() => {
 <template>
   <Dialog :open="modelValue" @update:open="(val) => { if (!val) close() }">
     <DialogContent
-      :style="{ width, maxWidth }"
+      :style="{ '--sf-dialog-w': width, '--sf-dialog-mw': maxWidth }"
       class="sf-dialog-content"
       @pointer-down-outside="handleOverlayClick"
     >
@@ -72,7 +72,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .sf-dialog-content {
-  max-height: 80vh;
+  max-height: calc(100vh - 32px);
 }
 
 .sf-dialog-body {

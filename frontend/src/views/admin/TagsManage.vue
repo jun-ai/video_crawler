@@ -201,7 +201,7 @@ onMounted(() => {
 <style scoped>
 /* ====== 页面容器 ====== */
 .tags-manage {
-  max-width: 1600px;
+  max-width: 100%;
   margin: 0 auto;
   padding: 0;
 }

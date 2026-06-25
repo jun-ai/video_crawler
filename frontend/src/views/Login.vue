@@ -113,7 +113,9 @@ const handleLogin = async () => {
   try {
     await userStore.login(form.phone, form.password)
     toast.success('登录成功')
-    router.push('/')
+    // 优先跳 redirect query 指定的目标 (如 /admin),否则回首页
+    const redirect = router.currentRoute.value.query.redirect
+    router.push(typeof redirect === 'string' && redirect.startsWith('/') ? redirect : '/')
   } catch (e) {
     console.error('登录失败', e)
   } finally {

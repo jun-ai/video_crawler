@@ -12,7 +12,7 @@ import {
 } from "reka-ui"
 import { cn } from "@/lib/utils"
 
-const props = defineProps<DialogContentProps & { class?: HTMLAttributes["class"] }>()
+const props = defineProps<DialogContentProps & { class?: HTMLAttributes["class"]; style?: HTMLAttributes["style"] }>()
 const emits = defineEmits<DialogContentEmits>()
 
 const delegatedProps = reactiveOmit(props, "class")
@@ -26,6 +26,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
     <DialogContent
       v-bind="forwarded"
       :class="cn('sf-reka-dialog-content', props.class)"
+      :style="props.style"
     >
       <slot />
 
@@ -54,8 +55,8 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
   transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
-  width: 100%;
-  max-width: 32rem; /* 默认 max-w-lg,允许 props.class 覆盖 */
+  width: var(--sf-dialog-w, 480px);
+  max-width: var(--sf-dialog-mw, 90vw);
   max-height: 85vh;
   overflow-y: auto;
   gap: 16px;

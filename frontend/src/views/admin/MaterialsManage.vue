@@ -601,7 +601,7 @@ onMounted(() => {
    ======================================== */
 
 .materials-manage {
-  max-width: 1600px;
+  max-width: 100%;
 }
 
 /* ── Page Header ── */

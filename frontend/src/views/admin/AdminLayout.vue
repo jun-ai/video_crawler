@@ -133,8 +133,8 @@ const goHome = () => {
 
 /* ── Desktop Sidebar ── */
 .admin-sidebar {
-  width: 240px;
-  min-width: 240px;
+  width: 200px;
+  min-width: 200px;
   background: var(--sf-admin-bg-card);
   display: flex;
   flex-direction: column;

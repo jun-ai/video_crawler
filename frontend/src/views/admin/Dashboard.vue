@@ -181,7 +181,7 @@ onMounted(() => {
    ======================================== */
 
 .dashboard {
-  max-width: 1600px;
+  max-width: 100%;
 }
 
 .page-title {
