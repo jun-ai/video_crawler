@@ -157,10 +157,10 @@
   --yt-highlight-bg: var(--sf-brand-subtle);
   --yt-highlight-border: rgba(37, 99, 235, 0.3);
   --yt-study-divider: var(--sf-border);
-  --color-success: var(--sf-success);
-  --color-warning: var(--sf-warning);
-  --color-danger: var(--sf-danger);
-  --color-info: var(--sf-info);
+  /* 注: 不要在这里反向定义 --color-success/warning/danger/info →
+     会跟 L31-34 的 --sf-* 形成循环引用, CSS var() 解析降级到空,
+     所有 background: var(--color-warning) 全部失效 (SfConfirmDialog "确定" 按钮透明看不清,
+     SfTag warning/danger 类型背景透明等)。需要 color 实际值, 直接走 Tailwind v4 @layer theme 设的。 */
   --annotation-vocabulary: var(--sf-annotation-vocabulary);
   --annotation-phrase: var(--sf-annotation-phrase);
   --annotation-important: var(--sf-annotation-important);
@@ -209,11 +209,10 @@
   --yt-border: var(--color-border);
   --yt-highlight-bg: rgba(37, 99, 235, 0.1);
   --yt-highlight-border: rgba(37, 99, 235, 0.3);
-  --color-text-primary: var(--color-text-primary);
-  --color-text-secondary: var(--color-text-secondary);
+  /* 注: 不要在 .dark 下自我引用 --color-text-primary/secondary/border →
+     CSS var() 解析降级到空。需要 dark 值直接在 .dark 写实际值。 */
   --color-text-tertiary: var(--color-text-muted);
   --color-text-placeholder: #475569;
-  --color-border: var(--color-border);
   --color-border-light: var(--color-border-strong);
   --color-bg: var(--color-bg-base);
   --color-bg-secondary: var(--color-bg-card);
