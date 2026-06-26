@@ -62,6 +62,9 @@
           <SfFormItem label="状态">
             <SfSelect v-model="filters.is_active" :options="statusOptions" placeholder="全部状态" />
           </SfFormItem>
+          <SfFormItem label="时长">
+            <SfSelect v-model="filters.duration" :options="durationOptions" placeholder="全部时长" @change="loadMaterials(1)" />
+          </SfFormItem>
           <SfFormItem>
             <div class="filter-actions">
               <SfButton type="primary" @click="loadMaterials(1)">搜索</SfButton>
@@ -408,10 +411,32 @@ const statusOptions = [
   { label: '待审核', value: false }
 ]
 
+// 时长筛选 (秒) — 跟"分类/状态"同样的预设档位
+const durationOptions = [
+  { label: '全部时长', value: '' },
+  { label: '短视频 (< 60s)', value: 'short' },
+  { label: '中等 (60-180s)', value: 'medium' },
+  { label: '中长 (180-600s)', value: 'long' },
+  { label: '长视频 (> 600s)', value: 'extra' }
+]
+
+// duration enum → 后端 min_duration / max_duration query params
+// 注: max_duration=null 表示无上限 (用于 "长视频 >600s" 档)
+function durationToRange(value) {
+  switch (value) {
+    case 'short':  return { min_duration: 0,   max_duration: 60 }
+    case 'medium': return { min_duration: 60,  max_duration: 180 }
+    case 'long':   return { min_duration: 180, max_duration: 600 }
+    case 'extra':  return { min_duration: 600, max_duration: null }
+    default:       return {}
+  }
+}
+
 const filters = reactive({
   keyword: '',
   category: '',
-  is_active: null
+  is_active: null,
+  duration: ''  // 全部时长 / short / medium / long / extra (映射 min/max_duration)
 })
 
 const pagination = reactive({
@@ -427,7 +452,8 @@ const loadMaterials = async (page = null) => {
     const res = await adminAPI.getMaterials({
       page: pagination.page,
       page_size: pagination.pageSize,
-      ...filters
+      ...filters,
+      ...durationToRange(filters.duration)  // duration enum → min/max query params
     })
     materials.value = res.items.map(m => ({ ...m, statusLoading: false }))
     pagination.total = res.total
@@ -483,6 +509,7 @@ const resetFilters = () => {
   filters.keyword = ''
   filters.category = ''
   filters.is_active = null
+  filters.duration = ''
   pagination.page = 1
   loadMaterials()
 }

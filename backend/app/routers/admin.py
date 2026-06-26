@@ -449,6 +449,8 @@ async def admin_get_materials(
     category: Optional[str] = None,
     is_active: Optional[bool] = None,
     keyword: Optional[str] = None,
+    min_duration: Optional[int] = None,
+    max_duration: Optional[int] = None,
     current_admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db)
 ):
@@ -462,6 +464,11 @@ async def admin_get_materials(
         query = query.where(Material.is_active == is_active)
     if keyword:
         query = query.where(Material.title.ilike(f"%{keyword}%"))
+    # 时长筛选 (秒)。max_duration=None 表示无上限 (用于 "长视频 >600s" 档)。
+    if min_duration is not None:
+        query = query.where(Material.duration >= min_duration)
+    if max_duration is not None:
+        query = query.where(Material.duration <= max_duration)
 
     # 统计总数
     count_query = select(func.count()).select_from(query.subquery())
