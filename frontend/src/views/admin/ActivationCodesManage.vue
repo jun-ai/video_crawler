@@ -134,7 +134,7 @@ const columns = [
 const generateForm = reactive({
   count: 5,
   max_uses: 1,
-  expires_days: 30
+  expires_days: 365  // 默认 1 年 (365 天); 用户填 0 = 永久, 留空 = 后端按 None 处理
 })
 
 const pagination = reactive({
