@@ -279,6 +279,8 @@ export const adminAPI = {
   generateActivationCodes: (data) => api.post('/admin/activation-codes', data),
   getActivationCodes: (params) => api.get('/admin/activation-codes', { params }),
   deleteActivationCode: (id) => api.delete(`/admin/activation-codes/${id}`),
+  batchDeleteActivationCodes: (ids) => api.post('/admin/activation-codes/batch-delete', { ids }),
+  deleteAllUnusedActivationCodes: (confirm = true) => api.delete('/admin/activation-codes-all', { params: { confirm } }),
 
   // 公告管理
   createAnnouncement: (data) => api.post('/admin/announcements', data),

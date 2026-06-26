@@ -45,7 +45,63 @@
 
     <!-- 列表 -->
     <div class="card-container list-card">
+      <!-- 顶部操作栏: 批量删除 (v-if 有选) + 全部删除未使用 (一直显示) -->
+      <div class="list-toolbar">
+        <div class="list-toolbar__left">
+          <span class="list-toolbar__count">共 {{ pagination.total }} 个激活码</span>
+          <span v-if="selectedIds.length > 0" class="list-toolbar__selected">
+            已选 <strong>{{ selectedIds.length }}</strong> 个
+          </span>
+        </div>
+        <div class="list-toolbar__right">
+          <!-- 全选 checkbox (header) — 在 toolbar 跟表头都能切换 -->
+          <label class="select-all-label">
+            <input
+              type="checkbox"
+              :checked="isAllSelected"
+              :indeterminate.prop="selectAllState === 1"
+              @change="toggleSelectAll"
+            />
+            <span>全选当前页</span>
+          </label>
+          <SfButton
+            v-if="selectedIds.length > 0"
+            type="ghost"
+            size="sm"
+            @click="clearSelection"
+          >
+            取消选择
+          </SfButton>
+          <SfPopconfirm
+            v-if="selectedIds.length > 0"
+            :title="`确定删除选中的 ${selectedIds.length} 个激活码？`"
+            @confirm="batchDeleteSelected"
+          >
+            <SfButton type="danger" size="sm" :loading="bulkDeleting">
+              <Trash2 :size="14" style="margin-right: 4px;" />
+              批量删除
+            </SfButton>
+          </SfPopconfirm>
+          <SfPopconfirm
+            title="确定删除所有未使用的激活码？已使用的会保留。"
+            @confirm="deleteAllUnused"
+          >
+            <SfButton type="danger" size="sm" :loading="deletingAll">
+              <Trash2 :size="14" style="margin-right: 4px;" />
+              全部删除未使用
+            </SfButton>
+          </SfPopconfirm>
+        </div>
+      </div>
       <SfTable :columns="columns" :data="codes">
+        <template #select="{ row }">
+          <input
+            type="checkbox"
+            class="row-checkbox"
+            :checked="selectedIds.includes(row.id)"
+            @change="toggleSelect(row.id)"
+          />
+        </template>
         <template #id="{ row }">{{ row.id }}</template>
         <template #code="{ row }">
           <code class="code-cell">{{ row.code }}</code>
@@ -99,9 +155,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { toast } from '@/composables/useToast'
-import { Plus, Copy } from 'lucide-vue-next'
+import { Plus, Copy, Trash2 } from 'lucide-vue-next'
 import { adminAPI } from '@/api'
 import SfButton from '@/components/ui/SfButton.vue'
 import SfInput from '@/components/ui/SfInput.vue'
@@ -116,12 +172,40 @@ import SfPagination from '@/components/ui/SfPagination.vue'
 
 const loading = ref(false)
 const generating = ref(false)
+const bulkDeleting = ref(false)
+const deletingAll = ref(false)
 const codes = ref([])
 const generatedCodes = ref([])
 const showGenerateDialog = ref(false)
 const showResultDialog = ref(false)
+const selectedIds = ref([])  // 多选 ids
+
+// 全选 checkbox 状态: 0=未选, 1=部分, 2=全选
+const selectAllState = computed(() => {
+  if (selectedIds.value.length === 0) return 0
+  if (selectedIds.value.length === codes.value.length) return 2
+  return 1
+})
+const isAllSelected = computed(() => selectAllState.value === 2)
+
+function toggleSelect(id) {
+  const i = selectedIds.value.indexOf(id)
+  if (i >= 0) selectedIds.value.splice(i, 1)
+  else selectedIds.value.push(id)
+}
+function toggleSelectAll() {
+  if (isAllSelected.value) {
+    selectedIds.value = []
+  } else {
+    selectedIds.value = codes.value.map(c => c.id)
+  }
+}
+function clearSelection() {
+  selectedIds.value = []
+}
 
 const columns = [
+  { key: 'select', label: '', width: '50px' },
   { key: 'id', label: 'ID', width: '70px' },
   { key: 'code', label: '激活码', width: '140px' },
   { key: 'usage', label: '使用情况', width: '160px' },
@@ -152,6 +236,7 @@ const loadCodes = async () => {
     })
     codes.value = res.items || []
     pagination.total = res.total || 0
+    clearSelection()  // 翻页/刷新清空选择 (避免跨页选错)
   } catch (e) {
     toast.error('加载激活码列表失败')
   } finally {
@@ -179,9 +264,42 @@ const handleDelete = async (row) => {
   try {
     await adminAPI.deleteActivationCode(row.id)
     toast.success('激活码已删除')
+    // 删完从 selectedIds 移除
+    selectedIds.value = selectedIds.value.filter(id => id !== row.id)
     loadCodes()
   } catch (e) {
     toast.error('删除失败')
+  }
+}
+
+// 批量删除选中的激活码
+const batchDeleteSelected = async () => {
+  if (!selectedIds.value.length) return
+  bulkDeleting.value = true
+  try {
+    const res = await adminAPI.batchDeleteActivationCodes([...selectedIds.value])
+    toast.success(res.message || `已删除 ${res.deleted_count} 个激活码`)
+    clearSelection()
+    loadCodes()
+  } catch (e) {
+    toast.error('批量删除失败: ' + (e.response?.data?.detail || e.message))
+  } finally {
+    bulkDeleting.value = false
+  }
+}
+
+// 全部删除"未使用"的激活码 (后端 confirm=true 二次确认, 已用的保留)
+const deleteAllUnused = async () => {
+  deletingAll.value = true
+  try {
+    const res = await adminAPI.deleteAllUnusedActivationCodes(true)
+    toast.success(res.message || `已删除 ${res.deleted_count} 个未使用的激活码`)
+    clearSelection()
+    loadCodes()
+  } catch (e) {
+    toast.error('全部删除失败: ' + (e.response?.data?.detail || e.message))
+  } finally {
+    deletingAll.value = false
   }
 }
 

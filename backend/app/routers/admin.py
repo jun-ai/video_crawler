@@ -1261,6 +1261,66 @@ async def delete_activation_code(
     return MessageResponse(message="激活码已删除", success=True)
 
 
+# 批量删除 (Pydantic body schema)
+class BatchDeleteCodesRequest(BaseModel):
+    ids: List[int]
+
+
+@router.post("/activation-codes/batch-delete")
+async def batch_delete_activation_codes(
+    data: BatchDeleteCodesRequest,
+    current_admin: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """批量删除激活码 (按 id 列表)"""
+    if not data.ids:
+        raise HTTPException(status_code=400, detail="ids 不能为空")
+    result = await db.execute(select(ActivationCode).where(ActivationCode.id.in_(data.ids)))
+    codes = result.scalars().all()
+    deleted_count = 0
+    for c in codes:
+        await db.delete(c)
+        deleted_count += 1
+    await db.commit()
+    return {
+        "deleted_count": deleted_count,
+        "requested_count": len(data.ids),
+        "message": f"已删除 {deleted_count} 个激活码"
+    }
+
+
+@router.delete("/activation-codes-all")
+async def delete_all_unused_activation_codes(
+    confirm: bool = Query(False, description="必须传 true 才执行, 防止误删"),
+    current_admin: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    全部删除"未使用"的激活码 (use_count = 0)
+    - 已使用的码 (use_count > 0) **不会被删**, 保留追溯链
+    - 必须传 ?confirm=true 才执行 (防止误操作)
+    """
+    if not confirm:
+        raise HTTPException(
+            status_code=400,
+            detail="必须传 ?confirm=true 才执行此操作 (防误删)"
+        )
+    result = await db.execute(
+        select(ActivationCode).where(ActivationCode.use_count == 0)
+    )
+    codes = result.scalars().all()
+    deleted_count = 0
+    for c in codes:
+        await db.delete(c)
+        deleted_count += 1
+    await db.commit()
+    return {
+        "deleted_count": deleted_count,
+        "kept_used": True,  # 已用的没删
+        "message": f"已删除 {deleted_count} 个未使用的激活码 (已使用的保留)"
+    }
+
+
 # ==================== 公告管理 ====================
 
 @router.post("/announcements")
