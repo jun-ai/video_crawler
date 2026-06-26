@@ -175,6 +175,7 @@ async def get_materials(
     difficulty: Optional[int] = None,
     keyword: Optional[str] = None,
     tag_id: Optional[int] = None,
+    duration_range: Optional[str] = None,  # 视频库前台筛选: 'short' (< 3 分钟) / 'medium' (3-10 分钟) / 'long' (> 10 分钟)
     db: AsyncSession = Depends(get_db)
 ):
     """获取语料列表（支持分页和筛选）"""
@@ -194,6 +195,14 @@ async def get_materials(
                 select(MaterialTag.material_id).where(MaterialTag.tag_id == tag_id)
             )
         )
+    # 时长筛选 (前台"视频库" duration_range)
+    # 注: Material.duration 是 Integer (秒), NULL 不参与比较自动排除
+    if duration_range == 'short':    # < 3 分钟
+        query = query.where(Material.duration < 180)
+    elif duration_range == 'medium':  # 3-10 分钟
+        query = query.where(Material.duration >= 180, Material.duration <= 600)
+    elif duration_range == 'long':    # > 10 分钟
+        query = query.where(Material.duration > 600)
 
     # 统计总数
     count_query = select(func.count()).select_from(query.subquery())
