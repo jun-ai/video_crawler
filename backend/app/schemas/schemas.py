@@ -27,6 +27,9 @@ class UserResponse(BaseModel):
     avatar: Optional[str] = None
     level: Optional[int] = 1
     role: int = 0  # 用户角色：0普通用户，1管理员
+    activation_code_id: Optional[int] = None  # 绑定的激活码 ID (一人一码)
+    status: Optional[str] = 'approved'         # pending/approved/rejected
+    activated_at: Optional[datetime] = None   # 激活时间
     created_at: datetime
 
     class Config:
