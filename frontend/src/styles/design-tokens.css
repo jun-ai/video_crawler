@@ -167,9 +167,10 @@
   --shadow-card: var(--sf-shadow-sm);
   --shadow-hover: var(--sf-shadow-md);
   --shadow-modal: var(--sf-shadow-lg);
-  --shadow-sm: var(--sf-shadow-xs);
-  --shadow-lg: var(--sf-shadow-lg);
-  --shadow-xl: var(--sf-shadow-lg);
+  /* 注: 不要在这里反向定义 --shadow-sm / --shadow-lg / --shadow-xl →
+     会跟 L113-117 的 --sf-shadow-* 形成循环引用, CSS var() 解析降级到空,
+     所有 box-shadow: var(--shadow-lg) 全部失效 (SfPopconfirm/SfSelect/SfDropdown/SfToast 等)。
+     需要 shadow 实际值,直接走 Tailwind v4 @layer theme 设的。 */
   --transition-fast: var(--sf-duration-fast);
   --transition-normal: var(--sf-duration-normal);
   --transition-slow: var(--sf-duration-slow);
