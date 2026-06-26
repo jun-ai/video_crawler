@@ -254,6 +254,8 @@ export const adminAPI = {
   // 重新生成字幕 / 重新解读
   retranscribe: (id, params = {}) => api.post(`/admin/materials/${id}/retranscribe`, null, { params, timeout: 30000 }),
   reinterpret: (id) => api.post(`/admin/materials/${id}/reinterpret`, null, { timeout: 30000 }),
+  probeDuration: (videoPath) => api.post('/admin/materials/probe-duration', { video_path: videoPath }),
+  backfillDurations: () => api.post('/admin/materials/backfill-durations'),
 
   // CSV 导出 (blob 下载, 跟词汇导出用同套路)
   exportMaterials: (params) => api.get('/admin/materials/export', {

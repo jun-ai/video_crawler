@@ -216,7 +216,20 @@
             />
           </SfFormItem>
           <SfFormItem label="时长(秒)" class="edit-col">
-            <SfInput v-model.number="editModal.form.duration" type="number" placeholder="秒" />
+            <div class="duration-input-group">
+              <SfInput v-model.number="editModal.form.duration" type="number" placeholder="秒" />
+              <SfButton
+                type="ghost"
+                size="sm"
+                :loading="probingDuration"
+                :disabled="!editModal.form.video_path || probingDuration"
+                @click="probeMaterialDuration"
+                title="从 OSS 下载视频并用 ffprobe 自动提取时长"
+              >
+                <RefreshCw :size="14" style="margin-right: 4px;" />
+                自动检测
+              </SfButton>
+            </div>
           </SfFormItem>
         </div>
         <SfFormItem label="状态">
@@ -292,7 +305,7 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from '@/composables/useToast'
 import {
-  Download, Plus, Pencil, Eye, EyeOff, MoreHorizontal, Settings
+  Download, Plus, Pencil, Eye, EyeOff, MoreHorizontal, Settings, RefreshCw
 } from 'lucide-vue-next'
 import { adminAPI, materialAPI } from '@/api'
 import SfButton from '@/components/ui/SfButton.vue'
@@ -321,8 +334,9 @@ const selectedIds = ref([])
 const editModal = reactive({
   show: false,
   saving: false,
+  probingDuration: false,
   title: '编辑语料',
-  form: { id: null, title: '', description: '', category: '', difficulty: 2, duration: null, is_active: true }
+  form: { id: null, title: '', description: '', category: '', difficulty: 2, duration: null, is_active: true, video_path: null }
 })
 
 // OSS 信息 modal 状态
@@ -569,10 +583,30 @@ const openEdit = (row) => {
     category: row.category || '',
     difficulty: row.difficulty || 2,
     duration: row.duration || null,
-    is_active: !!row.is_active
+    is_active: !!row.is_active,
+    video_path: row.video_path || null   // 给"自动检测时长"按钮用
   }
   editModal.title = `编辑语料 #${row.id}`
   editModal.show = true
+}
+
+// 自动检测时长: 从 OSS 下载视频 → 后端 ffprobe → 填 input
+const probeMaterialDuration = async () => {
+  const vp = editModal.form.video_path
+  if (!vp) {
+    toast.error('该语料没有视频文件路径,无法探测')
+    return
+  }
+  editModal.probingDuration = true
+  try {
+    const res = await adminAPI.probeDuration(vp)
+    editModal.form.duration = res.duration
+    toast.success(`自动检测完成: ${res.duration} 秒`)
+  } catch (e) {
+    toast.error('自动检测失败: ' + (e.response?.data?.detail || e.message))
+  } finally {
+    editModal.probingDuration = false
+  }
 }
 
 const saveEdit = async () => {
@@ -736,6 +770,17 @@ onMounted(() => {
 .header-actions {
   display: flex;
   gap: 8px;
+}
+
+/* ── Duration input + 自动检测按钮 (同一行) ── */
+.duration-input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.duration-input-group .sf-input {
+  flex: 1;
+  min-width: 100px;
 }
 
 .page-header h1 {

@@ -30,6 +30,27 @@ from app.services.subtitle_parser import parse_srt_file, parse_srt
 from app.routers.auth import get_current_admin
 from pydantic import BaseModel
 import tempfile
+import subprocess
+
+
+def _ffprobe_duration(video_path: str, timeout: int = 30) -> float:
+    """用 ffprobe 取视频时长（秒），失败返 0.0"""
+    cmd = [
+        "ffprobe", "-v", "error",
+        "-show_entries", "format=duration",
+        "-of", "default=noprint_wrappers=1:nokey=1",
+        video_path,
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        return float(result.stdout.strip())
+    except (ValueError, subprocess.TimeoutExpired, FileNotFoundError):
+        return 0.0
+
+
+# Pydantic body schema: probe-duration 用
+class ProbeDurationRequest(BaseModel):
+    video_path: str  # OSS object key, e.g. "videos/2026/06/abc.mp4"
 
 router = APIRouter(prefix="/api/admin", tags=["管理后台"])
 
@@ -1342,3 +1363,100 @@ async def delete_announcement(
     await db.delete(announcement)
     await db.commit()
     return MessageResponse(message="公告已删除", success=True)
+
+
+# ==================== 视频时长探测 (ffprobe) ====================
+
+@router.post("/materials/probe-duration")
+async def probe_material_duration(
+    req: ProbeDurationRequest,
+    current_admin: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    给定 video_path (OSS object key)，从 OSS 下载到本地，ffprobe 取时长（秒）。
+    不入库 — 调用方拿 duration 后自行决定是否写入。
+
+    用法：
+    1. 编辑语料: 前端拿 material.video_path → probe → 填到 input
+    2. 上传新视频: presign upload 完拿 object_key → probe → 填到 form
+    """
+    storage = get_storage_service()
+    if not await storage.file_exists(req.video_path):
+        raise HTTPException(status_code=404, detail=f"视频文件不存在: {req.video_path}")
+
+    # 下载到临时文件
+    tmpdir = tempfile.mkdtemp(prefix="probe_")
+    tmp_path = os.path.join(tmpdir, os.path.basename(req.video_path))
+    try:
+        ok = await storage.download_file(req.video_path, tmp_path)
+        if not ok:
+            raise HTTPException(status_code=500, detail="下载视频失败")
+        duration = _ffprobe_duration(tmp_path)
+        if duration <= 0:
+            raise HTTPException(status_code=422, detail="ffprobe 未能提取时长（视频可能损坏）")
+        # Material.duration 是 Integer, 取整秒
+        duration_int = int(round(duration))
+        return {"video_path": req.video_path, "duration": duration_int, "duration_raw": round(duration, 2)}
+    finally:
+        # 清理临时文件
+        try:
+            os.remove(tmp_path)
+            os.rmdir(tmpdir)
+        except OSError:
+            pass
+
+
+@router.post("/materials/backfill-durations")
+async def backfill_durations(
+    current_admin: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    批量: 遍历所有 duration IS NULL 的语料, 从 OSS 下载 + ffprobe + UPDATE 库。
+    Idempotent — 已填的跳过, 没视频文件的跳过。
+    """
+    result = await db.execute(
+        select(Material).where(Material.duration.is_(None)).order_by(Material.id)
+    )
+    materials = result.scalars().all()
+    storage = get_storage_service()
+    updated = []
+    skipped = []
+    failed = []
+    for m in materials:
+        if not m.video_path:
+            skipped.append({"id": m.id, "reason": "video_path is null"})
+            continue
+        if not await storage.file_exists(m.video_path):
+            skipped.append({"id": m.id, "reason": f"OSS file not found: {m.video_path}"})
+            continue
+        tmpdir = tempfile.mkdtemp(prefix="bf_")
+        tmp_path = os.path.join(tmpdir, os.path.basename(m.video_path))
+        try:
+            ok = await storage.download_file(m.video_path, tmp_path)
+            if not ok:
+                failed.append({"id": m.id, "reason": "download failed"})
+                continue
+            duration = _ffprobe_duration(tmp_path)
+            if duration <= 0:
+                failed.append({"id": m.id, "reason": "ffprobe returned 0"})
+                continue
+            m.duration = int(round(duration))
+            updated.append({"id": m.id, "duration": int(round(duration))})
+        finally:
+            try:
+                os.remove(tmp_path)
+                os.rmdir(tmpdir)
+            except OSError:
+                pass
+    await db.commit()
+    return {
+        "total_null_before": len(materials),
+        "updated_count": len(updated),
+        "skipped_count": len(skipped),
+        "failed_count": len(failed),
+        "updated": updated,
+        "skipped": skipped,
+        "failed": failed,
+    }
