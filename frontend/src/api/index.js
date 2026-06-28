@@ -254,6 +254,14 @@ export const adminAPI = {
   // 重新生成字幕 / 重新解读
   retranscribe: (id, params = {}) => api.post(`/admin/materials/${id}/retranscribe`, null, { params, timeout: 30000 }),
   reinterpret: (id) => api.post(`/admin/materials/${id}/reinterpret`, null, { timeout: 30000 }),
+  replaceSubtitle: (id, file) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post(`/admin/materials/${id}/replace-subtitle`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120000,
+    })
+  },
   probeDuration: (videoPath) => api.post('/admin/materials/probe-duration', { video_path: videoPath }),
   backfillDurations: () => api.post('/admin/materials/backfill-durations'),
 

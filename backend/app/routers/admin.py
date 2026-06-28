@@ -7,7 +7,7 @@ import uuid
 import re
 from typing import Annotated, Optional, List, Dict, Any
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Query
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Query, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, delete
 from sqlalchemy.orm import joinedload
@@ -15,7 +15,7 @@ from pathlib import Path
 import os
 
 from app.database import get_db
-from app.models.models import Material, Subtitle, User, Tag, MaterialTag, ActivationCode, Announcement
+from app.models.models import Material, Subtitle, SubtitleAnnotation, SubtitleBookmark, Vocabulary, VideoInterpretation, User, Tag, MaterialTag, ActivationCode, Announcement
 from app.schemas.schemas import (
     MaterialResponse,
     MaterialListResponse,
@@ -839,6 +839,116 @@ async def retranscribe_material(
     asyncio.create_task(_do_retranscribe())
 
     return {"task_id": task_id, "status": "pending", "message": "重新转录已启动"}
+
+
+@router.post("/materials/{material_id}/replace-subtitle")
+async def replace_subtitle(
+    material_id: int,
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    current_admin: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """上传 SRT 替换现有字幕。级联清理关联数据 (标注/书签/AI 解读) + 后台触发翻译+AI 解读"""
+    result = await db.execute(select(Material).where(Material.id == material_id))
+    material = result.scalar_one_or_none()
+    if not material:
+        raise HTTPException(status_code=404, detail="语料不存在")
+
+    # 1. 读文件 + 解码
+    srt_data = await file.read()
+    if not srt_data:
+        raise HTTPException(status_code=400, detail="上传文件为空")
+    srt_text = None
+    for enc in ["utf-8-sig", "utf-8", "gbk", "latin-1"]:
+        try:
+            srt_text = srt_data.decode(enc)
+            break
+        except UnicodeDecodeError:
+            continue
+    if srt_text is None:
+        raise HTTPException(status_code=400, detail="文件编码无法识别")
+
+    # 2. 解析 SRT (验证格式)
+    new_subs = parse_srt(srt_text, material_id)
+    if not new_subs:
+        raise HTTPException(status_code=422, detail="SRT 解析失败或为空")
+
+    # 3. 上传新 SRT 到 OSS
+    storage = get_storage_service()
+    srt_key = generate_object_key("subtitle", f"{material_id}_replaced.srt")
+    new_subtitle_path = await storage.upload_file(srt_data, srt_key, "text/plain")
+
+    # 4. 按 FK 依赖顺序清旧关联数据
+    from sqlalchemy import delete as sql_delete, update as sql_update
+    # 4a. 删 annotations + bookmarks (FK subtitle_id, RESTRICT — 必须先删)
+    await db.execute(
+        sql_delete(SubtitleAnnotation).where(
+            SubtitleAnnotation.subtitle_id.in_(
+                select(Subtitle.id).where(Subtitle.material_id == material_id)
+            )
+        )
+    )
+    await db.execute(
+        sql_delete(SubtitleBookmark).where(
+            SubtitleBookmark.subtitle_id.in_(
+                select(Subtitle.id).where(Subtitle.material_id == material_id)
+            )
+        )
+    )
+    # 4b. vocabularies.subtitle_id 置 NULL (保留生词记录)
+    await db.execute(
+        sql_update(Vocabulary)
+        .where(Vocabulary.subtitle_id.in_(
+            select(Subtitle.id).where(Subtitle.material_id == material_id)
+        ))
+        .values(subtitle_id=None)
+    )
+    # 4c. 删 AI 解读 (FK material_id, 但 CASCADE 配过, 显式删更稳)
+    await db.execute(
+        sql_delete(VideoInterpretation).where(VideoInterpretation.material_id == material_id)
+    )
+    # 4d. 删旧 subtitles
+    await db.execute(sql_delete(Subtitle).where(Subtitle.material_id == material_id))
+
+    # 5. 写新 subtitles
+    for sub in new_subs:
+        db.add(Subtitle(**sub.model_dump()))
+
+    # 6. 更新 material
+    material.subtitle_path = new_subtitle_path
+    material.interpretation_status = "pending"
+
+    await db.commit()
+
+    # 7. 后台触发翻译 + AI 解读 (FastAPI BackgroundTasks — response 后才跑, 跟主请求 session 隔离)
+    background_tasks.add_task(_post_replace, material_id)
+
+    return {
+        "success": True,
+        "subtitle_count": len(new_subs),
+        "subtitle_path": new_subtitle_path,
+        "message": f"已替换字幕 ({len(new_subs)} 条), 后台翻译+解读已触发"
+    }
+
+
+# 模块级后台函数 (BackgroundTasks.add_task 需要可 pickle / 无闭包依赖)
+async def _post_replace(material_id: int):
+    import httpx
+    try:
+        async with httpx.AsyncClient() as client:
+            await client.post(
+                f"http://127.0.0.1:8000/api/materials/{material_id}/translate",
+                json={},
+                timeout=600,
+            )
+    except Exception as e:
+        print(f"[WARN] replace-subtitle 翻译失败: {e}")
+    try:
+        from app.services.interpretation_tasks import generate_interpretations_for_material
+        await generate_interpretations_for_material(material_id)
+    except Exception as e:
+        print(f"[WARN] replace-subtitle AI 解读失败: {e}")
 
 
 @router.post("/materials/{material_id}/reinterpret")

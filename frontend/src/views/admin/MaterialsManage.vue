@@ -178,8 +178,13 @@
                 <div class="menu-item" @click="doReinterpret(row)">
                   <Sparkles :size="14" /><span>重新 AI 解读</span>
                 </div>
+                <div class="menu-divider"></div>
+                <div class="menu-item" @click="triggerReplaceSubtitle(row)">
+                  <FileUp :size="14" /><span>替换字幕文件</span>
+                </div>
               </div>
             </SfDropdown>
+            <input ref="replaceSubtitleInput" type="file" accept=".srt,.vtt" style="display:none" @change="handleReplaceSubtitle" />
           </div>
         </template>
       </SfTable>
@@ -305,7 +310,8 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from '@/composables/useToast'
 import {
-  Download, Plus, Pencil, Eye, EyeOff, MoreHorizontal, Settings, RefreshCw
+  Download, Plus, Pencil, Eye, EyeOff, MoreHorizontal, Settings, RefreshCw,
+  Server, FileText, Sparkles, FileUp
 } from 'lucide-vue-next'
 import { adminAPI, materialAPI } from '@/api'
 import SfButton from '@/components/ui/SfButton.vue'
@@ -656,6 +662,32 @@ const doReinterpret = async (row) => {
   }
 }
 
+// 替换字幕文件 (隐藏 file input 触发模式)
+const replaceSubtitleInput = ref(null)
+const triggerReplaceSubtitle = (row) => {
+  if (!replaceSubtitleInput.value) return
+  replaceSubtitleInput.value._targetRow = row
+  replaceSubtitleInput.value.value = ''
+  replaceSubtitleInput.value.click()
+}
+const handleReplaceSubtitle = async (event) => {
+  const file = event.target.files?.[0]
+  const row = event.target._targetRow
+  event.target.value = ''  // reset 允许重选同一文件
+  if (!file) return
+  if (!file.name.match(/\.(srt|vtt)$/i)) {
+    toast.error('请上传 .srt 或 .vtt 文件')
+    return
+  }
+  if (!confirm(`确定替换「${row.title}」的字幕?\n\n旧字幕的标注/书签会清空, 生词记录会保留 (不再关联旧字幕)。\n后台会自动重新翻译 + 生成 AI 解读,过程约 1-2 分钟。`)) return
+  try {
+    const res = await adminAPI.replaceSubtitle(row.id, file)
+    toast.success(res.message || '字幕已替换')
+  } catch (e) {
+    toast.error(e.response?.data?.detail || '替换失败')
+  }
+}
+
 // ============ CSV 导出 ============
 
 const exportCsv = async () => {
@@ -892,6 +924,12 @@ onMounted(() => {
   height: 1px;
   background: var(--sf-admin-border, rgba(255,255,255,0.08));
   margin: 4px 0;
+}
+
+/* ── Action cell: 不要 overflow:hidden,否则 SfDropdown 弹出菜单被截断
+   (其他列的 ellipsis 仍靠 td{overflow:hidden}) */
+.card-container :deep(td:has(.action-cell)) {
+  overflow: visible;
 }
 
 /* ── Dropdown menu (深色底 + 浅色文字) ── */
