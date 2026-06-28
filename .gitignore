@@ -2,10 +2,8 @@
 .env
 backend/.env
 
-# Old backups that are NOT 关键修复证据 (只留今天的)
+# Backups (gitignore all *.bak.* — 历史已暴露密钥事故 .env.bak.* + admin.py.bak.* 不能 commit)
 *.bak.*
-!*.env.bak.*
-!backend/app/main.py.bak.20260622_104323
 
 # Generated / large data
 data/
@@ -26,3 +24,6 @@ dist-cache/
 
 # Whisper models
 whisper_models/
+
+# Frontend build artifact (build 产物不进 git, ECS 从 host bind-mount serve)
+frontend/dist/

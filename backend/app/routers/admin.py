@@ -4,31 +4,53 @@
 """
 import asyncio
 import uuid
-from typing import Annotated, Optional, List, Dict
+import re
+from typing import Annotated, Optional, List, Dict, Any
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, delete
 from sqlalchemy.orm import joinedload
 from pathlib import Path
 import os
-import re
-from datetime import datetime
 
 from app.database import get_db
 from app.models.models import Material, Subtitle, User, Tag, MaterialTag, ActivationCode, Announcement
 from app.schemas.schemas import (
     MaterialResponse,
     MaterialListResponse,
+    MaterialUpdate,
     MessageResponse,
     AnnouncementCreate,
     AnnouncementUpdate
 )
 from app.config import settings
 from app.services.storage import get_storage_service, generate_object_key
-from app.services.subtitle_parser import parse_srt_file
+from app.services.subtitle_parser import parse_srt_file, parse_srt
 from app.routers.auth import get_current_admin
 from pydantic import BaseModel
 import tempfile
+import subprocess
+
+
+def _ffprobe_duration(video_path: str, timeout: int = 30) -> float:
+    """用 ffprobe 取视频时长（秒），失败返 0.0"""
+    cmd = [
+        "ffprobe", "-v", "error",
+        "-show_entries", "format=duration",
+        "-of", "default=noprint_wrappers=1:nokey=1",
+        video_path,
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        return float(result.stdout.strip())
+    except (ValueError, subprocess.TimeoutExpired, FileNotFoundError):
+        return 0.0
+
+
+# Pydantic body schema: probe-duration 用
+class ProbeDurationRequest(BaseModel):
+    video_path: str  # OSS object key, e.g. "videos/2026/06/abc.mp4"
 
 router = APIRouter(prefix="/api/admin", tags=["管理后台"])
 
@@ -58,6 +80,15 @@ class FetchURLRequest(BaseModel):
     category: Optional[str] = None
     difficulty: Optional[int] = None
     subtitle_langs: Optional[List[str]] = None
+
+
+@router.get("/ai-providers")
+async def get_ai_providers_status(
+    current_admin: User = Depends(get_current_admin),
+):
+    """查看 AI provider 状态(用于诊断熔断 / 配置)"""
+    from app.services.deepseek import get_ai_providers_status
+    return get_ai_providers_status()
 
 
 @router.post("/materials/fetch-url")
@@ -93,7 +124,7 @@ async def fetch_material_from_url(
 
     async def _do_fetch():
         from app.services.interpretation_tasks import generate_interpretations_for_material
-        from app.services.subtitle_parser import parse_srt_file
+        from app.services.subtitle_parser import parse_srt_file, parse_srt
 
         try:
             task.status = "fetching"
@@ -430,7 +461,6 @@ async def delete_transcribe_task(
     return {"message": "已清理"}
 
 
-
 # ==================== 语料管理 ====================
 
 @router.get("/materials", response_model=MaterialListResponse)
@@ -440,6 +470,8 @@ async def admin_get_materials(
     category: Optional[str] = None,
     is_active: Optional[bool] = None,
     keyword: Optional[str] = None,
+    min_duration: Optional[int] = None,
+    max_duration: Optional[int] = None,
     current_admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db)
 ):
@@ -453,6 +485,11 @@ async def admin_get_materials(
         query = query.where(Material.is_active == is_active)
     if keyword:
         query = query.where(Material.title.ilike(f"%{keyword}%"))
+    # 时长筛选 (秒)。max_duration=None 表示无上限 (用于 "长视频 >600s" 档)。
+    if min_duration is not None:
+        query = query.where(Material.duration >= min_duration)
+    if max_duration is not None:
+        query = query.where(Material.duration <= max_duration)
 
     # 统计总数
     count_query = select(func.count()).select_from(query.subquery())
@@ -553,6 +590,348 @@ async def delete_material(
     return {"message": "语料已删除", "success": True}
 
 
+# ==================== 编辑语料 ====================
+
+@router.put("/materials/{material_id}")
+async def update_material(
+    material_id: int,
+    payload: MaterialUpdate,
+    current_admin: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """编辑语料信息（仅更新 payload 中提供的字段）"""
+    result = await db.execute(select(Material).where(Material.id == material_id))
+    material = result.scalar_one_or_none()
+    if not material:
+        raise HTTPException(status_code=404, detail="语料不存在")
+
+    update_data = payload.model_dump(exclude_unset=True)
+    if not update_data:
+        raise HTTPException(status_code=400, detail="没有要更新的字段")
+
+    # title 截断防超长
+    if "title" in update_data and update_data["title"]:
+        update_data["title"] = update_data["title"][:200]
+    if "description" in update_data and update_data["description"]:
+        update_data["description"] = update_data["description"][:1000]
+
+    # difficulty 范围保护
+    if "difficulty" in update_data and update_data["difficulty"] is not None:
+        d = update_data["difficulty"]
+        if d < 1 or d > 5:
+            raise HTTPException(status_code=400, detail="difficulty 必须在 1-5 之间")
+        update_data["difficulty"] = d
+
+    for field, value in update_data.items():
+        setattr(material, field, value)
+
+    await db.commit()
+    await db.refresh(material)
+
+    return {
+        "message": "已更新",
+        "success": True,
+        "material": {
+            "id": material.id,
+            "title": material.title,
+            "description": material.description,
+            "category": material.category,
+            "difficulty": material.difficulty,
+            "duration": material.duration,
+            "is_active": material.is_active,
+        }
+    }
+
+
+# ==================== 批量删除 / 批量状态 ====================
+
+@router.post("/materials/batch-delete")
+async def batch_delete_materials(
+    payload: Dict[str, List[int]],
+    delete_files: bool = Query(False, description="是否同时删除 OSS 文件"),
+    current_admin: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """批量删除语料。payload: {"ids": [1,2,3]}"""
+    ids = payload.get("ids", [])
+    if not ids:
+        raise HTTPException(status_code=400, detail="ids 不能为空")
+
+    result = await db.execute(select(Material).where(Material.id.in_(ids)))
+    materials = result.scalars().all()
+
+    deleted = 0
+    if delete_files:
+        storage = get_storage_service()
+        for m in materials:
+            if m.storage_type != 'local':
+                try:
+                    for path_field in [m.video_path, m.subtitle_path, m.cover_path]:
+                        if not path_field:
+                            continue
+                        # path 可能是 object key 或带 bucket 的 url — 取最后一段当 key 不够准
+                        # 实际生产用 url 中 / 后的路径; 这里保守: 只删带 videos/ subtitles/ covers 前缀的 key
+                        for prefix in ["videos/", "subtitles/", "covers/"]:
+                            if prefix in path_field:
+                                key = path_field[path_field.index(prefix):]
+                                await storage.delete_file(key)
+                                break
+                except Exception as e:
+                    print(f"[BatchDelete] 删除 OSS 文件失败 (id={m.id}): {e}")
+
+    for m in materials:
+        await db.delete(m)
+        deleted += 1
+
+    await db.commit()
+
+    skipped = len(ids) - deleted
+    msg = f"已删除 {deleted} 个语料"
+    if skipped:
+        msg += f" (跳过 {skipped} 个: 不存在)"
+
+    return {"message": msg, "success": True, "deleted": deleted}
+
+
+@router.post("/materials/batch-status")
+async def batch_update_status(
+    payload: Dict[str, Any],
+    current_admin: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """批量发布/取消发布。payload: {"ids": [1,2,3], "is_active": true}"""
+    ids = payload.get("ids", [])
+    is_active = payload.get("is_active")
+    if not ids:
+        raise HTTPException(status_code=400, detail="ids 不能为空")
+    if is_active is None:
+        raise HTTPException(status_code=400, detail="is_active 必填")
+
+    result = await db.execute(select(Material).where(Material.id.in_(ids)))
+    materials = result.scalars().all()
+
+    updated = 0
+    for m in materials:
+        m.is_active = bool(is_active)
+        updated += 1
+    await db.commit()
+
+    skipped = len(ids) - updated
+    action = "发布" if is_active else "取消发布"
+    msg = f"已{action} {updated} 个语料"
+    if skipped:
+        msg += f" (跳过 {skipped} 个: 不存在)"
+
+    return {"message": msg, "success": True, "updated": updated}
+
+
+# ==================== 重新生成字幕 / 重新解读 ====================
+
+@router.post("/materials/{material_id}/retranscribe")
+async def retranscribe_material(
+    material_id: int,
+    model_size: str = Query("base", description="tiny / base / small"),
+    language: Optional[str] = Query(None, description="强制语言, 留空自动检测"),
+    current_admin: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """从 OSS 下载视频 → faster-whisper 转录 → 上传新 SRT 到 OSS → 替换 subtitle_path → 重新解析字幕
+    返回 task_id (后台运行, 前端轮询 status)"""
+    result = await db.execute(select(Material).where(Material.id == material_id))
+    material = result.scalar_one_or_none()
+    if not material:
+        raise HTTPException(status_code=404, detail="语料不存在")
+    if not material.video_path:
+        raise HTTPException(status_code=400, detail="语料没有视频文件")
+
+    task_id = uuid.uuid4().hex[:16]
+    _TRANSCRIBE_TASKS[task_id] = TranscribeTask(
+        task_id=task_id,
+        filename=f"material_{material_id}_retranscribe",
+        model_size=model_size,
+        language=language,
+        status="pending",
+        message="已加入队列,等待执行...",
+        created_at=datetime.now().isoformat(),
+    )
+
+    async def _do_retranscribe():
+        from app.services.video_transcriber import _transcribe_sync
+        tmpdir = tempfile.mkdtemp(prefix="retrans_")
+        local_video = os.path.join(tmpdir, "video.mp4")
+        local_srt = os.path.join(tmpdir, "subtitles.srt")
+        try:
+            t = _TRANSCRIBE_TASKS[task_id]
+            t.status = "extracting"
+            t.message = "下载视频从 OSS..."
+
+            # 从 OSS 拉视频到本地
+            storage = get_storage_service()
+            # 找到 object key: video_path 一般是 object key 或 url
+            # storage.download_file 接受 object key; 假设路径就是 key
+            video_key = material.video_path
+            for prefix in ["videos/", "subtitles/", "covers/"]:
+                if prefix in video_key and not video_key.startswith(prefix):
+                    video_key = video_key[video_key.index(prefix):]
+            await storage.download_file(video_key, local_video)
+
+            t.status = "transcribing"
+            t.message = "faster-whisper 转录中..."
+
+            # 同步转录包成异步 (run in thread pool)
+            loop = asyncio.get_event_loop()
+            result_data = await loop.run_in_executor(
+                None, _transcribe_sync, local_video, model_size, language,
+                lambda pct, msg: setattr(t, 'progress', pct) or setattr(t, 'message', msg)
+            )
+
+            if not result_data.get("success"):
+                raise RuntimeError(result_data.get("error", "转录失败"))
+
+            srt_text = result_data["srt"]
+            with open(local_srt, "w", encoding="utf-8") as f:
+                f.write(srt_text)
+
+            t.message = f"已转录 {result_data.get('segment_count', 0)} 条, 上传 OSS..."
+
+            # 上传新 SRT 到 OSS
+            srt_key = generate_object_key("subtitle", f"{material_id}_retrans.srt")
+            new_subtitle_path = await storage.upload_file(
+                srt_text.encode("utf-8"), srt_key, "text/plain"
+            )
+
+            # 更新 DB
+            material.subtitle_path = new_subtitle_path
+            material.duration = int(result_data.get("duration", 0))
+
+            # 删除旧字幕 + 写入新字幕
+            from sqlalchemy import delete as sql_delete
+            await db.execute(sql_delete(Subtitle).where(Subtitle.material_id == material_id))
+
+            subtitles = parse_srt(srt_text, material_id)
+            for sub in subtitles:
+                db.add(Subtitle(**sub.model_dump()))
+
+            await db.commit()
+
+            t.status = "done"
+            t.progress = 100
+            t.message = f"完成!字幕 {len(subtitles)} 条, 语言={result_data.get('language')}"
+            t.srt = srt_text
+            t.language_detected = result_data.get("language")
+            t.duration = result_data.get("duration")
+            t.segment_count = result_data.get("segment_count")
+            t.finished_at = datetime.now().isoformat()
+        except Exception as e:
+            t.status = "failed"
+            t.error = f"{type(e).__name__}: {str(e)[:300]}"
+            t.message = "转录失败"
+            t.finished_at = datetime.now().isoformat()
+            import traceback
+            traceback.print_exc()
+        finally:
+            try:
+                import shutil
+                shutil.rmtree(tmpdir, ignore_errors=True)
+            except Exception:
+                pass
+
+    asyncio.create_task(_do_retranscribe())
+
+    return {"task_id": task_id, "status": "pending", "message": "重新转录已启动"}
+
+
+@router.post("/materials/{material_id}/reinterpret")
+async def reinterpret_material(
+    material_id: int,
+    current_admin: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """重新生成 AI 解读 (单词/短语/语法/地道表达)
+    会清空旧的 VideoInterpretation, 触发后台任务"""
+    result = await db.execute(select(Material).where(Material.id == material_id))
+    material = result.scalar_one_or_none()
+    if not material:
+        raise HTTPException(status_code=404, detail="语料不存在")
+
+    # 清空旧解读
+    from app.models.models import VideoInterpretation
+    from sqlalchemy import delete as sql_delete
+    await db.execute(
+        sql_delete(VideoInterpretation).where(VideoInterpretation.material_id == material_id)
+    )
+
+    # 重置状态 + commit 让后台任务能看到 pending
+    material.interpretation_status = "pending"
+    await db.commit()
+    await db.refresh(material)
+
+    # 触发后台任务
+    try:
+        from app.services.interpretation_tasks import generate_interpretations_for_material
+        asyncio.create_task(generate_interpretations_for_material(material_id))
+    except Exception as e:
+        print(f"[Reinterpret] 触发失败: {e}")
+        return {"message": "触发失败", "success": False, "error": str(e)}
+
+    return {"message": "已重新触发 AI 解读", "success": True, "material_id": material_id}
+
+
+# ==================== CSV 导出 ====================
+
+@router.get("/materials/export")
+async def export_materials_csv(
+    category: Optional[str] = None,
+    is_active: Optional[bool] = None,
+    keyword: Optional[str] = None,
+    current_admin: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """导出语料列表为 CSV (UTF-8 BOM, Excel 友好)"""
+    import csv
+    import io
+
+    query = select(Material)
+    if category:
+        query = query.where(Material.category == category)
+    if is_active is not None:
+        query = query.where(Material.is_active == is_active)
+    if keyword:
+        query = query.where(Material.title.ilike(f"%{keyword}%"))
+    query = query.order_by(Material.created_at.desc())
+
+    result = await db.execute(query)
+    materials = result.scalars().all()
+
+    buf = io.StringIO()
+    buf.write("\ufeff")  # BOM 让 Excel 不乱码
+    writer = csv.writer(buf)
+    writer.writerow([
+        "id", "title", "category", "difficulty", "duration",
+        "view_count", "is_active", "storage_type",
+        "video_path", "subtitle_path", "cover_path",
+        "interpretation_status", "created_at"
+    ])
+    for m in materials:
+        writer.writerow([
+            m.id, m.title, m.category or "", m.difficulty, m.duration or "",
+            m.view_count, "true" if m.is_active else "false",
+            m.storage_type, m.video_path or "",
+            m.subtitle_path or "", m.cover_path or "",
+            m.interpretation_status or "", m.created_at.isoformat() if m.created_at else ""
+        ])
+
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    buf.seek(0)
+    return StreamingResponse(
+        iter([buf.getvalue()]),
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": f"attachment; filename=materials-{timestamp}.csv"
+        }
+    )
+
+
 # ==================== 批量操作 ====================
 
 @router.post("/materials/batch-upload")
@@ -603,6 +982,25 @@ async def batch_upload_materials(
             subtitle_data = await group['subtitle'].read()
             cover_data = await group.get('cover').read() if group.get('cover') else None
 
+            # 上传时同步 ffprobe 探测时长 (修根因: 6-28 之前 batch_upload 没填 duration, 新视频前端不显示时长)
+            video_duration = None
+            try:
+                video_ext = Path(group['video'].filename).suffix.lower() or '.mp4'
+                with tempfile.NamedTemporaryFile(mode='wb', suffix=video_ext, delete=False) as _tmp_v:
+                    _tmp_v.write(video_data)
+                    _tmp_video_path = _tmp_v.name
+                try:
+                    _probed = _ffprobe_duration(_tmp_video_path)
+                    if _probed > 0:
+                        video_duration = int(round(_probed))
+                finally:
+                    try:
+                        os.unlink(_tmp_video_path)
+                    except OSError:
+                        pass
+            except Exception as _e:
+                print(f"[WARN] ffprobe 探测时长失败 ({title}): {_e}")
+
             # 上传文件
             video_key = generate_object_key('video', group['video'].filename)
             subtitle_key = generate_object_key('subtitle', group['subtitle'].filename)
@@ -622,7 +1020,8 @@ async def batch_upload_materials(
                 subtitle_path=subtitle_url,
                 cover_path=cover_url or '',
                 storage_type=settings.storage_type,
-                video_size=len(video_data)
+                video_size=len(video_data),
+                duration=video_duration,
             )
 
             db.add(material)
@@ -882,6 +1281,66 @@ async def delete_activation_code(
     return MessageResponse(message="激活码已删除", success=True)
 
 
+# 批量删除 (Pydantic body schema)
+class BatchDeleteCodesRequest(BaseModel):
+    ids: List[int]
+
+
+@router.post("/activation-codes/batch-delete")
+async def batch_delete_activation_codes(
+    data: BatchDeleteCodesRequest,
+    current_admin: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """批量删除激活码 (按 id 列表)"""
+    if not data.ids:
+        raise HTTPException(status_code=400, detail="ids 不能为空")
+    result = await db.execute(select(ActivationCode).where(ActivationCode.id.in_(data.ids)))
+    codes = result.scalars().all()
+    deleted_count = 0
+    for c in codes:
+        await db.delete(c)
+        deleted_count += 1
+    await db.commit()
+    return {
+        "deleted_count": deleted_count,
+        "requested_count": len(data.ids),
+        "message": f"已删除 {deleted_count} 个激活码"
+    }
+
+
+@router.delete("/activation-codes-all")
+async def delete_all_unused_activation_codes(
+    confirm: bool = Query(False, description="必须传 true 才执行, 防止误删"),
+    current_admin: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    全部删除"未使用"的激活码 (use_count = 0)
+    - 已使用的码 (use_count > 0) **不会被删**, 保留追溯链
+    - 必须传 ?confirm=true 才执行 (防止误操作)
+    """
+    if not confirm:
+        raise HTTPException(
+            status_code=400,
+            detail="必须传 ?confirm=true 才执行此操作 (防误删)"
+        )
+    result = await db.execute(
+        select(ActivationCode).where(ActivationCode.use_count == 0)
+    )
+    codes = result.scalars().all()
+    deleted_count = 0
+    for c in codes:
+        await db.delete(c)
+        deleted_count += 1
+    await db.commit()
+    return {
+        "deleted_count": deleted_count,
+        "kept_used": True,  # 已用的没删
+        "message": f"已删除 {deleted_count} 个未使用的激活码 (已使用的保留)"
+    }
+
+
 # ==================== 公告管理 ====================
 
 @router.post("/announcements")
@@ -984,3 +1443,100 @@ async def delete_announcement(
     await db.delete(announcement)
     await db.commit()
     return MessageResponse(message="公告已删除", success=True)
+
+
+# ==================== 视频时长探测 (ffprobe) ====================
+
+@router.post("/materials/probe-duration")
+async def probe_material_duration(
+    req: ProbeDurationRequest,
+    current_admin: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    给定 video_path (OSS object key)，从 OSS 下载到本地，ffprobe 取时长（秒）。
+    不入库 — 调用方拿 duration 后自行决定是否写入。
+
+    用法：
+    1. 编辑语料: 前端拿 material.video_path → probe → 填到 input
+    2. 上传新视频: presign upload 完拿 object_key → probe → 填到 form
+    """
+    storage = get_storage_service()
+    if not await storage.file_exists(req.video_path):
+        raise HTTPException(status_code=404, detail=f"视频文件不存在: {req.video_path}")
+
+    # 下载到临时文件
+    tmpdir = tempfile.mkdtemp(prefix="probe_")
+    tmp_path = os.path.join(tmpdir, os.path.basename(req.video_path))
+    try:
+        ok = await storage.download_file(req.video_path, tmp_path)
+        if not ok:
+            raise HTTPException(status_code=500, detail="下载视频失败")
+        duration = _ffprobe_duration(tmp_path)
+        if duration <= 0:
+            raise HTTPException(status_code=422, detail="ffprobe 未能提取时长（视频可能损坏）")
+        # Material.duration 是 Integer, 取整秒
+        duration_int = int(round(duration))
+        return {"video_path": req.video_path, "duration": duration_int, "duration_raw": round(duration, 2)}
+    finally:
+        # 清理临时文件
+        try:
+            os.remove(tmp_path)
+            os.rmdir(tmpdir)
+        except OSError:
+            pass
+
+
+@router.post("/materials/backfill-durations")
+async def backfill_durations(
+    current_admin: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    批量: 遍历所有 duration IS NULL 的语料, 从 OSS 下载 + ffprobe + UPDATE 库。
+    Idempotent — 已填的跳过, 没视频文件的跳过。
+    """
+    result = await db.execute(
+        select(Material).where(Material.duration.is_(None)).order_by(Material.id)
+    )
+    materials = result.scalars().all()
+    storage = get_storage_service()
+    updated = []
+    skipped = []
+    failed = []
+    for m in materials:
+        if not m.video_path:
+            skipped.append({"id": m.id, "reason": "video_path is null"})
+            continue
+        if not await storage.file_exists(m.video_path):
+            skipped.append({"id": m.id, "reason": f"OSS file not found: {m.video_path}"})
+            continue
+        tmpdir = tempfile.mkdtemp(prefix="bf_")
+        tmp_path = os.path.join(tmpdir, os.path.basename(m.video_path))
+        try:
+            ok = await storage.download_file(m.video_path, tmp_path)
+            if not ok:
+                failed.append({"id": m.id, "reason": "download failed"})
+                continue
+            duration = _ffprobe_duration(tmp_path)
+            if duration <= 0:
+                failed.append({"id": m.id, "reason": "ffprobe returned 0"})
+                continue
+            m.duration = int(round(duration))
+            updated.append({"id": m.id, "duration": int(round(duration))})
+        finally:
+            try:
+                os.remove(tmp_path)
+                os.rmdir(tmpdir)
+            except OSError:
+                pass
+    await db.commit()
+    return {
+        "total_null_before": len(materials),
+        "updated_count": len(updated),
+        "skipped_count": len(skipped),
+        "failed_count": len(failed),
+        "updated": updated,
+        "skipped": skipped,
+        "failed": failed,
+    }

@@ -117,12 +117,14 @@ async def update_progress(
     record = result.scalar_one_or_none()
 
     if record:
-        record.progress = data.progress
-        record.last_position = data.last_position
+        # 前端视频 metadata 未加载时 NaN→null 序列化,显式 null coerce 为默认值
+        record.progress = data.progress if data.progress is not None else 0
+        record.last_position = data.last_position if data.last_position is not None else 0
         # 如果从未完成变为完成，设置完成时间
-        if data.completed and not record.completed:
+        completed_val = data.completed if data.completed is not None else False
+        if completed_val and not record.completed:
             record.completed_at = datetime.now(timezone.utc)
-        record.completed = data.completed
+        record.completed = completed_val
         record.last_watched_at = datetime.now(timezone.utc)
         if data.watch_duration and data.watch_duration > 0:
             record.watch_duration = (record.watch_duration or 0) + data.watch_duration
@@ -130,9 +132,9 @@ async def update_progress(
         record = LearningRecord(
             user_id=current_user.id,
             material_id=data.material_id,
-            progress=data.progress,
-            last_position=data.last_position,
-            completed=data.completed,
+            progress=data.progress if data.progress is not None else 0,
+            last_position=data.last_position if data.last_position is not None else 0,
+            completed=data.completed if data.completed is not None else False,
             watch_duration=data.watch_duration or 0
         )
         db.add(record)
@@ -1208,19 +1210,17 @@ def _normalize_to_date(d):
 def _normalize_learning_dates(raw_rows) -> list:
     """SQLAlchemy rows -> list[date], 跳过 None
 
-    接受: [(date_or_str,)] / [date_or_str] / 混合
+    接受: [(date_or_str,)] / [date_or_str] / Row 对象 / 混合
+    SQLAlchemy 2.x 的 Row 不是 tuple 子类, 必须用下标取
     """
     result = []
     for row in raw_rows:
-        # SQLAlchemy 2.0 Row 对象不是 tuple 的子类, 但支持 row[0]
-        # date/datetime/str 是标量, 直接用
-        if isinstance(row, (date, datetime, str)):
+        # 优先按下标取 (Row / tuple 都支持)
+        d = None
+        try:
+            d = row[0]
+        except (TypeError, IndexError, KeyError):
             d = row
-        else:
-            try:
-                d = row[0]
-            except (IndexError, KeyError, TypeError):
-                d = row
         normalized = _normalize_to_date(d)
         if normalized is not None:
             result.append(normalized)
@@ -1233,6 +1233,10 @@ def _compute_streak_days(dates: list, today: date) -> int:
     输入: 学习日期 list[date] (任意顺序)
     输出: 连续天数 (>=0)
     """
+    if not dates:
+        return 0
+    # 防御: 过滤意外混入的 None
+    dates = [d for d in dates if d is not None]
     if not dates:
         return 0
     sorted_desc = sorted(dates, reverse=True)
@@ -1256,6 +1260,10 @@ def _compute_max_streak(dates: list) -> int:
     输入: 学习日期 list[date] (任意顺序)
     输出: 最长连续段长度 (>=0)
     """
+    if not dates:
+        return 0
+    # 防御: 过滤意外混入的 None
+    dates = [d for d in dates if d is not None]
     if not dates:
         return 0
     sorted_asc = sorted(dates)

@@ -27,6 +27,9 @@ class UserResponse(BaseModel):
     avatar: Optional[str] = None
     level: Optional[int] = 1
     role: int = 0  # 用户角色：0普通用户，1管理员
+    activation_code_id: Optional[int] = None  # 绑定的激活码 ID (一人一码)
+    status: Optional[str] = 'approved'         # pending/approved/rejected
+    activated_at: Optional[datetime] = None   # 激活时间
     created_at: datetime
 
     class Config:
@@ -53,6 +56,16 @@ class MaterialBase(BaseModel):
 
 class MaterialCreate(MaterialBase):
     pass
+
+
+class MaterialUpdate(BaseModel):
+    """管理后台更新语料信息（所有字段可选）"""
+    title: Optional[str] = None
+    description: Optional[str] = None
+    category: Optional[str] = None
+    difficulty: Optional[int] = None
+    duration: Optional[int] = None
+    is_active: Optional[bool] = None
 
 
 class TagResponse(BaseModel):
@@ -116,14 +129,47 @@ class SubtitleResponse(SubtitleBase):
 # ==================== Learning Record Schemas ====================
 
 class LearningRecordBase(BaseModel):
-    progress: int = 0
-    last_position: int = 0
+    # 允许 null (前端视频 metadata 未加载时 NaN→null 序列化),默认 0
+    progress: Optional[int] = 0
+    last_position: Optional[int] = 0
     watch_duration: Optional[int] = None  # 本次上报的观看秒数（增量）
-    completed: bool = False
+    completed: Optional[bool] = False
 
 
 class LearningRecordCreate(LearningRecordBase):
     material_id: int
+
+
+# ==================== 直传 OSS presign / finalize ====================
+
+class PresignUploadRequest(BaseModel):
+    """前端请求预签名 URL 时发送的文件元信息"""
+    video_name: str
+    subtitle_name: str
+    cover_name: str
+
+
+class PresignedFileInfo(BaseModel):
+    url: str        # 前端用这个 PUT 文件到 OSS
+    key: str        # OSS 对象键
+    content_type: str
+
+
+class PresignUploadResponse(BaseModel):
+    video: PresignedFileInfo
+    subtitle: PresignedFileInfo
+    cover: PresignedFileInfo
+
+
+class FinalizeUploadRequest(BaseModel):
+    """前端直传完成后,调这个接口创建 Material 记录"""
+    title: str
+    description: Optional[str] = None
+    category: Optional[str] = None
+    difficulty: int = 2
+    video_key: str
+    subtitle_key: str
+    cover_key: str
 
 
 class LearningRecordResponse(LearningRecordBase):

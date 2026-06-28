@@ -1,11 +1,11 @@
-import asyncio
 """
 英语口语学习网站 - 后端 API
 """
+import asyncio
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import StreamingResponse, HTMLResponse
+from fastapi.responses import StreamingResponse
 from contextlib import asynccontextmanager
 from pathlib import Path
 import os
@@ -279,18 +279,6 @@ async def root():
         "version": "1.0.0",
         "docs": "/docs"
     }
-
-
-# ==================== Admin 工具页面 ====================
-
-@app.get("/admin/transcribe", response_class=HTMLResponse)
-async def admin_transcribe_page():
-    """视频转字幕管理页面（仅管理员可见，无需登录拦截，靠前端 token 鉴权）"""
-    from fastapi.responses import HTMLResponse
-    html_path = Path(__file__).parent / "utils" / "admin_transcribe.html"
-    if not html_path.exists():
-        return HTMLResponse("<h1>页面文件丢失</h1>", status_code=500)
-    return HTMLResponse(html_path.read_text(encoding="utf-8"))
 
 
 @app.get("/health")

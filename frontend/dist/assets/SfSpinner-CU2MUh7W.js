@@ -1,1 +1,0 @@
-import{_ as s,a as n,d as a,n as r}from"./index-lIcL4KzY.js";const t={__name:"SfSpinner",props:{size:{type:String,default:"md"}},setup(e){return(c,p)=>(n(),a("div",{class:r(["sf-spinner",[`sf-spinner--${e.size}`]])},null,2))}},i=s(t,[["__scopeId","data-v-449b127c"]]);export{i as S};

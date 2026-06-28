@@ -23,7 +23,11 @@ from app.schemas.schemas import (
     InterpretationResponse,
     InterpretationListResponse,
     InterpretationStatusResponse,
-    TagResponse
+    TagResponse,
+    PresignUploadRequest,
+    PresignUploadResponse,
+    PresignedFileInfo,
+    FinalizeUploadRequest,
 )
 from app.config import settings
 from app.services.subtitle_parser import parse_srt_file
@@ -171,6 +175,7 @@ async def get_materials(
     difficulty: Optional[int] = None,
     keyword: Optional[str] = None,
     tag_id: Optional[int] = None,
+    duration_range: Optional[str] = None,  # 视频库前台筛选: 'short' (< 3 分钟) / 'medium' (3-10 分钟) / 'long' (> 10 分钟)
     db: AsyncSession = Depends(get_db)
 ):
     """获取语料列表（支持分页和筛选）"""
@@ -190,6 +195,14 @@ async def get_materials(
                 select(MaterialTag.material_id).where(MaterialTag.tag_id == tag_id)
             )
         )
+    # 时长筛选 (前台"视频库" duration_range)
+    # 注: Material.duration 是 Integer (秒), NULL 不参与比较自动排除
+    if duration_range == 'short':    # < 3 分钟
+        query = query.where(Material.duration < 180)
+    elif duration_range == 'medium':  # 3-10 分钟
+        query = query.where(Material.duration >= 180, Material.duration <= 600)
+    elif duration_range == 'long':    # > 10 分钟
+        query = query.where(Material.duration > 600)
 
     # 统计总数
     count_query = select(func.count()).select_from(query.subquery())
@@ -403,6 +416,105 @@ async def generate_interpretation_endpoint(
     return {"message": "已开始生成", "status": "generating", "material_id": material_id}
 
 
+@router.post("/presign-upload", response_model=PresignUploadResponse)
+async def presign_upload(
+    req: PresignUploadRequest,
+    current_admin: User = Depends(get_current_admin),
+):
+    """生成 OSS PUT presigned URL,前端用这个直接上传到 OSS(绕过 backend)
+
+    用途:解决大文件上传慢的问题(200MB 视频经 backend 中转要 5+ 分钟)
+    流程:
+      1. 前端调这个接口,得到 3 个 presigned URL
+      2. 前端用 PUT 直接上传 3 个文件到 OSS,带 onUploadProgress 真实进度
+      3. 上传完成调 /finalize-upload 创建 Material 记录
+
+    需要管理员权限
+    """
+    storage = get_storage_service()
+    expires = 3600  # 1 小时有效
+
+    video_key = generate_object_key('video', req.video_name)
+    subtitle_key = generate_object_key('subtitle', req.subtitle_name)
+    cover_key = generate_object_key('cover', req.cover_name)
+
+    video_url = await storage.sign_put_url(video_key, "video/mp4", expires)
+    subtitle_url = await storage.sign_put_url(subtitle_key, "text/plain", expires)
+    cover_url = await storage.sign_put_url(cover_key, "image/jpeg", expires)
+
+    return PresignUploadResponse(
+        video=PresignedFileInfo(url=video_url, key=video_key, content_type="video/mp4"),
+        subtitle=PresignedFileInfo(url=subtitle_url, key=subtitle_key, content_type="text/plain"),
+        cover=PresignedFileInfo(url=cover_url, key=cover_key, content_type="image/jpeg"),
+    )
+
+
+@router.post("/finalize-upload", response_model=MessageResponse)
+async def finalize_upload(
+    req: FinalizeUploadRequest,
+    current_admin: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """前端直传 OSS 完成后,调这个接口创建 Material 记录
+
+    验证 3 个文件都已上传到 OSS,然后:
+    1. 创建 Material 记录
+    2. 下载并解析字幕
+    3. 触发后台 AI 解读生成
+    """
+    storage = get_storage_service()
+
+    # 验证文件都已存在
+    if not await storage.file_exists(req.video_key):
+        raise HTTPException(status_code=404, detail="视频文件未上传到 OSS")
+    if not await storage.file_exists(req.subtitle_key):
+        raise HTTPException(status_code=404, detail="字幕文件未上传到 OSS")
+    if not await storage.file_exists(req.cover_key):
+        raise HTTPException(status_code=404, detail="封面文件未上传到 OSS")
+
+    # 创建 Material
+    material = Material(
+        title=req.title,
+        description=req.description,
+        video_path=req.video_key,
+        subtitle_path=req.subtitle_key,
+        cover_path=req.cover_key,
+        category=req.category,
+        difficulty=req.difficulty,
+        is_active=False,
+    )
+    db.add(material)
+    await db.flush()
+
+    # 下载字幕到临时文件,解析入库
+    try:
+        tmp_path = f"/tmp/subtitle_{material.id}_{int(time.time())}.srt"
+        downloaded = await storage.download_file(req.subtitle_key, tmp_path)
+        if downloaded:
+            subtitles = await parse_srt_file(tmp_path, material.id)
+            for sub in subtitles:
+                db.add(Subtitle(**sub.model_dump()))
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
+        else:
+            print(f"[WARN] 字幕文件下载失败: {req.subtitle_key}")
+    except Exception as e:
+        print(f"字幕解析失败: {e}")
+
+    await db.commit()
+
+    # 触发后台解读
+    try:
+        from app.services.interpretation_tasks import generate_interpretations_for_material
+        asyncio.create_task(generate_interpretations_for_material(material.id))
+    except Exception as e:
+        print(f"[WARN] 触发解读生成失败: {e}")
+
+    return MessageResponse(message="语料创建成功", success=True)
+
+
 @router.post("", response_model=MessageResponse)
 async def create_material(
     title: Annotated[str, Form()],
@@ -485,8 +597,13 @@ async def translate_subtitles_endpoint(
     request: dict,
     db: AsyncSession = Depends(get_db)
 ):
-    """翻译字幕"""
-    # 获取字幕
+    """翻译字幕 — 分批 + 渐进保存
+
+    长字幕(>40 条)按 BATCH=40 分批调 AI, 每批单独 commit。
+    - 增量重试: 已翻译的字幕跳过, 失败批次再调会只重试 pending 部分
+    - 单批失败不影响前面已 commit 的批次
+    - 返回 translated_count / total / failed_batches 方便前端展示进度
+    """
     result = await db.execute(
         select(Subtitle)
         .where(Subtitle.material_id == material_id)
@@ -500,34 +617,59 @@ async def translate_subtitles_endpoint(
             detail="该视频没有字幕"
         )
 
-    # 检查是否已有翻译
-    has_translation = any(sub.text_cn for sub in subtitles)
-    if has_translation:
-        # 已有翻译，直接返回
+    # 全部已翻译 → 短路
+    if all(sub.text_cn for sub in subtitles):
         return {
             "success": True,
             "subtitles": [{"text_en": sub.text_en, "text_cn": sub.text_cn} for sub in subtitles],
             "message": "字幕已有翻译"
         }
 
-    # 调用翻译
+    # 只翻译未翻译的 (增量重试友好)
+    pending = [(idx, sub) for idx, sub in enumerate(subtitles) if not sub.text_cn]
+    total_pending = len(pending)
+    BATCH = 40
+    translated_count = 0
+    failed_batches = []
+
     try:
-        subtitle_list = [{"text_en": sub.text_en} for sub in subtitles]
-        translated = await translate_subtitles(subtitle_list)
+        for batch_start in range(0, total_pending, BATCH):
+            batch = pending[batch_start:batch_start + BATCH]
+            batch_lo = batch_start + 1
+            batch_hi = min(batch_start + BATCH, total_pending)
+            inputs = [{"text_en": sub.text_en} for _, sub in batch]
+            print(f"[TRANSLATE] material {material_id}: batch {batch_lo}-{batch_hi}/{total_pending}")
 
-        # 更新数据库中的字幕翻译
-        for i, sub in enumerate(subtitles):
-            if i < len(translated) and translated[i].get("text_cn"):
-                sub.text_cn = translated[i]["text_cn"]
+            translated_batch = await translate_subtitles(inputs)
 
-        await db.commit()
+            batch_ok = 0
+            for i, (orig_idx, sub) in enumerate(batch):
+                if i < len(translated_batch) and translated_batch[i].get("text_cn"):
+                    subtitles[orig_idx].text_cn = translated_batch[i]["text_cn"]
+                    batch_ok += 1
+                    translated_count += 1
 
+            await db.commit()
+
+            if batch_ok == 0:
+                failed_batches.append(f"{batch_lo}-{batch_hi}")
+                print(f"[TRANSLATE] material {material_id}: batch {batch_lo}-{batch_hi} 全部失败 (AI 返回空)")
+            else:
+                print(f"[TRANSLATE] material {material_id}: batch {batch_lo}-{batch_hi} ok {batch_ok}/{len(batch)}")
+
+        msg = f"翻译完成 {translated_count}/{total_pending}"
+        if failed_batches:
+            msg += f", 失败批次: {','.join(failed_batches)}"
         return {
             "success": True,
+            "translated_count": translated_count,
+            "total": total_pending,
+            "failed_batches": failed_batches,
+            "message": msg,
             "subtitles": [{"text_en": sub.text_en, "text_cn": sub.text_cn} for sub in subtitles]
         }
     except Exception as e:
-        print(f"[ERROR] 翻译失败: {e}")
+        print(f"[ERROR] 翻译失败 material {material_id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"翻译失败: {str(e)}"
