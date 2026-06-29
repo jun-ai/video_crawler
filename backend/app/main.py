@@ -25,6 +25,14 @@ from app.utils.logger import setup_logging, get_logger
 from app.utils.rate_limit import limiter
 from slowapi.middleware import SlowAPIMiddleware
 
+# P0 商业化安全: 生产环境关闭 /docs /openapi.json /redoc
+# (任何人都能看到完整 API schema = 把后门图纸公开)
+# 用 ENV 控制: ENABLE_API_DOCS=true 才开 (开发环境)
+_enable_docs = os.getenv("ENABLE_API_DOCS", "false").lower() == "true"
+_docs_url = "/docs" if _enable_docs else None
+_redoc_url = "/redoc" if _enable_docs else None
+_openapi_url = "/openapi.json" if _enable_docs else None
+
 # 初始化日志系统
 setup_logging(debug=settings.debug)
 logger = get_logger(__name__)
@@ -48,7 +56,11 @@ app = FastAPI(
     title="英语口语学习 API",
     description="基于真实视频语料库的英语口语学习平台",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+    # P0 商业化安全: 生产环境关闭 API 文档 (由上面 _enable_docs 决定)
+    docs_url=_docs_url,
+    redoc_url=_redoc_url,
+    openapi_url=_openapi_url
 )
 
 # 限流配置

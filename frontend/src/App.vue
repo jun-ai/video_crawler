@@ -135,9 +135,9 @@
             </div>
             <div class="app-footer-col">
               <h4>关于</h4>
-              <a href="#">使用指南</a>
-              <a href="#">意见反馈</a>
-              <a href="#">联系我们</a>
+              <router-link to="/terms">用户协议</router-link>
+              <router-link to="/privacy">隐私政策</router-link>
+              <router-link to="/refund">退换政策</router-link>
             </div>
           </div>
         </div>

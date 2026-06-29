@@ -61,6 +61,8 @@
 
       <!-- Footer -->
       <div class="login-footer">
+        <router-link to="/forgot-password" class="login-link login-link--muted">忘记密码？</router-link>
+        <span class="login-divider">·</span>
         还没有账号？
         <router-link to="/register" class="login-link">去注册</router-link>
       </div>
@@ -296,6 +298,20 @@ const handleLogin = async () => {
 
 .login-link:hover {
   color: var(--color-accent);
+}
+
+.login-link--muted {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.login-link--muted:hover {
+  color: var(--color-brand);
+}
+
+.login-divider {
+  margin: 0 8px;
+  color: var(--color-border);
 }
 
 /* ── Mobile ── */

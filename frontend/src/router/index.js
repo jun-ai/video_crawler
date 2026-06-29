@@ -57,6 +57,27 @@ const routes = [
     name: 'Register',
     component: () => import('@/views/Register.vue')
   },
+  {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: () => import('@/views/ForgotPassword.vue')
+  },
+  // P0 商业化合规: 用户协议 / 隐私政策 / 退换政策
+  {
+    path: '/terms',
+    name: 'Terms',
+    component: () => import('@/views/Terms.vue')
+  },
+  {
+    path: '/privacy',
+    name: 'Privacy',
+    component: () => import('@/views/Privacy.vue')
+  },
+  {
+    path: '/refund',
+    name: 'Refund',
+    component: () => import('@/views/Refund.vue')
+  },
   // P3 组件展示页(开发环境,生产可保留)
   {
     path: '/_showcase',

@@ -20,6 +20,21 @@ class UserLogin(BaseModel):
     password: str
 
 
+class ForgotPasswordRequest(BaseModel):
+    """忘记密码重置 (用激活码当身份凭证, 避免依赖短信)
+
+    业务流程:
+    1. 用户填手机号 + 注册时用的激活码 + 新密码
+    2. 后端查 users 表, 找到 phone 对应的用户
+    3. 验证该用户的 activation_code_id 对应的 ActivationCode.code 跟用户填的 invite_code 一致
+    4. 通过 → 改 password_hash → 返回成功
+    5. 不通过 → 返 400 错误 (不泄露码是否有效)
+    """
+    phone: str
+    invite_code: str
+    new_password: str
+
+
 class UserResponse(BaseModel):
     id: int
     username: str

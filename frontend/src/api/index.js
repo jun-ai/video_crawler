@@ -50,7 +50,10 @@ api.interceptors.response.use(
 export const authAPI = {
   register: (data) => api.post('/auth/register', data),
   login: (phone, password) => api.post('/auth/login', { phone, password }),
-  getProfile: () => api.get('/auth/profile')
+  getProfile: () => api.get('/auth/profile'),
+  // P0 商业化: 忘记密码重置 (用激活码当凭证)
+  forgotPassword: (phone, invite_code, new_password) =>
+    api.post('/auth/forgot-password', { phone, invite_code, new_password })
 }
 
 // ==================== 语料 API ====================

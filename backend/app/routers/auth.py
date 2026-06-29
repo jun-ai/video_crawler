@@ -1,10 +1,11 @@
 """
 用户认证路由
 """
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, update, or_
 from typing import Annotated
 import re
 import time
@@ -12,7 +13,7 @@ import time
 from app.database import get_db
 from app.utils.rate_limit import limiter
 from app.models.models import User, UserRole, ActivationCode
-from app.schemas.schemas import UserCreate, UserResponse, UserLogin, Token, MessageResponse
+from app.schemas.schemas import UserCreate, UserResponse, UserLogin, Token, MessageResponse, ForgotPasswordRequest
 from app.services.auth import (
     verify_password,
     get_password_hash,
@@ -20,6 +21,8 @@ from app.services.auth import (
     decode_access_token
 )
 from datetime import datetime, timezone
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/auth", tags=["认证"])
 
@@ -130,34 +133,54 @@ async def register(
         )
 
     # 验证激活码
-    activation_code_record = None
-    if user_data.invite_code:
-        result = await db.execute(
-            select(ActivationCode).where(ActivationCode.code == user_data.invite_code)
-        )
-        activation_code_record = result.scalar_one_or_none()
-
-        if not activation_code_record:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="激活码无效"
-            )
-
-        if activation_code_record.use_count >= activation_code_record.max_uses:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="激活码已用完"
-            )
-
-        if activation_code_record.expires_at and activation_code_record.expires_at < datetime.now(timezone.utc):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="激活码已过期"
-            )
-    else:
+    if not user_data.invite_code:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="请输入激活码"
+        )
+
+    result = await db.execute(
+        select(ActivationCode).where(ActivationCode.code == user_data.invite_code)
+    )
+    activation_code_record = result.scalar_one_or_none()
+
+    if not activation_code_record:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="激活码无效"
+        )
+
+    if activation_code_record.expires_at and activation_code_record.expires_at < datetime.now(timezone.utc):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="激活码已过期"
+        )
+
+    # P0 商业化安全: 修复 TOCTOU race condition
+    # 旧代码: 读 use_count → 检查 < max_uses → +1, 中间无锁, 并发可绕过
+    # 修法: 用单条原子 UPDATE 条件扣减, 看 rowcount
+    #   条件 use_count < max_uses + 未过期 同时由 DB 评估, 并发只能成功 1 个
+    now_utc = datetime.now(timezone.utc)
+    atomic_update = await db.execute(
+        update(ActivationCode)
+        .where(
+            ActivationCode.id == activation_code_record.id,
+            ActivationCode.use_count < ActivationCode.max_uses,
+            # expires_at 为 NULL OR > now
+            or_(ActivationCode.expires_at.is_(None), ActivationCode.expires_at > now_utc)
+        )
+        .values(
+            use_count=ActivationCode.use_count + 1,
+            used_at=now_utc
+            # used_by 留空, 等 user INSERT 后再回填
+        )
+    )
+    if atomic_update.rowcount == 0:
+        # 扣减失败, 说明刚才 SELECT 后被并发用完 (或刚刚过期)
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="激活码已被使用或已过期"
         )
 
     # 创建用户
@@ -165,19 +188,18 @@ async def register(
         username=user_data.username,
         phone=user_data.phone,
         password_hash=get_password_hash(user_data.password),
-        activation_code_id=activation_code_record.id if activation_code_record else None,
+        activation_code_id=activation_code_record.id,
         status='approved',
-        activated_at=datetime.now(timezone.utc)
+        activated_at=now_utc
     )
 
     db.add(user)
-    await db.flush()
+    await db.flush()  # 拿 user.id
 
-    # 更新激活码使用计数
-    if activation_code_record:
-        activation_code_record.use_count += 1
-        activation_code_record.used_by = user.id
-        activation_code_record.used_at = datetime.now(timezone.utc)
+    # 回填激活码的 used_by (最后使用者)
+    activation_code_record.used_by = user.id
+    # 重新 SELECT 一遍, 拿最新 use_count
+    await db.refresh(activation_code_record)
 
     await db.commit()
     await db.refresh(user)
@@ -204,7 +226,25 @@ async def login(
     result = await db.execute(select(User).where(User.phone == user_data.phone))
     user = result.scalar_one_or_none()
 
-    if not user or not verify_password(user_data.password, user.password_hash):
+    if not user:
+        # 故意跟"密码错误"返同样的 detail, 不泄露用户是否存在
+        # (bcrypt 仍然要跑一次, 防 timing attack)
+        get_password_hash("dummy")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="手机号或密码错误",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # P1 安全: bcrypt 抛 Invalid salt 时返 401 而不是 500
+    # (DB 哈希被截断/损坏时, 不应该让攻击者通过 500 错误区分)
+    try:
+        password_ok = verify_password(user_data.password, user.password_hash)
+    except (ValueError, TypeError, AttributeError) as e:
+        logger.warning(f"bcrypt verify failed for user {user.id}: {e}")
+        password_ok = False
+
+    if not password_ok:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="手机号或密码错误",
@@ -215,6 +255,64 @@ async def login(
     access_token = create_access_token(data={"sub": str(user.id)})
 
     return Token(access_token=access_token)
+
+
+@router.post("/forgot-password", response_model=MessageResponse)
+@limiter.limit("5/minute")
+async def forgot_password(
+    request: Request,
+    data: ForgotPasswordRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """忘记密码重置 (P0 商业化必需)
+
+    用户填: 手机号 + 注册时用的激活码 + 新密码
+    验证: phone 找到 user, 且 user.activation_code_id 对应的 ActivationCode.code 匹配
+    通过: 改 password_hash, 返 200
+    失败: 返 400 通用错误 (不泄露码是否有效, 防止暴力枚举)
+    """
+    if not validate_phone(data.phone):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="手机号格式不正确"
+        )
+
+    if not data.invite_code or len(data.new_password) < 6:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="激活码和新密码（至少 6 位）必填"
+        )
+
+    # 找用户
+    result = await db.execute(select(User).where(User.phone == data.phone))
+    user = result.scalar_one_or_none()
+
+    if user is None or user.activation_code_id is None:
+        # 用户不存在 / 没绑定激活码 (admin 这种直接创建的用户)
+        # 返通用错误, 防枚举
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="激活码与手机号不匹配"
+        )
+
+    # 验证激活码
+    result = await db.execute(
+        select(ActivationCode).where(ActivationCode.id == user.activation_code_id)
+    )
+    code_record = result.scalar_one_or_none()
+
+    if code_record is None or str(code_record.code) != data.invite_code:
+        # 激活码跟用户绑定的那个不匹配
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="激活码与手机号不匹配"
+        )
+
+    # 改密码
+    user.password_hash = get_password_hash(data.new_password)
+    await db.commit()
+
+    return MessageResponse(message="密码已重置，请用新密码登录", success=True)
 
 
 @router.get("/profile", response_model=UserResponse)
