@@ -14,7 +14,8 @@ export const useUserStore = defineStore('user', () => {
 
   const login = async (phone, password) => {
     const res = await authAPI.login(phone, password)
-    console.log('Login response:', res) // 调试
+    // P0 安全 (6-29 体检发现): 不要 console.log 登录响应
+    // res 含 access_token 完整 JWT, devtools 任何人都能看 + 复制 = 账号被盗
     if (!res.access_token) {
       throw new Error('登录失败：未返回 token')
     }

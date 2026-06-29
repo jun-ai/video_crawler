@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 
@@ -6,18 +6,24 @@ from typing import Optional, List, Dict, Any
 # ==================== User Schemas ====================
 
 class UserBase(BaseModel):
-    username: str
+    # P1 安全 (6-29 体检发现): 限制 username 长度跟前端一致, 防超长输入炸 DB
+    # 前端 Register.vue L122: '用户名长度 3-20 个字符'
+    username: str = Field(..., min_length=3, max_length=20)
     phone: str
 
 
 class UserCreate(UserBase):
-    password: str
-    invite_code: Optional[str] = None  # 激活码
+    # P0 安全 (6-29 体检发现): 强制 password 至少 6 字符
+    # 之前 1 字符密码能注册成功 (Pydantic 无 min_length)
+    # bcrypt 上限 72 字节 (超出会截断, 跟"长密码"实际效果不一致)
+    password: str = Field(..., min_length=6, max_length=72)
+    invite_code: Optional[str] = Field(None, max_length=50)  # 激活码
 
 
 class UserLogin(BaseModel):
-    phone: str       # 手机号登录
-    password: str
+    # P1: 不限制长度 (老用户可能有短密码, 不能锁老账号)
+    phone: str
+    password: str = Field(..., min_length=1, max_length=72)
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -31,8 +37,8 @@ class ForgotPasswordRequest(BaseModel):
     5. 不通过 → 返 400 错误 (不泄露码是否有效)
     """
     phone: str
-    invite_code: str
-    new_password: str
+    invite_code: str = Field(..., max_length=50)
+    new_password: str = Field(..., min_length=6, max_length=72)
 
 
 class UserResponse(BaseModel):
