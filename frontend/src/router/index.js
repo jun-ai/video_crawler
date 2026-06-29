@@ -50,33 +50,40 @@ const routes = [
   {
     path: '/login',
     name: 'Login',
-    component: () => import('@/views/Login.vue')
+    component: () => import('@/views/Login.vue'),
+    meta: { noindex: true }  // P1-11: 认证页不让搜索引擎抓
   },
   {
     path: '/register',
     name: 'Register',
-    component: () => import('@/views/Register.vue')
+    component: () => import('@/views/Register.vue'),
+    meta: { noindex: true }
   },
   {
     path: '/forgot-password',
     name: 'ForgotPassword',
-    component: () => import('@/views/ForgotPassword.vue')
+    component: () => import('@/views/ForgotPassword.vue'),
+    meta: { noindex: true }
   },
   // P0 商业化合规: 用户协议 / 隐私政策 / 退换政策
+  // (合规页应该被 index, 客户能看到, 加 canonical 让 SEO 收录)
   {
     path: '/terms',
     name: 'Terms',
-    component: () => import('@/views/Terms.vue')
+    component: () => import('@/views/Terms.vue'),
+    meta: { title: '用户协议 - Fluenty' }
   },
   {
     path: '/privacy',
     name: 'Privacy',
-    component: () => import('@/views/Privacy.vue')
+    component: () => import('@/views/Privacy.vue'),
+    meta: { title: '隐私政策 - Fluenty' }
   },
   {
     path: '/refund',
     name: 'Refund',
-    component: () => import('@/views/Refund.vue')
+    component: () => import('@/views/Refund.vue'),
+    meta: { title: '退换政策 - Fluenty' }
   },
   // P3 组件展示页(开发环境,生产可保留)
   {
@@ -162,6 +169,27 @@ router.beforeEach((to, from, next) => {
   }
 
   next()
+})
+
+// P1-11: 动态设置 <meta name="robots"> 和 <title>
+// 认证页 (login/register/forgot-password) 加 noindex, 防止搜索引擎抓
+// 合规页 + 普通页保持 indexable
+router.afterEach((to) => {
+  // 1. robots meta
+  let robotsMeta = document.querySelector('meta[name="robots"]')
+  if (!robotsMeta) {
+    robotsMeta = document.createElement('meta')
+    robotsMeta.setAttribute('name', 'robots')
+    document.head.appendChild(robotsMeta)
+  }
+  robotsMeta.setAttribute('content', to.meta.noindex ? 'noindex,nofollow' : 'index,follow')
+
+  // 2. title (优先用 route meta.title, 否则用默认)
+  if (to.meta.title) {
+    document.title = to.meta.title
+  } else {
+    document.title = 'Fluenty — 英语口语学习'
+  }
 })
 
 export default router

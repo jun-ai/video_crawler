@@ -18,6 +18,31 @@
       </div>
     </div>
 
+    <!-- 9. 激活信息 (P0 商业化: 用户查看自己激活码/状态/时间) -->
+    <div v-if="userStore.user?.activation_code_id" class="profile-section">
+      <PageHeader title="激活信息" />
+      <div class="activation-info">
+        <div class="activation-info-row">
+          <span class="activation-info-label">激活码 ID</span>
+          <span class="activation-info-value">#{{ userStore.user.activation_code_id }}</span>
+        </div>
+        <div class="activation-info-row">
+          <span class="activation-info-label">账号状态</span>
+          <span :class="['activation-info-tag', `tag-${userStore.user.status || 'pending'}`]">
+            {{ statusLabel(userStore.user.status) }}
+          </span>
+        </div>
+        <div class="activation-info-row" v-if="userStore.user.activated_at">
+          <span class="activation-info-label">激活时间</span>
+          <span class="activation-info-value">{{ formatDateTime(userStore.user.activated_at) }}</span>
+        </div>
+        <div class="activation-info-hint">
+          <Key :size="13" />
+          账号永久有效，可在不同设备登录使用
+        </div>
+      </div>
+    </div>
+
     <!-- 学习统计 -->
     <div class="profile-section">
       <PageHeader title="学习统计" />
@@ -119,7 +144,8 @@ import {
   Star,
   BookOpen,
   ArrowRight,
-  BarChart3
+  BarChart3,
+  Key
 } from 'lucide-vue-next'
 import SfDialog from '@/components/ui/SfDialog.vue'
 import SfButton from '@/components/ui/SfButton.vue'
@@ -163,6 +189,28 @@ const formatDate = (dateStr) => {
     month: 'long',
     day: 'numeric'
   })
+}
+
+// 9. 激活信息 helpers
+const formatDateTime = (dateStr) => {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+const statusLabel = (status) => {
+  const map = {
+    approved: '已激活',
+    pending: '待审核',
+    rejected: '已拒绝'
+  }
+  return map[status] || '未知'
 }
 
 const goLearn = (id) => {
@@ -242,6 +290,71 @@ onMounted(() => {
   margin: 0 auto;
   padding: 0 0 32px 0;
   font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ── 9. 激活信息 ── */
+.activation-info {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.activation-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  min-height: 28px;
+}
+
+.activation-info-label {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.activation-info-value {
+  color: var(--color-text-primary);
+  font-weight: 600;
+  font-family: 'SF Mono', 'Menlo', monospace;
+}
+
+.activation-info-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.activation-info-tag.tag-approved {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.activation-info-tag.tag-pending {
+  background: rgba(245, 158, 11, 0.12);
+  color: #D97706;
+}
+
+.activation-info-tag.tag-rejected {
+  background: rgba(239, 68, 68, 0.12);
+  color: #DC2626;
+}
+
+.activation-info-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  padding-top: 8px;
+  border-top: 1px dashed var(--color-border);
+  margin-top: 4px;
 }
 
 /* ── Hero 用户信息 ── */

@@ -95,6 +95,35 @@
 
         <!-- 右侧: 筛选 + featured + 视频网格 -->
         <div class="videos-side">
+          <!-- 7. P0 商业化: 激活码引导横幅 — 未登录用户第一眼看到 -->
+          <div v-if="!userStore.isLoggedIn" class="activation-banner">
+            <div class="activation-banner__content">
+              <div class="activation-banner__icon">
+                <Key :size="20" />
+              </div>
+              <div class="activation-banner__text">
+                <h3 class="activation-banner__title">刚拿到激活码？</h3>
+                <p class="activation-banner__sub">3 步开账号：输入激活码 → 设置密码 → 开始学习</p>
+              </div>
+            </div>
+            <div class="activation-banner__actions">
+              <SfButton
+                type="primary"
+                size="md"
+                @click="$router.push('/register')"
+              >
+                立即注册
+              </SfButton>
+              <SfButton
+                type="ghost"
+                size="md"
+                @click="$router.push('/login')"
+              >
+                已有账号
+              </SfButton>
+            </div>
+          </div>
+
           <!-- 筛选条 (放在视频上方, 用户筛选视频用) -->
           <div class="filter-row" ref="filterBar">
             <div class="filter-group" v-if="categories.length > 0">
@@ -217,7 +246,7 @@ import FilterChip from '@/components/common/FilterChip.vue'
 import VideoCard from '@/components/common/VideoCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import AnnouncementBanner from '@/components/common/AnnouncementBanner.vue'
-import { BarChart3, Calendar, Clock, Play, Flame, Sprout, Dumbbell, Star, Trophy, Crown, Target, Sparkles, BookOpen, Headphones, Mic, Check, ChevronDown } from 'lucide-vue-next'
+import { BarChart3, Calendar, Clock, Play, Flame, Sprout, Dumbbell, Star, Trophy, Crown, Target, Sparkles, BookOpen, Headphones, Mic, Check, ChevronDown, Key } from 'lucide-vue-next'
 import SfTooltip from '@/components/ui/SfTooltip.vue'
 import SfProgress from '@/components/ui/SfProgress.vue'
 import SfButton from '@/components/ui/SfButton.vue'
@@ -606,6 +635,102 @@ onMounted(async () => {
   min-height: 100vh;
   background: var(--color-bg-base);  /* 跟视频库 (Materials.vue) 一致, 不再覆写米色 */
   padding: 24px 0 48px;
+}
+
+/* ====== 7. 激活码引导横幅 (P0 商业化 — 未登录用户第一眼看到) ====== */
+.activation-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 24px;
+  margin-bottom: 22px;
+  background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+  border: 1px solid #FCD34D;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.10);
+  position: relative;
+  overflow: hidden;
+}
+
+.activation-banner::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 140px;
+  height: 140px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.18) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.activation-banner__content {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+.activation-banner__icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+}
+
+.activation-banner__text {
+  min-width: 0;
+}
+
+.activation-banner__title {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #92400E;
+  letter-spacing: -0.01em;
+}
+
+.activation-banner__sub {
+  margin: 0;
+  font-size: 13px;
+  color: #B45309;
+  line-height: 1.4;
+}
+
+.activation-banner__actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 640px) {
+  .activation-banner {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+  }
+  .activation-banner__actions {
+    width: 100%;
+  }
+  .activation-banner__actions > * {
+    flex: 1;
+  }
+  .activation-banner__title {
+    font-size: 15px;
+  }
+  .activation-banner__sub {
+    font-size: 12px;
+  }
 }
 
 .home-container {
