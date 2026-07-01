@@ -90,9 +90,48 @@
                 </div>
               </div>
             </div>
+
+            <!-- 继续学习: 最近 3 个未完成视频 (横向 mini-card: 封面+标题+进度) -->
+            <div class="panel-divider"></div>
+            <div class="panel-continue">
+              <div class="pc-head">
+                <Play :size="14" />
+                <span class="pc-title">继续学习</span>
+                <span class="pc-count" v-if="continueLearnItems.length">{{ continueLearnItems.length }} 部</span>
+              </div>
+              <div v-if="continueLearnItems.length > 0" class="pc-list">
+                <div
+                  v-for="item in continueLearnItems.slice(0, 3)"
+                  :key="item.material_id"
+                  class="pc-item"
+                  @click="goLearn(item.material_id)"
+                >
+                  <div class="pc-cover">
+                    <img v-if="item.cover_path" :src="item.cover_path" :alt="item.title" loading="lazy" />
+                    <div v-else class="pc-cover-fallback"><Play :size="18" /></div>
+                  </div>
+                  <div class="pc-info">
+                    <div class="pc-title-text">{{ item.title }}</div>
+                    <div class="pc-progress-row">
+                      <div class="pc-progress-track">
+                        <div class="pc-progress-fill" :style="{ width: Math.min(100, Math.round(item.progress)) + '%' }"></div>
+                      </div>
+                      <span class="pc-pct">{{ Math.round(item.progress) }}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- 空态: 引导去视频库挑一个新课 -->
+              <div v-else class="pc-empty" @click="$router.push('/materials')">
+                <Sparkles :size="18" />
+                <div class="pc-empty-text">
+                  <div class="pc-empty-title">还没有进行中的课</div>
+                  <div class="pc-empty-sub">去视频库挑一个开始学吧 →</div>
+                </div>
+              </div>
+            </div>
           </div>
         </aside>
-
         <!-- 右侧: 筛选 + featured + 视频网格 -->
         <div class="videos-side">
           <!-- 7. P0 商业化: 激活码引导横幅 — 未登录用户第一眼看到 -->
@@ -145,32 +184,6 @@
                 />
               </div>
             </div>
-
-            <div class="filter-group" v-if="creatorTags.length > 0">
-              <span class="filter-label">视频博主</span>
-              <div class="chip-list">
-                <div
-                  v-for="tag in creatorTags"
-                  :key="'c-' + tag.id"
-                  :class="['tag-chip', { active: selectedCreatorTag === tag.id }]"
-                  :style="{ '--chip-color': tag.color || 'var(--color-brand)' }"
-                  @click="toggleCreatorTag(tag.id)"
-                >{{ tag.name }}</div>
-              </div>
-            </div>
-
-            <div class="filter-group" v-if="topicTags.length > 0">
-              <span class="filter-label">视频话题</span>
-              <div class="chip-list">
-                <div
-                  v-for="tag in topicTags"
-                  :key="'t-' + tag.id"
-                  :class="['tag-chip', { active: selectedTopicTag === tag.id }]"
-                  :style="{ '--chip-color': tag.color || 'var(--color-success)' }"
-                  @click="toggleTopicTag(tag.id)"
-                >{{ tag.name }}</div>
-              </div>
-            </div>
           </div>
 
           <!-- 视频网格 3 列 (砍掉 featured hero, 避免重复展示) -->
@@ -218,8 +231,8 @@
         </div>
       </div>
 
-      <!-- 5. 底部（学习消息 / 学习指南 / 联系） -->
-      <footer class="home-footer">
+      <!-- 5. 底部（学习消息 / 学习指南 / 联系） — H5 端隐藏 (核心 only) -->
+      <footer class="home-footer home-footer--h5-hide">
         <div class="footer-col">
           <div class="footer-col-title">学习消息</div>
           <p class="footer-text">坚持每天 15 分钟，三个月看到进步。</p>
@@ -240,7 +253,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { materialAPI, learningStatsAPI, tagsAPI } from '@/api'
+import { materialAPI, learningStatsAPI } from '@/api'
 import { useUserStore } from '@/stores/user'
 import FilterChip from '@/components/common/FilterChip.vue'
 import VideoCard from '@/components/common/VideoCard.vue'
@@ -282,10 +295,6 @@ const displayFeatures = computed(() =>
 )
 const materials = ref([])
 const selectedCategory = ref(null)
-const creatorTags = ref([])
-const topicTags = ref([])
-const selectedCreatorTag = ref(null)
-const selectedTopicTag = ref(null)
 const page = ref(1)
 const pageSize = 12
 const total = ref(0)            // 当前筛选下的视频数 (跟筛选走)
@@ -437,31 +446,6 @@ const selectCategory = (category) => {
   loadMaterials()
 }
 
-const loadTags = async () => {
-  try {
-    const [creators, topics] = await Promise.all([
-      tagsAPI.getList({ type: 'creator' }),
-      tagsAPI.getList({ type: 'topic' })
-    ])
-    creatorTags.value = creators || []
-    topicTags.value = topics || []
-  } catch (e) {
-    console.error('加载标签失败', e)
-  }
-}
-
-const toggleCreatorTag = (tagId) => {
-  selectedCreatorTag.value = selectedCreatorTag.value === tagId ? null : tagId
-  page.value = 1
-  loadMaterials()
-}
-
-const toggleTopicTag = (tagId) => {
-  selectedTopicTag.value = selectedTopicTag.value === tagId ? null : tagId
-  page.value = 1
-  loadMaterials()
-}
-
 const getProgress = (materialId) => {
   return learningProgress.value[materialId] || 0
 }
@@ -509,11 +493,6 @@ const loadMaterials = async () => {
     if (selectedCategory.value) {
       params.category = selectedCategory.value
     }
-    if (selectedCreatorTag.value) {
-      params.tag_id = selectedCreatorTag.value
-    } else if (selectedTopicTag.value) {
-      params.tag_id = selectedTopicTag.value
-    }
 
     const res = await materialAPI.getList(params)
     if (page.value === 1) {
@@ -523,7 +502,7 @@ const loadMaterials = async () => {
     }
     total.value = res.total
     // 首次无筛选加载时快照全库总数 — 之后筛选变化不影响 globalTotal
-    const noFilter = !selectedCategory.value && !selectedCreatorTag.value && !selectedTopicTag.value
+    const noFilter = !selectedCategory.value
     if (globalTotal.value === 0 && noFilter && page.value === 1) {
       globalTotal.value = res.total
     }
@@ -607,7 +586,7 @@ const loadMore = async () => {
 
 // Featured 视频 hero（speakvlog library 风格）— 仅在浏览全部时展示最新一个
 const featuredVideo = computed(() => {
-  if (selectedCategory.value || selectedCreatorTag.value || selectedTopicTag.value) return null
+  if (selectedCategory.value) return null
   return materials.value[0] || null
 })
 const gridVideos = computed(() => {
@@ -619,8 +598,7 @@ const gridVideos = computed(() => {
 onMounted(async () => {
   await Promise.all([
     loadCategories(),
-    loadMaterials(),
-    loadTags()
+    loadMaterials()
   ])
 })
 </script>
@@ -767,33 +745,6 @@ onMounted(async () => {
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
-}
-
-.tag-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 7px 16px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  cursor: pointer;
-  transition: all 0.18s ease;
-  user-select: none;
-}
-
-.tag-chip:hover {
-  border-color: var(--color-border-strong);
-  color: var(--color-text-primary);
-  transform: translateY(-1px);
-}
-
-.tag-chip.active {
-  color: #fff;
-  background: var(--chip-color, var(--color-brand));
-  border-color: var(--chip-color, var(--color-brand));
 }
 
 /* ====== 2. Featured hero ====== */
@@ -1223,6 +1174,123 @@ onMounted(async () => {
   box-shadow: 0 2px 6px rgba(15, 76, 58, 0.3);
 }
 
+/* ====== 继续学习 mini-card ====== */
+.panel-continue {
+  padding: 14px 18px 16px;
+}
+.pc-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: var(--color-text-secondary);
+}
+.pc-head svg { color: #0F4C3A; }
+.pc-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  flex: 1;
+  letter-spacing: 0.2px;
+}
+.pc-count {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  background: rgba(15, 76, 58, 0.08);
+  color: #0F4C3A;
+  border-radius: 999px;
+}
+.pc-list { display: flex; flex-direction: column; gap: 10px; }
+.pc-item {
+  display: flex;
+  gap: 11px;
+  align-items: center;
+  padding: 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+  background: transparent;
+}
+.pc-item:hover {
+  background: rgba(15, 76, 58, 0.04);
+  transform: translateX(2px);
+}
+.pc-cover {
+  position: relative;
+  width: 56px;
+  height: 40px;
+  border-radius: 7px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #C9D6BE, #94A88B);
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
+}
+.pc-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.pc-cover-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.85);
+}
+.pc-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.pc-title-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+.pc-progress-row { display: flex; align-items: center; gap: 8px; }
+.pc-progress-track {
+  flex: 1;
+  height: 4px;
+  background: rgba(15, 76, 58, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.pc-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0F4C3A, #10B981);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+.pc-pct {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.pc-empty {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(15, 76, 58, 0.04), rgba(16, 185, 129, 0.04));
+  border: 1px dashed rgba(15, 76, 58, 0.18);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #0F4C3A;
+}
+.pc-empty:hover {
+  background: linear-gradient(135deg, rgba(15, 76, 58, 0.08), rgba(16, 185, 129, 0.08));
+  border-color: rgba(15, 76, 58, 0.3);
+}
+.pc-empty-text { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.pc-empty-title { font-size: 13px; font-weight: 600; }
+.pc-empty-sub { font-size: 11px; color: var(--color-text-muted); font-weight: 500; }
+
 /* 右侧视频区 */
 .videos-side {
   min-width: 0;  /* 防止 grid 子项溢出 */
@@ -1444,14 +1512,28 @@ onMounted(async () => {
   }
 }
 
+/* H5 (≤ 640px): 隐藏"我的学习"面板 — H5 不要这块, 留出空间给视频流 */
+@media (max-width: 640px) {
+  .stats-side {
+    display: none;
+  }
+  .home-main {
+    grid-template-columns: 1fr;
+  }
+  .video-grid {
+    grid-template-columns: 1fr;
+  }
+  /* 隐藏底部"学习消息/学习指南/联系我们" — H5 端不要这堆引导内容 */
+  .home-footer--h5-hide {
+    display: none;
+  }
+}
+
 @media (max-width: 640px) {
   .home-container { padding: 0 16px; }
   .filter-label { min-width: auto; }
   .panel-quick-stats {
     padding: 12px 14px;
-  }
-  .qs-value {
-    font-size: 18px;
   }
   .panel-progress {
     padding: 16px 14px 14px;

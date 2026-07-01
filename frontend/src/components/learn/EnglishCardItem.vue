@@ -2,13 +2,14 @@
   <div
     :class="[
       'ec-vocab-card',
-      type === 'grammar' && 'ec-grammar-card',
+      (type === 'grammar' || type === 'idiom') && 'ec-grammar-card',
       {
         'ec-card-selected': selected,
         'ec-card-known': status === 'known',
         'ec-card-unknown': status === 'unknown'
       }
     ]"
+    :data-card-type="type"
     @click="selected ? $emit('toggle-select', null) : $emit('toggle-select', item.id)"
   >
     <!-- 卡片头部: 词/短语/表达 + 音标 + POS + 喇叭 -->
@@ -65,8 +66,8 @@
       >{{ item.example_sentence }}</div>
     </div>
 
-    <!-- Grammar: 字幕原句 + 翻译 (默认显示, 详细分析折叠) -->
-    <template v-if="type === 'grammar'">
+    <!-- Grammar/Idiom: 字幕原句 + 翻译 (默认显示, 详细分析折叠) -->
+    <template v-if="type === 'grammar' || type === 'idiom'">
       <div class="ec-card-meanings" v-if="item.context_sentence">
         <div class="ec-expand-label">字幕原句</div>
         <div class="ec-expand-text">{{ item.context_sentence }}</div>
@@ -81,7 +82,7 @@
         v-if="hasAnalysis"
         class="ec-grammar-toggle"
         :aria-expanded="grammarExpanded"
-        :aria-label="grammarExpanded ? '收起表达分析' : '展开表达分析'"
+        :aria-label="grammarExpanded ? '收起分析' : '展开分析'"
         @click.stop="$emit('toggle-grammar', item.id)"
       >
         <Lightbulb :size="14" />
@@ -93,29 +94,54 @@
 
       <transition name="ec-expand">
         <div class="ec-card-meanings ec-analysis-area" v-if="grammarExpanded && hasAnalysis">
-          <div class="ec-analysis-item" v-if="item.explanation">{{ item.explanation }}</div>
-          <div class="ec-analysis-item" v-if="item.structure_analysis">
-            <span class="ec-analysis-label">结构解析：</span>{{ item.structure_analysis }}
+          <!-- 结构解析 (grammar 专用, 短公式直接给出) -->
+          <div class="ec-analysis-item ec-analysis-structure" v-if="item.structure_analysis">
+            <span class="ec-analysis-label">结构公式</span>
+            <span class="ec-analysis-formula">{{ item.structure_analysis }}</span>
           </div>
+
+          <!-- 详细解释 (段落化渲染, 兼容 \\n 字面转义) -->
+          <div class="ec-analysis-item ec-analysis-body" v-if="item.explanation">
+            <div class="ec-analysis-label">详细解释</div>
+            <div class="ec-analysis-paragraphs">
+              <template v-for="(p, idx) in explanationParagraphs" :key="idx">
+                <h5 v-if="p.type === 'header'" class="ec-analysis-h">{{ p.content }}</h5>
+                <p v-else class="ec-analysis-p">{{ p.content }}</p>
+              </template>
+            </div>
+          </div>
+
+          <!-- 举一反三 -->
           <div class="ec-analysis-item" v-if="parseList(item.similar_expressions).length > 0">
-            <span class="ec-analysis-label">举一反三：</span>
+            <span class="ec-analysis-label">举一反三</span>
             <div class="ec-expand-tags">
               <span class="ec-expand-tag" v-for="(expr, idx) in parseList(item.similar_expressions)" :key="idx">{{ expr }}</span>
             </div>
           </div>
+
+          <!-- 使用场景 -->
           <div class="ec-analysis-item" v-if="item.usage_scenario">
-            <span class="ec-analysis-label">使用场景：</span>{{ item.usage_scenario }}
+            <span class="ec-analysis-label">使用场景</span>
+            <span class="ec-analysis-scenario">{{ item.usage_scenario }}</span>
           </div>
+
+          <!-- 相似表达 -->
           <div class="ec-analysis-item" v-if="parseList(item.alternative_phrasings).length > 0">
-            <span class="ec-analysis-label">相似表达：</span>
+            <span class="ec-analysis-label">相似表达</span>
             <div class="ec-expand-tags">
               <span class="ec-expand-tag" v-for="(phrase, idx) in parseList(item.alternative_phrasings)" :key="idx">{{ phrase }}</span>
             </div>
           </div>
+
+          <!-- 表达来源 (idiom 专用) -->
+          <div class="ec-analysis-item ec-analysis-origin" v-if="item.origin">
+            <span class="ec-analysis-label">来源背景</span>
+            <span class="ec-analysis-origin-text">{{ item.origin }}</span>
+          </div>
         </div>
       </transition>
 
-      <!-- 例句 (grammar 总是显示, 折叠不影响) -->
+      <!-- 例句 (grammar/idiom 总是显示, 折叠不影响) -->
       <div class="ec-card-example" v-if="item.example_sentence">
         <div class="ec-example-label">例句</div>
         <div class="ec-example-text">{{ item.example_sentence }}</div>
@@ -171,7 +197,7 @@ import SfTooltip from '@/components/ui/SfTooltip.vue'
 
 const props = defineProps({
   item: { type: Object, required: true },
-  type: { type: String, required: true, validator: v => ['word', 'phrase', 'grammar'].includes(v) },
+  type: { type: String, required: true, validator: v => ['word', 'phrase', 'grammar', 'idiom'].includes(v) },
   status: { type: String, default: '' },  // 'known' / 'unknown' / ''
   selected: { type: Boolean, default: false },
   hideChinese: { type: Boolean, default: false },
@@ -186,20 +212,47 @@ defineEmits([
   'jump-learn',        // (item) 跳到学习页
 ])
 
-// POS 标签: word 取 part_of_speech, phrase='短语', grammar='表达'
+// POS 标签: word 取 part_of_speech, phrase='短语', grammar='语法点', idiom='表达'
 const posLabel = computed(() => {
   if (props.type === 'phrase') return '短语'
-  if (props.type === 'grammar') return '表达'
+  if (props.type === 'grammar') return '语法'
+  if (props.type === 'idiom') return '表达'
   return props.item.part_of_speech || ''
 })
 
-// grammar 是否有分析内容 (决定是否显示折叠按钮)
+// grammar/idiom 是否有分析内容 (决定是否显示折叠按钮)
 const hasAnalysis = computed(() => {
   const i = props.item
   return i.explanation || i.structure_analysis
     || parseList(i.similar_expressions).length > 0
     || i.usage_scenario
     || parseList(i.alternative_phrasings).length > 0
+    || i.origin
+})
+
+// 把 explanation 拆成段落 + 识别小标题 (兼容字面 \\n 转义和老式纯 wall-of-text)
+// 返回 [{ type: 'header'|'body', content: string }]
+const explanationParagraphs = computed(() => {
+  const raw = props.item.explanation
+  if (!raw) return []
+  // 统一换行: 字面 "\n" (2 chars) 或真 \n → 真换行
+  const normalized = raw.replace(/\\n/g, '\n')
+  // 段落分隔: 双换行 或 单换行 (AI 老格式常单换行)
+  let paras = normalized.split(/\n\n+/).flatMap(seg => seg.split('\n')).map(p => p.trim()).filter(Boolean)
+  if (paras.length === 0) return []
+
+  // 启发式: 短标签 + 冒号 → 小标题
+  //   - 长度 <= 10 chars
+  //   - 末尾是 : 或 :
+  //   - 不含 . , ! ? 句子结尾符号
+  const HEADER_RE = /^([^。,.!?\n]{1,12})[：:]\s*$/
+
+  return paras.map(text => {
+    if (HEADER_RE.test(text)) {
+      return { type: 'header', content: text.replace(HEADER_RE, '$1').trim() }
+    }
+    return { type: 'body', content: text }
+  })
 })
 
 // word/phrase 是否有可展开内容 (决定是否显示展开箭头)

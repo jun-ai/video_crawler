@@ -64,6 +64,8 @@ export const materialAPI = {
   getCategories: () => api.get('/materials/categories'),
   getInterpretation: (id) => api.get(`/materials/${id}/interpretation`),
   getInterpretationStatus: (id) => api.get(`/materials/${id}/interpretation/status`),
+  // 后台任务实时进度 (替换字幕 / 重新解读时返回)
+  getProgress: (id) => api.get(`/materials/${id}/progress`),
   generateInterpretation: (id) => api.post(`/materials/${id}/interpretation/generate`, {}),
   // 长字幕分批翻译 (后端 BATCH=40, 每批单独 commit), 405 条字幕约 5-10 分钟
   translateSubtitles: (id, subtitles) => api.post(`/materials/${id}/translate`, { subtitles }, { timeout: 600000 }),

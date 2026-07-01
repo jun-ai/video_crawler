@@ -44,6 +44,13 @@ export const useUserStore = defineStore('user', () => {
     localStorage.removeItem('token')
   }
 
+  // 最近学习路径 (供移动端底 tab "学习" 入口使用, 持久化到 localStorage)
+  const lastLearningPath = ref(localStorage.getItem('lastLearningPath') || '')
+  function setLastLearningPath(path) {
+    lastLearningPath.value = path
+    try { localStorage.setItem('lastLearningPath', path) } catch {}
+  }
+
   // 初始化时获取用户信息
   if (token.value) {
     fetchProfile()
@@ -56,6 +63,8 @@ export const useUserStore = defineStore('user', () => {
     isAdmin,
     login,
     logout,
-    fetchProfile
+    fetchProfile,
+    lastLearningPath,
+    setLastLearningPath
   }
 })

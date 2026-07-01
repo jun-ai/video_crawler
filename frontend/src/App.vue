@@ -147,19 +147,18 @@
         </div>
       </footer>
 
-      <!-- 移动端底部导航 -->
-      <nav class="fixed bottom-0 left-0 right-0 h-14 flex lg:hidden border-t z-[1000]"
-           style="background: var(--color-bg-card); border-color: var(--color-border); padding-bottom: env(safe-area-inset-bottom, 0px)">
+      <!-- 移动端底部导航 — SpeakVlog 4 入口 (对标规范) -->
+      <!-- 在 /learn/* 视频学习页隐藏, 因为 Learn.vue 内部有自己的 5-icon 视频工具栏 -->
+      <!-- CSS 通过 @media (max-width: 1023px) 控制显示, 默认桌面隐藏 -->
+      <nav v-if="!isLearnRoute" class="mobile-tab-bar" aria-label="主导航">
         <div
           v-for="item in mobileNavItems"
           :key="item.path"
-          :class="['flex-1 flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-colors duration-150',
-                    isActiveRoute(item.path) ? '' : '']"
-          :style="{ color: isActiveRoute(item.path) ? 'var(--color-brand)' : 'var(--color-text-muted)' }"
+          :class="['mobile-tab-item', { 'is-active': isActiveRoute(item.path) }]"
           @click="navigateTo(item.path)"
         >
-          <component :is="item.icon" :size="20" />
-          <span class="text-[10px] font-medium">{{ item.label }}</span>
+          <component :is="item.icon" :size="22" :stroke-width="isActiveRoute(item.path) ? 2.4 : 1.8" />
+          <span class="mobile-tab-label">{{ item.label }}</span>
         </div>
       </nav>
     </div>
@@ -167,11 +166,11 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useThemeStore } from '@/stores/theme'
-import { Home, Video, BarChart3, Star, BookOpen, Layers, UserCircle, UserCheck } from 'lucide-vue-next'
+import { Home, GraduationCap, Star, UserCircle, UserCheck, BookOpen, Layers } from 'lucide-vue-next'
 import SfProvider from '@/components/ui/SfProvider.vue'
 import SfDropdown from '@/components/ui/SfDropdown.vue'
 import SfAvatar from '@/components/ui/SfAvatar.vue'
@@ -201,9 +200,9 @@ const navItems = computed(() => {
 
 const mobileNavItems = computed(() => [
   { path: '/', label: '首页', icon: Home },
-  { path: '/materials', label: '视频库', icon: Video },
-  { path: '/learning-center', label: '学习', icon: BarChart3 },
-  { path: '/english-cards', label: '卡片', icon: Layers },
+  // 学习: 优先跳最近学习, 否则学习中心
+  { path: userStore.lastLearningPath || '/learning-center', label: '学习', icon: GraduationCap },
+  { path: '/vocabulary', label: '生词本', icon: BookOpen },
   { path: '/profile', label: '我的', icon: userStore.isLoggedIn ? UserCheck : UserCircle }
 ])
 
@@ -211,6 +210,16 @@ const isActiveRoute = (path) => {
   if (path === '/') return route.path === '/'
   return route.path.startsWith(path)
 }
+
+// 视频学习页 (/learn/:id) 用 Learn.vue 自己的 5-icon 工具栏, 不显示 App 全局 tab bar
+const isLearnRoute = computed(() => route.path.startsWith('/learn/'))
+
+// 记住最近学习路径 (供移动端 "学习" tab 入口使用)
+watch(() => route.path, (p) => {
+  if (p && p.startsWith('/learn') && route.params.id) {
+    userStore.setLastLearningPath(`/learn/${route.params.id}`)
+  }
+}, { immediate: true })
 
 const navigateTo = (path) => {
   router.push(path)
@@ -227,10 +236,72 @@ const logout = () => {
   min-height: calc(100vh - 64px);
   padding-bottom: 0;
 }
-/* 手机端给底部导航栏留空间 */
+
+/* === 移动端底 tab bar (SpeakVlog 4 入口) === */
+/* 默认桌面隐藏, 只在 <= 1023px 显示 (避免跟 Tailwind lg:hidden 冲突) */
+.mobile-tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: none;
+  z-index: 1000;
+  height: calc(56px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: rgba(255, 255, 255, 0.95);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 -1px 12px rgba(0, 0, 0, 0.04);
+}
+@media (max-width: 1023px) {
+  .mobile-tab-bar {
+    display: flex;
+  }
+}
+.mobile-tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  transition: color 0.15s ease, transform 0.1s ease;
+  color: var(--color-text-muted, #777);
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+}
+.mobile-tab-item:active {
+  transform: scale(0.92);
+}
+.mobile-tab-item.is-active {
+  color: var(--color-brand, #10B981);
+}
+.mobile-tab-item.is-active::before {
+  /* 顶部小圆点 active 指示器 */
+  content: '';
+  position: absolute;
+  top: 4px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-brand, #10B981);
+}
+.mobile-tab-label {
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.2px;
+}
+
+/* 手机端给底部导航栏留空间, 隐藏全屏 footer */
 @media (max-width: 1023px) {
   .app-main {
     padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+  }
+  .app-footer {
+    display: none;
   }
 }
 

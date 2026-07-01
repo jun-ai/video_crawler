@@ -36,6 +36,7 @@
     <!-- 主内容（加载完成后） -->
     <template v-else>
       <!-- 页面头部 — Phase 1B Task 4: 提取到独立组件 -->
+      <template v-if="!isMobileView">
             <LearnHeader
               :title="material?.title"
               :is-favorited="isFavorited"
@@ -47,9 +48,17 @@
               @back="$router.back()"
               @toggle-favorite="toggleFavorite"
             />
+      </template>
+      <!-- H5 端: 极简 header (只有返回 + 标题), 跟对标一样 -->
+      <header v-else class="sf-h5-header">
+        <button class="sf-h5-back" type="button" @click="$router.back()" aria-label="返回">
+          <ArrowLeft :size="22" />
+        </button>
+        <h1 class="sf-h5-title">{{ material?.title }}</h1>
+      </header>
 
       <!-- 学习模式切换 — Phase 1B Task 3: 提取到独立组件 -->
-      <LearnModeSwitcher v-model="learningMode" />
+      <LearnModeSwitcher v-if="!isMobileView" v-model="learningMode" />
 
       <!-- 听写模式 -->
       <div class="sf-main-content" v-if="learningMode === 'dictation'">
@@ -263,7 +272,7 @@
     <!-- 工具箱抽屉遮罩 -->
     <div class="sf-toolbox-overlay" v-if="showToolboxDrawer" @click="showToolboxDrawer = false"></div>
 
-    <!-- Phase 1B Task 2: 移动端底部 Tab Bar -->
+    <!-- Phase 1B Task 2 + Phase 2 (H5): 移动端 5-icon 工具栏 (SpeakVlog 规范) -->
     <nav class="sf-mobile-tabs" v-if="!loading">
       <button
         v-for="tab in mobileTabs"
@@ -326,6 +335,69 @@
           @seek-subtitle="seekToSubtitle"
           @add-vocabulary="addToVocabulary"
         />
+      </SheetContent>
+    </Sheet>
+
+    <!-- Phase 2 (H5): 移动端 字幕设置 Sheet (双语/英文/中文/字号) -->
+    <Sheet v-model:open="showSubtitleSettings">
+      <SheetContent side="bottom" class="sf-subtitle-settings-sheet">
+        <SheetHeader>
+          <SheetTitle>字幕设置</SheetTitle>
+        </SheetHeader>
+        <div class="sf-subtitle-settings">
+          <!-- 字幕模式单选 -->
+          <div class="sf-subtitle-row">
+            <span class="sf-subtitle-label">字幕模式</span>
+            <div class="sf-subtitle-options">
+              <button
+                v-for="opt in [
+                  { key: 'bilingual', label: '双语' },
+                  { key: 'en-only',   label: '仅英文' },
+                  { key: 'cn-only',   label: '仅中文' }
+                ]"
+                :key="opt.key"
+                :class="['sf-subtitle-opt', { active: subtitleMode === opt.key }]"
+                @click="setSubtitleMode(opt.key)"
+              >{{ opt.label }}</button>
+            </div>
+          </div>
+          <!-- 字号滑块 -->
+          <div class="sf-subtitle-row">
+            <span class="sf-subtitle-label">字体大小</span>
+            <div class="sf-subtitle-size-row">
+              <button
+                v-for="size in [14, 16, 18, 20]"
+                :key="size"
+                :class="['sf-subtitle-opt', { active: subtitleFontSize === size }]"
+                @click="subtitleFontSize = size"
+              >{{ size }}</button>
+            </div>
+          </div>
+          <!-- 应用/关闭 -->
+          <div class="sf-subtitle-actions">
+            <button class="sf-subtitle-cancel" @click="showSubtitleSettings = false">关闭</button>
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+
+    <!-- Phase 2 (H5): 移动端 倍速选择 Sheet -->
+    <Sheet v-model:open="showPlaybackRateSheet">
+      <SheetContent side="bottom" class="sf-playback-rate-sheet">
+        <SheetHeader>
+          <SheetTitle>播放倍速</SheetTitle>
+        </SheetHeader>
+        <div class="sf-playback-rate-list">
+          <button
+            v-for="rate in [0.5, 0.75, 1.0, 1.25, 1.5, 2.0]"
+            :key="rate"
+            :class="['sf-rate-opt', { active: playbackRate === rate }]"
+            @click="selectPlaybackRate(rate)"
+          >
+            <span class="sf-rate-label">{{ rate }}x</span>
+            <span v-if="playbackRate === rate" class="sf-rate-check">✓</span>
+          </button>
+        </div>
       </SheetContent>
     </Sheet>
 
@@ -422,7 +494,10 @@ const lastPosition = ref(0)  // 上次播放位置（秒）
 const showResumeBanner = ref(false)  // 是否显示继续学习横幅
 const showShortcutPanel = ref(false)  // 是否显示快捷键帮助面板
 const interpretationSheetOpen = ref(false)  // 是否显示解读面板 Sheet
-const showToolboxDrawer = ref(false)  // 工具箱抽屉（< 1280px 用）
+// Phase 2 (H5): 移动端工具栏抽屉状态
+const showSubtitleSettings = ref(false)   // 字幕设置 sheet (双语/英文/中文/字号)
+const showPlaybackRateSheet = ref(false)  // 倍速选择 sheet
+const showToolboxDrawer = ref(false)      // 兼容旧 API, 移动端工具抽屉
 
 // 工具箱 badge 计数
 const vocabCount = computed(() => (interpretation.value?.words?.length || 0) + (interpretation.value?.phrases?.length || 0))
@@ -453,26 +528,29 @@ const setPlayMode = (mode) => {
 const learningMode = ref('shadowing')
 const dictationIndex = ref(0)  // 听写模式当前索引
 
-// Phase 1B Task 2: 移动端 tab 切换 (video / shadowing / subtitles / interpretation)
-const mobileActiveTab = ref('video')
+// Phase 1B Task 2 + Phase 2 (H5): 移动端 1-icon 工具栏 (H5 核心动作 only)
+// H5 只要 1 个核心动作: 收藏 (练习 砍掉, 桌面端通过 /learn/:id 的跟读/听写模式使用)
+// 默认 (未选) 显示 视频+字幕列表 (单列布局)
+const mobileActiveTab = ref(null)  // null = 默认视图
 const mobileTabs = [
-  { key: 'video', label: '视频', icon: Video },
-  { key: 'shadowing', label: '跟读', icon: Mic },
-  { key: 'subtitles', label: '字幕', icon: FileText },
-  { key: 'interpretation', label: '解读', icon: BookOpen }
+  { key: 'bookmark',          label: '收藏', icon: Bookmark, action: 'bookmarkCurrent' }
 ]
 const setMobileTab = (key) => {
-  if (key === 'interpretation') {
-    interpretationSheetOpen.value = true
-    return
+  const tab = mobileTabs.find(t => t.key === key)
+  if (!tab) return
+  switch (tab.action) {
+    case 'bookmarkCurrent':      bookmarkCurrentSubtitle(); break
   }
-  mobileActiveTab.value = key
 }
 
 // Phase 1B Task 5: 移动端宽度检测（用于解读面板 Sheet side 切换）
 const isMobileView = ref(false)
 const updateIsMobile = () => {
   isMobileView.value = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
+  // H5 端: 强制 learningMode 永远为 shadowing (听写模式 H5 砍掉)
+  if (isMobileView.value && learningMode.value === 'dictation') {
+    learningMode.value = 'shadowing'
+  }
 }
 onMounted(() => {
   updateIsMobile()
@@ -514,6 +592,14 @@ const currentSubtitleIndexInPage = computed(() => {
 // 字幕翻译相关
 const showTranslation = ref(true)  // 默认显示中英翻译
 const showOnlyChinese = ref(false)  // 仅显示中文模式
+// Phase 2 (H5): 字幕设置 sheet 用的派生状态
+const subtitleFontSize = ref(16)  // 字幕字体大小 (px)
+const subtitleMode = computed(() => {
+  if (showOnlyChinese.value) return 'cn-only'
+  if (!showTranslation.value) return 'en-only'
+  return 'bilingual'
+})
+// setSubtitleMode / setPlaybackRate 定义在下方 (L2033 / L812 附近)
 const translationLoading = ref(false)
 
 // 跟读相关
@@ -1571,9 +1657,9 @@ const toggleBookmark = async (subtitle) => {
       const bookmarks = await subtitleBookmarkAPI.getList(material.value.id)
       const target = bookmarks.find(b => b.subtitle_id === subId)
       if (target) {
+        // API 方法是 .remove 不是 .delete (旧代码 bug 修复)
         await subtitleBookmarkAPI.remove(target.id)
         bookmarkedSubtitleIds.value.delete(subId)
-        bookmarkedSubtitleIds.value = new Set(bookmarkedSubtitleIds.value)
         toast.success('已取消收藏')
       }
     } catch (e) {
@@ -1582,23 +1668,36 @@ const toggleBookmark = async (subtitle) => {
     }
   } else {
     try {
-      await subtitleBookmarkAPI.add({
-        material_id: material.value.id,
-        subtitle_id: subId
-      })
+      await subtitleBookmarkAPI.add({ material_id: material.value.id, subtitle_id: subId, note: '' })
       bookmarkedSubtitleIds.value.add(subId)
-      bookmarkedSubtitleIds.value = new Set(bookmarkedSubtitleIds.value)
-      toast.success('已收藏该字幕')
+      toast.success('已收藏')
     } catch (e) {
       console.error('收藏失败', e)
-      if (e.response?.data?.detail?.includes('已收藏')) {
-        bookmarkedSubtitleIds.value.add(subId)
-        bookmarkedSubtitleIds.value = new Set(bookmarkedSubtitleIds.value)
-      } else {
-        toast.error('收藏失败')
-      }
+      toast.error('操作失败')
     }
   }
+}
+
+// Phase 2 (H5): 移动端"收藏"按钮 — 收藏当前字幕
+const bookmarkCurrentSubtitle = () => {
+  if (!userStore.isLoggedIn) {
+    toast.warning('请先登录')
+    router.push('/login')
+    return
+  }
+  const sub = subtitles.value[currentIndex.value]
+  if (!sub) {
+    toast.warning('当前没有可收藏的字幕')
+    return
+  }
+  toggleBookmark(sub)
+}
+
+// Phase 2 (H5): 倍速切换
+const selectPlaybackRate = (rate) => {
+  playbackRate.value = rate
+  showPlaybackRateSheet.value = false
+  toast.success(`已切换到 ${rate}x 倍速`)
 }
 
 // 处理文本选择
@@ -1704,7 +1803,10 @@ const handleTextSelection = (subtitle, event) => {
 
   // 创建一个临时范围来计算偏移
   const tempRange = document.createRange()
-  const subtitleElement = event.target.closest('.sub-text')
+  // 兼容两种 class: 实际是 .sf-subtitle-item__text, 老代码写 .sub-text (永远 null)
+  const subtitleElement = event.target.closest('.sf-subtitle-item__text')
+                              || event.target.closest('.sub-text')
+                              || event.target.closest('.sf-subtitle-item')
 
   if (subtitleElement) {
     tempRange.selectNodeContents(subtitleElement)
@@ -1926,6 +2028,9 @@ const setSubtitleMode = async (mode) => {
     showTranslation.value = false
     showOnlyChinese.value = true
   }
+  // Phase 2 (H5): 关闭字幕设置 sheet + toast 提示
+  showSubtitleSettings.value = false
+  toast.success(`字幕: ${mode === 'bilingual' ? '双语' : mode === 'en-only' ? '仅英文' : '仅中文'}`)
   // 确保有中文翻译
   if ((showTranslation.value || showOnlyChinese.value) && subtitles.value.length > 0) {
     const hasChinese = subtitles.value.some(sub => sub.text_cn)
@@ -2146,6 +2251,46 @@ onUnmounted(() => {
 .sf-learn-page {
   margin: 0 auto;
   padding: 0 20px 24px;
+}
+
+/* ==================== H5 极简 Header (对标) ==================== */
+.sf-h5-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--color-bg-card);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.sf-h5-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+}
+.sf-h5-back:active {
+  background: var(--color-bg-elevated);
+}
+.sf-h5-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* 模式切换淡入动画 */
@@ -2433,6 +2578,111 @@ onUnmounted(() => {
   padding: 0;
 }
 
+/* ==================== Phase 2 (H5): 字幕设置 Sheet ==================== */
+.sf-subtitle-settings-sheet :deep(.sheet-content) {
+  max-height: 60vh;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+}
+.sf-subtitle-settings {
+  padding: 20px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.sf-subtitle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.sf-subtitle-label {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.sf-subtitle-options,
+.sf-subtitle-size-row {
+  display: flex;
+  gap: 8px;
+}
+.sf-subtitle-opt {
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--color-bg-elevated, #f5f5f5);
+  color: var(--color-text-primary, #222);
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.sf-subtitle-opt.active {
+  background: var(--color-brand, #10B981);
+  color: #fff;
+  border-color: var(--color-brand, #10B981);
+}
+.sf-subtitle-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border);
+}
+.sf-subtitle-cancel {
+  padding: 10px 20px;
+  border-radius: 8px;
+  background: var(--color-bg-elevated, #f5f5f5);
+  color: var(--color-text-primary, #222);
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* ==================== Phase 2 (H5): 倍速选择 Sheet ==================== */
+.sf-playback-rate-sheet :deep(.sheet-content) {
+  max-height: 50vh;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+}
+.sf-playback-rate-list {
+  padding: 12px 16px 24px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.sf-rate-opt {
+  position: relative;
+  padding: 14px 8px;
+  border-radius: 10px;
+  background: var(--color-bg-elevated, #f5f5f5);
+  color: var(--color-text-primary, #222);
+  border: 1px solid transparent;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.sf-rate-opt.active {
+  background: var(--color-brand, #10B981);
+  color: #fff;
+  border-color: var(--color-brand, #10B981);
+}
+.sf-rate-check {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 10px;
+  font-weight: 700;
+}
+.sf-rate-label {
+  font-feature-settings: 'tnum';
+}
+
 /* ==================== 快捷键面板 ==================== */
 .sf-shortcut-panel {
   z-index: 101;
@@ -2635,8 +2885,8 @@ onUnmounted(() => {
 
 @media (max-width: 768px) {
   .sf-learn-page {
-    padding: 0 12px 20px;
-    padding-bottom: 80px; /* 给底部 tab bar 留空间 */
+    padding: 0;          /* H5 端视频通栏, 不要 12px 边距 */
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); /* 给底 tab bar 留空间 */
   }
   .sf-page-header {
     margin-bottom: 10px;

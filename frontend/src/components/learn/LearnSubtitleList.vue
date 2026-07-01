@@ -7,6 +7,7 @@
           <span class="sf-subtitle-panel__title-text">动态字幕</span>
           <span class="sf-subtitle-panel__count">{{ subtitles.length }} 句</span>
         </h3>
+        <!-- Phase 2 (H5): 播放模式 + 更多操作 在 mobile (<=768px) 隐藏, 整合到 Learn.vue 底 5-icon 工具栏 (倍速/字幕设置) -->
         <div class="sf-subtitle-panel__actions">
           <!-- 播放模式分段控制 -->
           <div class="sf-subtitle-play-mode">
@@ -53,11 +54,29 @@
           <!-- 左侧状态指示条 -->
           <div :class="['sf-subtitle-item__indicator', { active: currentSubtitleIndexInPage === pageIndex, read: getGlobalIndex(pageIndex) < currentIndex }]"></div>
 
-          <span class="sf-subtitle-item__time">{{ formatTime(sub.start_time) }}</span>
           <div class="sf-subtitle-item__content">
+            <!-- 顶部 header 行: 时间码 (左) + 操作 (右, hover 显示) -->
+            <div class="sf-subtitle-item__head">
+              <span class="sf-subtitle-item__time">{{ formatTime(sub.start_time) }}</span>
+              <div class="sf-subtitle-item__actions">
+                <button class="sf-subtitle-action-btn" @click.stop="$emit('replay-subtitle', sub)" title="播放此句">
+                  <Play :size="13" />
+                </button>
+                <Star
+                  class="sf-bookmark-icon"
+                  :class="{ bookmarked: bookmarkedIds.has(sub.id) }"
+                  :size="13"
+                  :fill="bookmarkedIds.has(sub.id) ? 'currentColor' : 'none'"
+                  @click.stop="$emit('toggle-bookmark', sub)"
+                  :title="bookmarkedIds.has(sub.id) ? '取消收藏' : '收藏此句'"
+                />
+              </div>
+            </div>
+
             <div
               class="sf-subtitle-item__text"
               v-if="!showOnlyChinese"
+              @mousedown.stop=""
               @mouseup="$emit('text-selection', sub, $event)"
               @click.stop="$emit('annotation-click', $event)"
               v-html="getAnnotatedText(sub)"
@@ -80,19 +99,6 @@
             <span v-if="showOnlyChinese && sub.text_cn" class="sf-subtitle-item__text sf-subtitle-item__text--cn">
               {{ sub.text_cn }}
             </span>
-          </div>
-          <div class="sf-subtitle-item__actions">
-            <button class="sf-subtitle-action-btn" @click.stop="$emit('replay-subtitle', sub)" title="播放此句">
-              <Play :size="13" />
-            </button>
-            <Star
-              class="sf-bookmark-icon"
-              :class="{ bookmarked: bookmarkedIds.has(sub.id) }"
-              :size="13"
-              :fill="bookmarkedIds.has(sub.id) ? 'currentColor' : 'none'"
-              @click.stop="$emit('toggle-bookmark', sub)"
-              :title="bookmarkedIds.has(sub.id) ? '取消收藏' : '收藏此句'"
-            />
           </div>
         </div>
       </div>
@@ -218,6 +224,16 @@ defineExpose({ listRef })
   flex-shrink: 0;
 }
 
+/* Phase 2 (H5): 移动端隐藏桌面控件 (播放模式 + 更多), 整合到 Learn.vue 5-icon 工具栏 */
+@media (max-width: 768px) {
+  .sf-subtitle-panel__header {
+    padding: 10px 14px;
+  }
+  .sf-subtitle-panel__actions {
+    display: none;
+  }
+}
+
 .sf-subtitle-panel__title {
   display: flex;
   align-items: baseline;
@@ -278,6 +294,26 @@ defineExpose({ listRef })
   position: relative;
 }
 
+/* Phase 2 (H5): 移动端字幕条目更紧凑 — 小内边距让单屏看更多句 */
+@media (max-width: 768px) {
+  .sf-subtitle-item {
+    padding: 8px 12px;
+    margin: 1px 6px;
+    gap: 8px;
+  }
+  .sf-subtitle-item__time {
+    font-size: 10px;
+    min-width: 32px;
+  }
+  .sf-subtitle-item__text {
+    font-size: 13px;
+  }
+  .sf-subtitle-item__cn {
+    font-size: 11px;
+    margin-top: 2px;
+  }
+}
+
 .sf-subtitle-item:hover {
   background: var(--sf-bg-elevated);
   border-color: var(--sf-border);
@@ -312,7 +348,7 @@ defineExpose({ listRef })
   color: var(--sf-text-muted);
 }
 
-/* 时间戳 */
+/* 时间码 */
 .sf-subtitle-item__time {
   flex-shrink: 0;
   color: var(--sf-text-muted);
@@ -323,7 +359,8 @@ defineExpose({ listRef })
   background: var(--sf-bg-elevated);
   border: 1px solid var(--sf-border);
   border-radius: var(--sf-radius-full);
-  margin-top: 1px;
+  margin-top: 0;
+  letter-spacing: 0.3px;
 }
 .sf-subtitle-item.active .sf-subtitle-item__time {
   background: rgba(37, 99, 235, 0.18);
@@ -336,26 +373,45 @@ defineExpose({ listRef })
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   min-width: 0;
 }
 
+/* 顶部 header 行: 时间码 (左) + 操作 (右) */
+.sf-subtitle-item__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 20px;
+  margin-bottom: 2px;
+}
+
+/* 英文: 14px (不变) + 优化断行 (中长词可任意断) */
 .sf-subtitle-item__text {
   font-size: 14px;
   font-weight: 500;
-  line-height: 1.65;
+  line-height: 1.55;
   color: var(--sf-text-primary);
+  overflow-wrap: anywhere;
+  word-break: normal;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
 }
 
 .sf-subtitle-item.active .sf-subtitle-item__text {
   font-weight: 600;
 }
 
+/* 中文: 12px 保持,断行优化 */
 .sf-subtitle-item__cn {
   font-size: 12px;
   font-weight: 400;
   color: var(--sf-text-secondary);
-  line-height: 1.6;
+  line-height: 1.5;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 .sf-subtitle-item.active .sf-subtitle-item__cn {
   color: var(--sf-text-secondary);
@@ -407,17 +463,18 @@ defineExpose({ listRef })
   color: var(--color-brand);
 }
 
-/* 操作按钮 */
+/* 操作按钮 (横向 row, hover 显示) */
 .sf-subtitle-item__actions {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   flex-shrink: 0;
   opacity: 0;
   transition: opacity var(--sf-duration-fast);
 }
-.sf-subtitle-item:hover .sf-subtitle-item__actions {
+.sf-subtitle-item:hover .sf-subtitle-item__actions,
+.sf-subtitle-item.active .sf-subtitle-item__actions {
   opacity: 1;
 }
 

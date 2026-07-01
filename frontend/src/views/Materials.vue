@@ -78,10 +78,6 @@
               {{ filters.duration }}
               <X :size="12" @click="selectDuration('')" />
             </span>
-            <span class="active-chip" v-if="selectedTagId">
-              {{ selectedTagName }}
-              <X :size="12" @click="selectTag(null)" />
-            </span>
           </div>
         </div>
 
@@ -162,24 +158,6 @@
             </div>
           </div>
 
-          <!-- 标签 pills (如果有的话) -->
-          <template v-if="allTags.length > 0">
-            <span class="filter-bar__divider"></span>
-            <div class="filter-bar__group">
-              <span class="filter-bar__label">标签</span>
-              <div class="filter-bar__pills">
-                <span
-                  v-for="tag in allTags.slice(0, 10)"
-                  :key="tag.id"
-                  :class="['filter-pill tag-pill', { active: selectedTagId === tag.id }]"
-                  :style="selectedTagId === tag.id
-                    ? { background: tag.color || 'var(--sf-cta-gradient)', color: '#fff', borderColor: 'transparent' }
-                    : {}"
-                  @click="toggleTag(tag.id)"
-                >{{ tag.name }}</span>
-              </div>
-            </div>
-          </template>
         </div>
       </div>
 
@@ -244,7 +222,7 @@
 
     <!-- 移动端筛选 Sheet -->
     <Sheet v-model:open="mobileFilterOpen">
-      <SheetContent side="top" class="mobile-filter-sheet">
+      <SheetContent side="left" class="mobile-filter-sheet">
         <SheetHeader>
           <SheetTitle class="sheet-filter-title">
             <SlidersHorizontal :size="18" />
@@ -323,21 +301,6 @@
             </div>
           </div>
 
-          <!-- 标签 -->
-          <div class="mobile-filter-section" v-if="allTags.length > 0">
-            <h4 class="mobile-section-title">标签</h4>
-            <div class="mobile-tags-wrap">
-              <span
-                v-for="tag in allTags.slice(0, 12)"
-                :key="tag.id"
-                :class="['sidebar-tag', { active: selectedTagId === tag.id }]"
-                :style="selectedTagId === tag.id
-                  ? { background: tag.color || 'var(--color-brand-bright)', color: '#fff', borderColor: tag.color || 'var(--color-brand-bright)' }
-                  : { borderColor: tag.color || 'var(--color-border)', color: tag.color || 'var(--color-text-secondary)' }"
-                @click="toggleTag(tag.id)"
-              >{{ tag.name }}</span>
-            </div>
-          </div>
         </div>
 
         <!-- 底部操作栏 -->
@@ -367,7 +330,7 @@ import {
   SheetHeader,
   SheetTitle
 } from '@/components/ui/sheet'
-import { materialAPI, tagsAPI, favoriteAPI, learningStatsAPI } from '@/api'
+import { materialAPI, favoriteAPI, learningStatsAPI } from '@/api'
 import { useUserStore } from '@/stores/user'
 import PageHeader from '@/components/common/PageHeader.vue'
 import VideoCard from '@/components/common/VideoCard.vue'
@@ -423,26 +386,12 @@ const filters = reactive({
   keyword: route.query.keyword || ''
 })
 
-// 标签
-const creatorTags = ref([])
-const topicTags = ref([])
-const selectedTagId = ref(null)
-
-const allTags = computed(() => [...creatorTags.value, ...topicTags.value])
-
-const selectedTagName = computed(() => {
-  if (!selectedTagId.value) return ''
-  const tag = allTags.value.find(t => t.id === selectedTagId.value)
-  return tag ? tag.name : ''
-})
-
 const activeFilterCount = computed(() => {
   let count = 0
   if (filters.category) count++
   if (filters.difficulty) count++
   if (filters.duration) count++
   if (filters.keyword) count++
-  if (selectedTagId.value) count++
   return count
 })
 
@@ -498,7 +447,7 @@ const selectDuration = (duration) => {
   loadMaterials()
 }
 
-// 搜索
+// ====== 搜索 ======
 let searchTimer = null
 const debounceSearch = () => {
   clearTimeout(searchTimer)
@@ -516,33 +465,12 @@ const clearSearch = () => {
   loadMaterials()
 }
 
-// 标签
-const toggleTag = (tagId) => {
-  selectedTagId.value = selectedTagId.value === tagId ? null : tagId
-  page.value = 1
-  loadMaterials()
-}
-
-const loadTags = async () => {
-  try {
-    const [creators, topics] = await Promise.all([
-      tagsAPI.getList({ type: 'creator' }),
-      tagsAPI.getList({ type: 'topic' })
-    ])
-    creatorTags.value = creators || []
-    topicTags.value = topics || []
-  } catch (e) {
-    console.error('加载标签失败', e)
-  }
-}
-
 const clearFilters = () => {
   filters.category = ''
   filters.difficulty = 0
   filters.duration = ''
   filters.keyword = ''
   searchQuery.value = ''
-  selectedTagId.value = null
   page.value = 1
   loadMaterials()
 }
@@ -558,7 +486,6 @@ const loadMaterials = async () => {
     if (filters.category) params.category = filters.category
     if (filters.difficulty) params.difficulty = filters.difficulty
     if (filters.keyword) params.keyword = filters.keyword
-    if (selectedTagId.value) params.tag_id = selectedTagId.value
     if (filters.duration) params.duration_range = filters.duration
 
     const res = await materialAPI.getList(params)
@@ -605,7 +532,6 @@ const getProgress = (materialId) => learningProgress.value[materialId] || 0
 
 onMounted(() => {
   loadMaterials()
-  loadTags()
   loadUserStatus()
 })
 </script>
@@ -919,10 +845,6 @@ onMounted(() => {
   box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
 }
 
-.tag-pill {
-  cursor: pointer;
-}
-
 .filter-bar__divider {
   width: 1px;
   height: 20px;
@@ -987,26 +909,6 @@ onMounted(() => {
   gap: 6px;
 }
 
-.sidebar-tag {
-  padding: 4px 12px;
-  border-radius: var(--radius-full, 9999px);
-  font-size: 12px;
-  font-weight: 500;
-  border: 1px solid;
-  cursor: pointer;
-  transition: all var(--sf-duration-normal) cubic-bezier(0.4, 0, 0.2, 1);
-  white-space: nowrap;
-}
-
-.sidebar-tag:hover {
-  filter: brightness(0.9);
-  transform: translateY(-1px);
-}
-
-.sidebar-tag.active {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-}
-
 /* ====== 分页 ====== */
 .pagination {
   display: flex;
@@ -1014,11 +916,16 @@ onMounted(() => {
   padding: 32px 0;
 }
 
-/* ====== 移动端筛选 Sheet ====== */
-.mobile-filter-sheet {
-  max-height: 85vh;
-  border-radius: 0 0 var(--radius-xl, 24px) var(--radius-xl, 24px) !important;
-  padding: 0 !important;
+/* ====== 移动端筛选 Sheet (侧边抽屉 75% 宽, 对标规范) ====== */
+@media (max-width: 1024px) {
+  .mobile-filter-sheet {
+    width: 75vw !important;
+    max-width: 75vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+  }
 }
 
 .sheet-filter-title {

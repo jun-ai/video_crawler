@@ -82,8 +82,16 @@
               :class="{ active: activeTab === 'grammar' }"
               @click="activeTab = 'grammar'"
             >
-              <span>地道表达</span>
+              <span>语法点</span>
               <span class="ec-tab-count" v-if="tabCounts.grammar > 0">({{ tabCounts.grammar }})</span>
+            </div>
+            <div
+              class="ec-tab"
+              :class="{ active: activeTab === 'idioms' }"
+              @click="activeTab = 'idioms'"
+            >
+              <span>地道表达</span>
+              <span class="ec-tab-count" v-if="tabCounts.idioms > 0">({{ tabCounts.idioms }})</span>
             </div>
           </div>
           <div class="ec-tab-actions">
@@ -176,6 +184,24 @@
             @jump-learn="onJumpLearn"
           />
 
+          <!-- 4th tab: 地道表达 (idiom) -->
+          <EnglishCardItem
+            v-if="activeTab === 'idioms'"
+            v-for="item in filteredItems"
+            :key="item.id"
+            :item="item"
+            type="idiom"
+            :status="learningStatus[item.id] || ''"
+            :selected="false"
+            :hide-chinese="hideChinese"
+            :grammar-expanded="expandedGrammarIds.has(item.id)"
+            @toggle-select="onToggleSelect"
+            @set-status="onSetStatus"
+            @speak="speakWord"
+            @toggle-grammar="onToggleGrammar"
+            @jump-learn="onJumpLearn"
+          />
+
           <!-- Empty state for current tab -->
           <EmptyState
             v-if="!interpretationLoading && filteredItems.length === 0"
@@ -238,7 +264,7 @@ const selectedCardId = ref(null)
 // 2.10 grammar 展开状态 (Set, 默认全部折叠, 用户手动展开)
 const expandedGrammarIds = ref(new Set())
 
-const interpretationData = ref({ words: [], phrases: [], grammar: [] })
+const interpretationData = ref({ words: [], phrases: [], grammar: [], idioms: [] })
 const interpretationLoading = ref(false)
 const learningStatus = ref({})
 
@@ -262,7 +288,8 @@ const currentTabItems = computed(() => {
 const tabCounts = computed(() => ({
   words: (interpretationData.value.words || []).length,
   phrases: (interpretationData.value.phrases || []).length,
-  grammar: (interpretationData.value.grammar || []).length
+  grammar: (interpretationData.value.grammar || []).length,
+  idioms: (interpretationData.value.idioms || []).length
 }))
 
 /** Filter counts for the current tab */
@@ -336,14 +363,15 @@ async function loadInterpretation(materialId) {
     interpretationData.value = {
       words: data.words || [],
       phrases: data.phrases || [],
-      grammar: data.grammar || []
+      grammar: data.grammar || [],
+      idioms: data.idioms || []
     }
     // Cache the total count
-    const total = (data.words || []).length + (data.phrases || []).length + (data.grammar || []).length
+    const total = (data.words || []).length + (data.phrases || []).length + (data.grammar || []).length + (data.idioms || []).length
     materialInterpretationCounts.value[materialId] = total
   } catch (e) {
     console.error('Failed to load interpretation', e)
-    interpretationData.value = { words: [], phrases: [], grammar: [] }
+    interpretationData.value = { words: [], phrases: [], grammar: [], idioms: [] }
   } finally {
     interpretationLoading.value = false
   }
@@ -389,7 +417,8 @@ async function setStatus(interpretationId, status) {
         ...(interpretationData.value.words || []),
         ...(interpretationData.value.phrases || []),
         ...(interpretationData.value.grammar || []),
-      ]
+        ...(interpretationData.value.idioms || []),
+      ]// 全 4 类的所有卡片都参与 vocab 同步, 避免 idiom 标 unknown 时找不到
       const item = allItems.find(i => i.id === interpretationId)
       if (item) {
         vocabularyAPI.add({
@@ -714,12 +743,13 @@ onMounted(() => {
 }
 
 /* ==================== Card Grid ==================== */
+/* 默认 3 列 (每张卡更宽, 信息更易读) */
 .ec-card-grid {
   flex: 1;
   overflow-y: auto;
   padding: 20px 24px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   align-content: start;
 }
@@ -748,6 +778,20 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+/* Phase 3 (H5): 对标规范 — 卡片按分类加左侧色条 (绿=单词/蓝=短语/紫=语法/红=表达) */
+.ec-vocab-card[data-card-type="word"] {
+  border-left: 4px solid #10B981;
+}
+.ec-vocab-card[data-card-type="phrase"] {
+  border-left: 4px solid #3B82F6;
+}
+.ec-vocab-card[data-card-type="grammar"] {
+  border-left: 4px solid #8B5CF6;
+}
+.ec-vocab-card[data-card-type="idiom"] {
+  border-left: 4px solid #F59E0B;
 }
 
 .ec-vocab-card:hover {
@@ -1008,6 +1052,79 @@ onMounted(() => {
   color: var(--color-text-primary);
 }
 
+/* 结构公式 (短代码块风格) */
+.ec-analysis-structure .ec-analysis-formula {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 2px 8px;
+  background: rgba(15, 76, 58, 0.08);
+  color: #0F4C3A;
+  font-family: var(--sf-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid rgba(15, 76, 58, 0.18);
+}
+
+/* 详细解释: 段落化 + 区分小标题和正文 */
+.ec-analysis-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ec-analysis-body > .ec-analysis-label {
+  display: block;
+  margin-bottom: 2px;
+}
+.ec-analysis-paragraphs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 10px 12px;
+  background: rgba(15, 23, 42, 0.03);
+  border-radius: 8px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+.ec-analysis-h {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0F4C3A;
+  letter-spacing: 0.2px;
+}
+.ec-analysis-p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--color-text-primary);
+  overflow-wrap: break-word;
+}
+
+/* 使用场景 (简短一句话) */
+.ec-analysis-scenario {
+  margin-left: 4px;
+  font-size: 13px;
+  color: var(--color-text-primary);
+}
+
+/* 表达来源 / 出处 (idiom 专用, 长段落格式) */
+.ec-analysis-origin {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: linear-gradient(135deg, rgba(15, 76, 58, 0.04), rgba(16, 185, 129, 0.04));
+  border: 1px solid rgba(15, 76, 58, 0.12);
+  border-radius: 8px;
+}
+.ec-analysis-origin-text {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--color-text-primary);
+  overflow-wrap: break-word;
+}
+
 .analysis-icon {
   color: var(--color-warning);
   flex-shrink: 0;
@@ -1123,7 +1240,6 @@ onMounted(() => {
     border-right: none;
     border-bottom: 1px solid var(--color-border);
   }
-
   .ec-sidebar-list {
     display: flex;
     overflow-x: auto;
@@ -1268,6 +1384,11 @@ onMounted(() => {
 
   .ec-tab-actions .sf-btn {
     width: 100%;
+  }
+
+  /* Phase 3 (H5): H5 端隐藏"隐藏中文"Eye 切换 (桌面功能, 移动端不需要) */
+  .ec-tab-actions {
+    display: none;
   }
 }
 

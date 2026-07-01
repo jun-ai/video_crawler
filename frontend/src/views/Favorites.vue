@@ -23,9 +23,9 @@
             <span>字幕</span>
             <span class="tab-count" v-if="subtitleTotal">{{ subtitleTotal }}</span>
           </div>
-          <!-- 5-P1-1: 视频收藏 Tab -->
+          <!-- 5-P1-1: 视频收藏 Tab (Phase 3 H5 移动端隐藏, H5 只要字幕 + 单词短语 2 tab) -->
           <div
-            :class="['fav-tab', { active: activeTab === 'videos' }]"
+            :class="['fav-tab', { 'fav-tab--desktop': true, active: activeTab === 'videos' }]"
             @click="activeTab = 'videos'"
           >
             <span>视频</span>
@@ -464,6 +464,15 @@
                     删除
                   </div>
                 </SfDropdown>
+                <!-- Phase 3 (H5): 对标规范 "去练习" 按钮 -->
+                <SfButton
+                  type="primary"
+                  size="sm"
+                  class="vocab-practice-btn"
+                  @click="goPracticeVocab(item)"
+                >
+                  去练习
+                </SfButton>
               </div>
             </div>
           </div>
@@ -1271,6 +1280,16 @@ const loadVocabList = async () => {
 }
 
 // speakWord 由 useTTS 提供
+
+// Phase 3 (H5): 对标规范"去练习"按钮 - 跳到生词复习页
+const goPracticeVocab = (item) => {
+  if (!item?.word) {
+    toast.error('无法定位该词')
+    return
+  }
+  // 跳到生词复习页, 携带 word 参数让复习页聚焦这个词
+  router.push({ path: '/vocabulary-review', query: { word: item.word } })
+}
 
 const handleVocabCommand = async (command, vocabId) => {
   if (command === 'remove') {
@@ -2777,6 +2796,11 @@ onMounted(() => {
     gap: 24px;
   }
 
+  /* Phase 3 (H5): H5 端隐藏视频收藏 tab, 只剩 字幕 + 单词短语 */
+  .fav-tab--desktop {
+    display: none;
+  }
+
   .fav-tab {
     font-size: var(--text-sm, 14px);
   }
@@ -2816,6 +2840,17 @@ onMounted(() => {
 
   .vocab-word {
     font-size: var(--text-base, 16px);
+  }
+
+  /* Phase 3 (H5): 移动端 vocab 卡片"去练习"按钮更紧凑 */
+  .vocab-practice-btn {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+  .vocab-actions {
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-end;
   }
 }
 
