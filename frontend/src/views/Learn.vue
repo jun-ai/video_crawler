@@ -272,12 +272,12 @@
     <!-- 工具箱抽屉遮罩 -->
     <div class="sf-toolbox-overlay" v-if="showToolboxDrawer" @click="showToolboxDrawer = false"></div>
 
-    <!-- Phase 1B Task 2 + Phase 2 (H5): 移动端 5-icon 工具栏 (SpeakVlog 规范) -->
+    <!-- Phase 1B Task 2 + Phase 2 (H5): 移动端 5-icon 工具栏 (SpeakVlog 规范: 字幕/倍速/闪卡/收藏/练习) -->
     <nav class="sf-mobile-tabs" v-if="!loading">
       <button
         v-for="tab in mobileTabs"
         :key="tab.key"
-        :class="['sf-mobile-tab', { active: mobileActiveTab === tab.key || (tab.key === 'interpretation' && interpretationSheetOpen) }]"
+        :class="['sf-mobile-tab', { active: isMobileTabActive(tab.key) }]"
         @click="setMobileTab(tab.key)"
         :aria-label="tab.label"
       >
@@ -452,7 +452,11 @@ import {
   X,
   Bookmark,
   BookmarkCheck,
-  Wrench
+  Wrench,
+  Type,
+  Gauge,
+  Layers,
+  PencilLine
 } from 'lucide-vue-next'
 import SfDialog from '@/components/ui/SfDialog.vue'
 import SfInput from '@/components/ui/SfInput.vue'
@@ -528,19 +532,44 @@ const setPlayMode = (mode) => {
 const learningMode = ref('shadowing')
 const dictationIndex = ref(0)  // 听写模式当前索引
 
-// Phase 1B Task 2 + Phase 2 (H5): 移动端 1-icon 工具栏 (H5 核心动作 only)
-// H5 只要 1 个核心动作: 收藏 (练习 砍掉, 桌面端通过 /learn/:id 的跟读/听写模式使用)
-// 默认 (未选) 显示 视频+字幕列表 (单列布局)
+// Phase 1B Task 2 + Phase 2 (H5): 移动端 5-icon 工具栏 (SpeakVlog 规范 — 字幕/倍速/闪卡/收藏/练习)
+// H5 不是"砍剩 1 个", 也不是"PC 平移" — 跟对标保持 5 入口, 各打开对应 sheet/动作
 const mobileActiveTab = ref(null)  // null = 默认视图
 const mobileTabs = [
-  { key: 'bookmark',          label: '收藏', icon: Bookmark, action: 'bookmarkCurrent' }
+  { key: 'subtitle',     label: '字幕', icon: Type,      action: 'openSubtitleSettings' },
+  { key: 'playbackRate', label: '倍速', icon: Gauge,     action: 'openPlaybackRate' },
+  { key: 'flashcards',   label: '闪卡', icon: Layers,    action: 'openInterpretation' },
+  { key: 'bookmark',     label: '收藏', icon: Bookmark,  action: 'bookmarkCurrent' },
+  { key: 'practice',     label: '练习', icon: PencilLine, action: 'openPractice' }
 ]
 const setMobileTab = (key) => {
   const tab = mobileTabs.find(t => t.key === key)
   if (!tab) return
   switch (tab.action) {
+    case 'openSubtitleSettings': showSubtitleSettings.value = true; break
+    case 'openPlaybackRate':     showPlaybackRateSheet.value = true; break
+    case 'openInterpretation':   interpretationSheetOpen.value = true; break
     case 'bookmarkCurrent':      bookmarkCurrentSubtitle(); break
+    case 'openPractice':         openPractice(); break
   }
+}
+
+// Phase 2 (H5): 移动端"练习"入口 — 跳生词复习 (对标 speakvlog 5-icon 末位"练习")
+const openPractice = () => {
+  if (!userStore.isLoggedIn) {
+    toast.warning('请先登录')
+    router.push('/login')
+    return
+  }
+  router.push(`/vocabulary-review?material_id=${material.value?.id || ''}`)
+}
+
+// 工具栏高亮: 各 icon 对应 sheet 打开时, 该 icon active
+const isMobileTabActive = (key) => {
+  if (key === 'subtitle' && showSubtitleSettings.value) return true
+  if (key === 'playbackRate' && showPlaybackRateSheet.value) return true
+  if (key === 'flashcards' && interpretationSheetOpen.value) return true
+  return mobileActiveTab.value === key
 }
 
 // Phase 1B Task 5: 移动端宽度检测（用于解读面板 Sheet side 切换）
@@ -2999,6 +3028,8 @@ onUnmounted(() => {
   }
   .sf-mobile-tab-label {
     line-height: 1;
+    font-size: 11px;
+    margin-top: 3px;
   }
 }
 
