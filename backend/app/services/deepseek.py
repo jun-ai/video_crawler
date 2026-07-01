@@ -252,12 +252,12 @@ async def generate_word_cards(subtitles: List[Dict[str, Any]]) -> List[Dict]:
     if len(subtitle_text) > 5000:
         subtitle_text = subtitle_text[:5000] + "\n..."
 
-    prompt = f"""你是一位专业的英语教学AI,正在分析一个英语学习视频的字幕,需要提取重点单词。
+    prompt = f"""你是一位母语中文的资深英语教师,正在从一段视频字幕里挑出对中国学习者最有价值的单词,做成学习卡片。
 
-字幕内容(每行格式:[序号] 英文 | 中文翻译):
+字幕(每行:[序号] 英文 | 中文翻译, EN+CN 配套展示,用来判断单词在视频里的实际含义):
 {subtitle_text}
 
-请提取 8-15 个适合中国英语学习者学习的重点单词。返回 JSON 数组,每个元素格式:
+请挑 8-15 个学习价值最高的单词。返回 JSON 数组,每个元素:
 {{
     "content_en": "paddle",
     "phonetic": "/ˈpædl/",
@@ -265,26 +265,24 @@ async def generate_word_cards(subtitles: List[Dict[str, Any]]) -> List[Dict]:
     "content_cn": "n. 球拍",
     "english_definition": "a flat tool used for hitting the ball in table tennis",
     "subtitle_sequence": 3,
-    "other_pos_definitions": "v. 划船;涉水",
+    "other_pos_definitions": "v. 划船",
     "difficulty": 2,
     "frequency_rank": 3500
 }}
 
-规则:
-1. 选择有学习价值的词,跳过基础词(a/the/is/and 等)
-2. phonetic 使用国际音标格式,带斜杠
-3. part_of_speech 用缩写:n./v./adj./adv./prep./conj./interj.
-4. content_cn 格式为 "词性. 中文释义",多个释义用分号分隔
-5. english_definition 用简单英文解释
-6. subtitle_sequence 必须是上面字幕的序号,表示该词首次出现的位置
-7. other_pos_definitions 列出其他词性的释义,没有则设为 null
-8. difficulty 1-5:1=初学 3=中级 5=高级
-9. frequency_rank 估算该词在英语中的词频排名(1-10000),数字越小越常见,如 the=1, apple≈1500, ephemeral≈8000
-10. 只返回 JSON 数组,不要其他文字"""
+翻译规则(关键):
+1. **content_cn 用视频语境下最贴切的那个义,别把所有词典义项都抄过来**
+   - 反例(差): paddle → "n. 球拍" + other_pos = "v. 划船;v. 涉水;v. 拍水" (词典罗列)
+   - 正例(对): 看视频里 paddle 是打乒乓球 → content_cn = "n. 球拍", other_pos = "v. 划船" (只列本视频未用到的其他主要词性)
+2. content_cn 词性用 n./v./adj./adv. 等缩写,多个义项最多 2 个且用分号隔开,**不要 4-5 个义项大杂烩**
+3. english_definition 写一句简单英文解释,只解释最常用意
+4. frequency_rank 估算词频排名(1-10000): 数字越小越常见(the=1, apple≈1500, ephemeral≈8000)
+5. 跳过基础词 (a/the/is/and/it 等),不要凑数
+6. 只返回 JSON 数组, 不要其他文字"""
 
     try:
         content = await _call_ai(
-            system_prompt="你是一个专业的英语教学助手,擅长从视频字幕中提取词汇并生成学习卡片。你只返回JSON格式数据。",
+            system_prompt="你是一位母语中文的英语老师,帮中国学生从视频里挑值得记的单词。你只返回JSON格式数据。",
             user_prompt=prompt,
             max_tokens=4000,
             temperature=0.3
@@ -307,33 +305,38 @@ async def generate_phrase_cards(subtitles: List[Dict[str, Any]]) -> List[Dict]:
     if len(subtitle_text) > 5000:
         subtitle_text = subtitle_text[:5000] + "\n..."
 
-    prompt = f"""你是一位专业的英语教学AI,正在分析一个英语学习视频的字幕,需要提取常用短语和搭配。
+    prompt = f"""你是一位母语中文的资深英语口语老师,擅长教中国学生怎么用地道的英语短语/搭配。从一段英语视频字幕里挑出 5-10 个**最有学习价值**的短语/搭配(动词短语、习语、固定搭配)。
 
-字幕内容(每行格式:[序号] 英文 | 中文翻译):
+字幕(每行:[序号] 英文 | 中文翻译, EN+CN 配套,用来判断短语在视频里的具体用法):
 {subtitle_text}
 
-请提取 5-10 个常用短语或搭配。返回 JSON 数组,每个元素格式:
+请挑最有学习价值的 5-10 个短语。返回 JSON 数组,每个元素:
 {{
-    "content_en": "shoot off",
-    "phonetic": "/ʃuːt ɒf/",
-    "content_cn": "phr. 匆忙离开;赶紧走",
-    "synonyms": "rush off, hurry away, leave quickly",
-    "subtitle_sequence": 12,
+    "content_en": "get back into it",
+    "phonetic": "/ɡet bæk ˈɪntu ɪt/",
+    "content_cn": "回到正事,继续刚才的活儿",
+    "example_sentence": "OK, break's over—let's get back into it. (休息完了,继续刚才的事)",
+    "synonyms": "resume",
+    "subtitle_sequence": 24,
     "difficulty": 2
 }}
 
-规则:
-1. 选择有学习价值的短语/搭配/习语,不只是简单组合
-2. phonetic 使用国际音标
-3. content_cn 格式为 "phr. 中文释义"
-4. synonyms 用英文近义词,逗号分隔,2-4个
-5. subtitle_sequence 必须是上面字幕的序号
-6. difficulty 1-5
-7. 只返回 JSON 数组"""
+翻译规则(关键,直接影响学习体验):
+1. **content_cn 严禁写"phr." / "习语" / "口语" 这些字典标签**,直接写中文释义,1-2 句话讲清楚是什么意思
+2. **必须看字幕的 EN+CN 配套来定译文,翻译要"贴合视频里的用法",不要写脱离语境的字典释义**
+   - 反例(差,就是当前问题): get back into it → "phr. 重新投入;回到(某种状态)" (字典式 + 分号罗列 + 抽象)
+   - 正例(对): get back into it → "回到正事,继续刚才的活儿" (结合视频里"refreshed, we're going to get back into it"这个语境)
+3. **不要用分号";" 罗列多个近义同义释义** — 这会让卡片看起来像词典不像口语教学
+4. **example_sentence 必填** — 造一个简单的英文句子 + 中文翻译, 帮学生记住短语的典型用法(1 行,60 字符以内)
+5. **synonyms 同义短语最多 1-2 个**,没有就不写; 列的是短语不是单词(列 "resume" 比列 "go back" 更典型)
+6. phonetic 用国际音标, /.../ 包起来
+7. subtitle_sequence 必须是上面字幕的序号 (这个短语出现的最早位置)
+8. difficulty 1-5: 1=基础短语, 3=中级, 5=地道母语级
+9. 只返回 JSON 数组, 不要其他文字"""
 
     try:
         content = await _call_ai(
-            system_prompt="你是一个专业的英语教学助手,擅长从视频字幕中提取短语和搭配并生成学习卡片。你只返回JSON格式数据。",
+            system_prompt="你是一位母语中文的英语口语老师,帮中国学生理解并记住地道英语短语。你只返回JSON格式数据。",
             user_prompt=prompt,
             max_tokens=3000,
             temperature=0.3
@@ -352,7 +355,7 @@ async def generate_grammar_points(subtitles: List[Dict[str, Any]]) -> List[Dict]
     if len(text) > 3000:
         text = text[:3000] + "..."
 
-    prompt = f"""分析以下英语视频字幕,提取 2-3 个值得学习的语法点。
+    prompt = f"""分析以下英语视频字幕,提取 2-3 个值得学习的语法点。每个语法点用**结构化字段**填,不要把所有内容塞进 explanation 一个字段。
 
 字幕内容:
 {text}
@@ -361,23 +364,30 @@ async def generate_grammar_points(subtitles: List[Dict[str, Any]]) -> List[Dict]
 {{
     "content_en": "Present Perfect vs Past Simple",
     "content_cn": "现在完成时与一般过去时的区别",
-    "explanation": "详细解释该语法点的用法...",
+    "subtitle_sequence": 5,
+    "structure_analysis": "have/has + 过去分词 vs 一般过去时用动词过去式",
+    "similar_expressions": "现在完成进行时: 强调动作持续\\n一般过去时: 强调动作发生过",
+    "usage_scenario": "日常对话 / 视频叙事 / 邮件回复 工作汇报",
+    "alternative_phrasings": "I have done it. (现在完成时) | I did it. (一般过去时)",
     "example_sentence": "I have been to Paris. (现在完成时) vs I went to Paris last year. (一般过去时)",
     "difficulty": 3
 }}
 
-规则:
-1. 选择视频中实际出现的语法现象
-2. explanation 要详细,用中文解释
-3. example_sentence 可以结合字幕内容
-4. difficulty 1-5
-5. 只返回 JSON 数组"""
+【重要】不要在 JSON 里加 explanation 字段! 解释全部用下面的结构化字段表达,后端会自动按顺序拼成一段可读的解释:
+1. **structure_analysis (必填, 1 句话, 短公式)**: 讲清结构公式, 例 "have/has been + doing"。这是这张卡的"标题句"
+2. **similar_expressions (必填, 1-3 个, 用 \\n 分隔)**: 相关语法/用法对比。例如"现在完成进行时: 强调动作持续\\n一般过去时: 强调动作发生过"。每个对比 1 句话, 不要写很长的解释
+3. **usage_scenario (必填, 1 句话)**: 讲常见使用场景 (日常对话 / 视频叙事 / 邮件回复 / 工作汇报 等)
+4. **alternative_phrasings (必填, 1-3 个, 用 \\n 分隔)**: 英文例句, 用 "I have done it. (现在完成时)" 这种格式直接给, 不需要详细解释
+5. **example_sentence (必填)**: 带中文翻译的英文例句
+6. difficulty 1-5
+7. **JSON 格式注意**: 字段值要用真换行 ("\\n" 实际是 1 个字符), 不要写成字符串 "\\\\n" (2 个字符)
+8. 只返回 JSON 数组, 不要其他文字"""
 
     try:
         content = await _call_ai(
-            system_prompt="你是一个专业的英语语法教学助手。",
+            system_prompt="你是一个母语中文的英语语法老师,擅长把复杂语法用简单中文讲明白。你会按字段分门别类输出,不让内容堆在一个字段里。",
             user_prompt=prompt,
-            max_tokens=2000,
+            max_tokens=2500,
             temperature=0.5
         )
         return _parse_json_response(content)
@@ -398,33 +408,35 @@ async def generate_idiom_cards(subtitles: List[Dict[str, Any]]) -> List[Dict]:
     if len(subtitle_text) > 5000:
         subtitle_text = subtitle_text[:5000] + "\n..."
 
-    prompt = f"""你是一位专业的英语教学AI,正在分析一个英语学习视频的字幕,需要提取地道表达(习语、俚语、口语表达)。
+    prompt = f"""你是一位母语中文的英语口语老师,专攻习语/俚语/口语表达。从一段英语视频字幕里挑出 3-5 个**真正地道**的英语表达(idiom / slang / colloquialism)。
 
-字幕内容(每行格式:[序号] 英文 | 中文翻译):
+字幕(每行:[序号] 英文 | 中文翻译,用来判断该地道表达在视频里的具体用法):
 {subtitle_text}
 
-请提取 3-5 个地道表达、俚语或口语表达。返回 JSON 数组,每个元素格式:
+请挑最有代表性的 3-5 个地道表达。返回 JSON 数组,每个元素:
 {{
     "content_en": "hit the nail on the head",
-    "content_cn": "一针见血;说到点子上",
-    "explanation": "这个表达源自木工活,形容把钉子精确地敲进正确位置,比喻说话或做事非常准确。",
+    "content_cn": "一针见血,说得太准了",
+    "subtitle_sequence": 12,
+    "explanation": "这个表达源自木工活,形容把钉子精确地敲进正确位置,比喻说话或做事非常准确。中国学生日常聊天可以直接说'你说得太准了'。",
     "origin": "源自木工行业,指用锤子准确地敲击钉子的头部。14世纪开始在英语中使用。",
     "example_sentence": "You really hit the nail on the head with that analysis.",
     "difficulty": 3
 }}
 
-规则:
-1. 选择有学习价值的地道表达,包括习语(idioms)、俚语(slang)、口语表达(colloquialisms)
-2. content_cn 给出简洁准确的中文翻译
-3. explanation 用中文详细解释该表达的用法和使用场景
-4. origin 介绍该表达的来源或文化背景
-5. example_sentence 提供一个自然的使用例句
-6. difficulty 1-5:1=日常常见 3=中等地道 5=非常口语化/罕见
-7. 只返回 JSON 数组"""
+翻译规则:
+1. **content_cn 写地道自然的中文,不要";"罗列多个近义词** (反例: "一针见血;说到点子上;切中要害" 词典罗列)
+   - 正例: "一针见血,说得太准了" (口语 + 接地气)
+2. **subtitle_sequence (必填)**: 这个地道表达最早出现的字幕序号 (1-based, 对应上方字幕里 [N] 里的数字)。如果不填用户看不到具体出处
+3. **explanation (必填)**: 详细解释该表达的用法 + 中国学生怎么在日常聊天里替换它 (比方说 "形容说话非常准确,口语里你可以直接说'你说得太对了'")
+4. **origin (必填)**: 介绍文化背景 (1-2 句话讲来源 / 词根 / 历史典故)。没有明确来源的就写"民间口语流传,具体出处已不可考"
+5. **example_sentence (必填)**: 造一个地道的使用例句 (英文, 可附简短中文翻译)
+6. **difficulty 1-5**: 1=日常常见 3=中等地道 5=非常口语化/罕见
+7. 只返回 JSON 数组, 不要其他文字"""
 
     try:
         content = await _call_ai(
-            system_prompt="你是一个专业的英语教学助手,擅长从视频字幕中提取地道表达和文化内涵并生成学习卡片。你只返回JSON格式数据。",
+            system_prompt="你是一位母语中文的英语口语老师,专攻习语和俚语。你只返回JSON格式数据。",
             user_prompt=prompt,
             max_tokens=3000,
             temperature=0.3

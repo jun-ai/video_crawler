@@ -69,6 +69,7 @@ class Material(Base):
     view_count = Column(Integer, default=0)
     is_active = Column(Boolean, default=True)
     interpretation_status = Column(String(20), default='pending')  # pending, generating, done, failed
+    progress = Column(Text, nullable=True)  # JSON: 后台 regen 任务实时进度 (stages 列表 + error)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
@@ -274,7 +275,7 @@ class SubtitleAnnotation(Base):
     annotated_text = Column(String(200), nullable=False) # 标注的文本内容
     annotation_type = Column(String(20), nullable=False) # 标注类型: 'vocabulary', 'phrase', 'important'
     note = Column(Text, nullable=True)                   # 用户备注
-    color = Column(String(20), default='#ff0000')       # 高亮颜色
+    color = Column(String(50), default='#ff0000')       # 高亮颜色 (CSS var 名 / hex 都能存, 20 字符不够)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # 关联

@@ -49,6 +49,12 @@ class Settings(BaseSettings):
     debug: bool = True
     cors_origins: str = "*"  # 逗号分隔的域名，或 "*" 表示全部
 
+    # ==================== 上传限制 ====================
+    # P1-4 (6-29 体检): backend 第二层上传大小检查
+    # nginx 已经 client_max_body_size 500M 保护, 但 backend 直接 POST (绕过 nginx) 没保护
+    # 设 500MB 默认, 可 .env 覆盖
+    max_video_size_mb: int = 500
+
     # ==================== AI API配置 ====================
     # 多个 provider,按优先级 fallback(OpenAI 兼容协议)
     # DeepSeek (默认)

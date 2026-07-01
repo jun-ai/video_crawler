@@ -302,6 +302,50 @@
         </div>
       </template>
     </SfDialog>
+
+    <!-- 实时进度 modal (替换字幕 / 重新解读 后弹出) -->
+    <SfDialog v-model="progressModal.show" title="后台处理进度" width="560px" :close-on-click-modal="false" :close-on-press-escape="false">
+      <div v-if="progressModal.data">
+        <div class="progress-meta">
+          <div class="progress-title">{{ progressModal.title }}</div>
+          <SfTag :type="progressModal.historyStatus === 'done' ? 'success' : progressModal.historyStatus === 'failed' ? 'danger' : 'primary'" size="sm">
+            整体: {{ progressModal.historyStatus === 'done' ? '已全部完成' : progressModal.historyStatus === 'failed' ? '部分失败' : '运行中' }}
+          </SfTag>
+        </div>
+
+        <div class="progress-stages">
+          <div v-for="s in progressModal.data.stages || []" :key="s.key" :class="['progress-stage', `is-${s.status}`]">
+            <span class="stage-icon">{{ stageIcon(s.status) }}</span>
+            <span class="stage-label">{{ s.label || s.key }}</span>
+            <SfTag :type="statusType(s.status)" size="sm">{{ statusLabel(s.status) }}</SfTag>
+            <span v-if="typeof s.count === 'number' && s.status === 'done'" class="stage-meta">{{ s.count }} 张</span>
+            <span v-if="s.error" class="stage-error">{{ s.error }}</span>
+          </div>
+          <div v-if="!progressModal.data.stages || progressModal.data.stages.length === 0" class="progress-empty">
+            等待后端写入第一阶段状态…
+          </div>
+        </div>
+
+        <div v-if="progressModal.data.error" class="progress-fatal">
+          <strong>致命错误:</strong> {{ progressModal.data.error }}
+        </div>
+
+        <div class="progress-footer-hint">
+          <span v-if="progressModal.historyStatus === 'running'">每 2 秒自动刷新, 全部完成后会停止轮询</span>
+          <span v-else>已完成, 可关闭此窗口</span>
+        </div>
+      </div>
+      <div v-else class="progress-loading">加载中…</div>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <SfButton :type="progressModal.historyStatus === 'running' ? 'ghost' : 'primary'" @click="closeProgressModal">
+            {{ progressModal.historyStatus === 'running' ? '后台运行中 (可关闭此窗口)' : '关闭' }}
+          </SfButton>
+          <SfButton v-if="progressModal.historyStatus === 'failed'" type="ghost" @click="pollProgressOnce()">重试一次</SfButton>
+        </div>
+      </template>
+    </SfDialog>
   </div>
 </template>
 
@@ -313,6 +357,7 @@ import {
   Download, Plus, Pencil, Eye, EyeOff, MoreHorizontal, Settings, RefreshCw,
   Server, FileText, Sparkles, FileUp
 } from 'lucide-vue-next'
+import { onBeforeUnmount } from 'vue'
 import { adminAPI, materialAPI } from '@/api'
 import SfButton from '@/components/ui/SfButton.vue'
 import SfInput from '@/components/ui/SfInput.vue'
@@ -683,10 +728,82 @@ const handleReplaceSubtitle = async (event) => {
   try {
     const res = await adminAPI.replaceSubtitle(row.id, file)
     toast.success(res.message || '字幕已替换')
+    // 打开进度模态框, 实时轮询各 AI 阶段状态
+    openProgressModal(row.id, row.title)
   } catch (e) {
     toast.error(e.response?.data?.detail || '替换失败')
   }
 }
+
+// ===== 实时进度模态框 =====
+// 替换字幕 / 重新解读 后, 弹窗显示 6 个阶段 (parse / translate / words / phrases / grammar / idioms)
+// 后端 GET /api/materials/{id}/progress 每 2s 轮询一次
+const progressModal = reactive({
+  show: false,
+  mid: 0,
+  title: '',
+  data: null,         // {stages:[], error:..., interpretation_status}
+  pollerId: null,
+  historyStatus: 'running'   // 'running' | 'done' | 'failed' (整体汇总, 用于显示关闭按钮文案)
+})
+
+function statusType(s) {
+  return ({ pending: 'default', running: 'primary', done: 'success', failed: 'danger', skipped: 'info' })[s] || 'default'
+}
+function statusLabel(s) {
+  return ({ pending: '等待', running: '运行中', done: '完成', failed: '失败', skipped: '跳过' })[s] || s
+}
+function stageIcon(s) {
+  return ({ pending: '—', running: '⟳', done: '✓', failed: '✗', skipped: '⊘' })[s] || '?'
+}
+
+function openProgressModal(materialId, title) {
+  progressModal.mid = materialId
+  progressModal.title = title
+  progressModal.data = null
+  progressModal.historyStatus = 'running'
+  progressModal.show = true
+  // 立即拉一次 (不阻塞 UI)
+  pollProgressOnce()
+  // 启动轮询 (每 2s)
+  if (progressModal.pollerId) clearInterval(progressModal.pollerId)
+  progressModal.pollerId = setInterval(pollProgressOnce, 2000)
+}
+function closeProgressModal() {
+  progressModal.show = false
+  if (progressModal.pollerId) {
+    clearInterval(progressModal.pollerId)
+    progressModal.pollerId = null
+  }
+}
+async function pollProgressOnce() {
+  if (!progressModal.mid) return
+  try {
+    const data = await materialAPI.getProgress(progressModal.mid)
+    progressModal.data = data
+    // 整体状态汇总: 任意 failed → failed; 排除 skipped, 其余都 done → done; 否则 running
+    const stages = data.stages || []
+    if (stages.length > 0) {
+      const relevant = stages.filter(s => s.status !== 'skipped')
+      if (stages.some(s => s.status === 'failed')) progressModal.historyStatus = 'failed'
+      else if (relevant.every(s => s.status === 'done')) progressModal.historyStatus = 'done'
+      else progressModal.historyStatus = 'running'
+    }
+    // 不再需要轮询: 全 done 或 (done + failed) → 自动停
+    if (progressModal.historyStatus !== 'running') {
+      if (progressModal.pollerId) {
+        clearInterval(progressModal.pollerId)
+        progressModal.pollerId = null
+      }
+    }
+  } catch (e) {
+    console.error('pollProgress failed', e)
+  }
+}
+// onBeforeUnmount 在文件顶部 import (避免 setup() 内 import)
+onBeforeUnmount(() => {
+  if (progressModal.pollerId) clearInterval(progressModal.pollerId)
+})
 
 // ============ CSV 导出 ============
 
@@ -974,6 +1091,119 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+/* ── Progress Modal (后台 AI 任务实时进度) ── */
+.progress-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.progress-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sf-text-primary, #E2E8F0);
+}
+.progress-loading {
+  text-align: center;
+  padding: 32px 0;
+  color: var(--sf-text-secondary, #94A3B8);
+}
+.progress-stages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.progress-stage {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.04);
+  font-size: 13px;
+}
+.progress-stage.is-running {
+  background: rgba(96,165,250,0.08);
+  border-color: rgba(96,165,250,0.2);
+}
+.progress-stage.is-done {
+  background: rgba(16,185,129,0.06);
+  border-color: rgba(16,185,129,0.18);
+}
+.progress-stage.is-failed {
+  background: rgba(239,68,68,0.08);
+  border-color: rgba(239,68,68,0.25);
+}
+.progress-stage.is-skipped {
+  background: rgba(148,163,184,0.05);
+  border-color: rgba(148,163,184,0.15);
+  opacity: 0.6;
+}
+.stage-icon {
+  font-family: var(--sf-font-mono, ui-monospace, monospace);
+  font-size: 14px;
+  width: 16px;
+  text-align: center;
+  color: var(--sf-text-muted, #94A3B8);
+}
+.progress-stage.is-running .stage-icon {
+  color: #60A5FA;
+  animation: progress-spin 1.2s linear infinite;
+}
+.progress-stage.is-done .stage-icon { color: #10B981; }
+.progress-stage.is-failed .stage-icon { color: #EF4444; }
+.progress-stage.is-skipped .stage-icon { color: #94A3B8; opacity: 0.7; }
+
+@keyframes progress-spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+
+.stage-label {
+  flex: 1;
+  color: var(--sf-text-primary, #E2E8F0);
+  font-weight: 500;
+}
+.stage-meta {
+  color: var(--sf-text-muted, #94A3B8);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.stage-error {
+  flex-basis: 100%;
+  color: #FCA5A5;
+  font-size: 12px;
+  font-family: var(--sf-font-mono, ui-monospace, monospace);
+  background: rgba(239,68,68,0.08);
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-top: 4px;
+}
+.progress-empty {
+  text-align: center;
+  color: var(--sf-text-muted, #94A3B8);
+  padding: 24px 0;
+  font-size: 13px;
+}
+.progress-fatal {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 8px;
+  color: #FCA5A5;
+  font-size: 13px;
+}
+.progress-footer-hint {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(255,255,255,0.05);
+  color: var(--sf-text-muted, #94A3B8);
+  font-size: 12px;
+  text-align: center;
 }
 
 /* ── OSS Info ── */

@@ -13,6 +13,10 @@ import csv
 import io
 import logging
 
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 from app.database import get_db
 from app.models.models import User, LearningRecord, Material, Vocabulary, Subtitle, DictationRecord, SubtitleAnnotation, SubtitleBookmark, VideoInterpretation, UserTag, BookmarkTag, BookmarkFolder
 from app.schemas.schemas import (
@@ -990,7 +994,7 @@ async def set_interpretation_status(
                 content=interp.content_en,
             )
         except Exception as sig_err:
-            print(f"[WARN] LearningSignalService 失败: {sig_err}")
+            logger.warning(f"LearningSignalService 失败: {sig_err}")
 
     await db.commit()
     await db.refresh(record)
@@ -1139,7 +1143,7 @@ async def get_learning_statistics(
             total_watch_minutes=total_watch_minutes
         )
     except Exception as e:
-        print(f"Error in get_learning_statistics: {e}")
+        logger.error(f"Error in get_learning_statistics: {e}", exc_info=True)
         import traceback
         traceback.print_exc()
         raise HTTPException(
@@ -1643,7 +1647,7 @@ async def get_dashboard(
             records=records
         )
     except Exception as e:
-        print(f"Error in get_dashboard: {e}")
+        logger.error(f"Error in get_dashboard: {e}", exc_info=True)
         import traceback
         traceback.print_exc()
         raise HTTPException(

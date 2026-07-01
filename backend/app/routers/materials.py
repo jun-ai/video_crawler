@@ -11,6 +11,10 @@ import shutil
 from pathlib import Path
 import time
 
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 from app.database import get_db
 from app.utils.rate_limit import limiter
 from app.models.models import Material, Subtitle, VideoInterpretation, InterpretationLearning, User, Tag, MaterialTag
@@ -132,7 +136,7 @@ async def get_file_url_async(file_path: str | None, add_cache_buster: bool = Fal
                 storage = get_storage_service()
                 return await storage.get_file_url(object_key, expires=604800)
             except Exception as e:
-                print(f"解析OSS URL失败: {e}")
+                logger.warning(f"解析OSS URL失败: {e}")
                 return file_path
         # 其他云存储URL直接返回
         return file_path
@@ -379,6 +383,38 @@ async def get_interpretation_status(
     )
 
 
+@router.get("/{material_id}/progress")
+async def get_material_progress(
+    material_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """获取后台任务的实时进度 (替换字幕 / 重新解读时返回)"""
+    result = await db.execute(select(Material).where(Material.id == material_id))
+    material = result.scalar_one_or_none()
+    if not material:
+        raise HTTPException(status_code=404, detail="语料不存在")
+    if not material.progress:
+        return {
+            "material_id": material_id,
+            "interpretation_status": material.interpretation_status or 'pending',
+            "stages": [],
+            "updated_at": None,
+            "error": None,
+        }
+    import json
+    try:
+        data = json.loads(material.progress)
+    except Exception:
+        data = {"stages": [], "error": "progress JSON parse error"}
+    return {
+        "material_id": material_id,
+        "interpretation_status": material.interpretation_status or 'pending',
+        "stages": data.get("stages", []),
+        "updated_at": data.get("updated_at"),
+        "error": data.get("error"),
+    }
+
+
 @router.post("/{material_id}/interpretation/generate")
 @limiter.limit("3/minute")
 async def generate_interpretation_endpoint(
@@ -409,6 +445,15 @@ async def generate_interpretation_endpoint(
     )
     if (result.scalar() or 0) == 0:
         raise HTTPException(status_code=400, detail="该视频没有字幕，无法生成解读")
+
+    # 重新解读流程不涉及 parse / translate (字幕已存在且已翻译), 标 skipped
+    # 这样前端不会把整体卡在 "运行中"
+    from app.services.interpretation_tasks import _set_progress
+    from datetime import datetime as _dt
+    await _set_progress(material_id, {
+        "parse": {"status": "skipped", "finished_at": _dt.utcnow().isoformat()},
+        "translate": {"status": "skipped", "finished_at": _dt.utcnow().isoformat()},
+    })
 
     # 触发后台任务
     asyncio.create_task(generate_interpretations_for_material(material_id))
@@ -499,9 +544,9 @@ async def finalize_upload(
             except OSError:
                 pass
         else:
-            print(f"[WARN] 字幕文件下载失败: {req.subtitle_key}")
+            logger.warning(f"字幕文件下载失败: {req.subtitle_key}")
     except Exception as e:
-        print(f"字幕解析失败: {e}")
+        logger.error(f"字幕解析失败: {e}", exc_info=True)
 
     await db.commit()
 
@@ -510,7 +555,7 @@ async def finalize_upload(
         from app.services.interpretation_tasks import generate_interpretations_for_material
         asyncio.create_task(generate_interpretations_for_material(material.id))
     except Exception as e:
-        print(f"[WARN] 触发解读生成失败: {e}")
+        logger.warning(f"触发解读生成失败: {e}")
 
     return MessageResponse(message="语料创建成功", success=True)
 
@@ -638,7 +683,7 @@ async def translate_subtitles_endpoint(
             batch_lo = batch_start + 1
             batch_hi = min(batch_start + BATCH, total_pending)
             inputs = [{"text_en": sub.text_en} for _, sub in batch]
-            print(f"[TRANSLATE] material {material_id}: batch {batch_lo}-{batch_hi}/{total_pending}")
+            logger.info(f"[TRANSLATE] material {material_id}: batch {batch_lo}-{batch_hi}/{total_pending}")
 
             translated_batch = await translate_subtitles(inputs)
 
@@ -653,9 +698,9 @@ async def translate_subtitles_endpoint(
 
             if batch_ok == 0:
                 failed_batches.append(f"{batch_lo}-{batch_hi}")
-                print(f"[TRANSLATE] material {material_id}: batch {batch_lo}-{batch_hi} 全部失败 (AI 返回空)")
+                logger.warning(f"[TRANSLATE] material {material_id}: batch {batch_lo}-{batch_hi} 全部失败 (AI 返回空)")
             else:
-                print(f"[TRANSLATE] material {material_id}: batch {batch_lo}-{batch_hi} ok {batch_ok}/{len(batch)}")
+                logger.info(f"[TRANSLATE] material {material_id}: batch {batch_lo}-{batch_hi} ok {batch_ok}/{len(batch)}")
 
         msg = f"翻译完成 {translated_count}/{total_pending}"
         if failed_batches:
@@ -669,7 +714,7 @@ async def translate_subtitles_endpoint(
             "subtitles": [{"text_en": sub.text_en, "text_cn": sub.text_cn} for sub in subtitles]
         }
     except Exception as e:
-        print(f"[ERROR] 翻译失败 material {material_id}: {e}")
+        logger.error(f"翻译失败 material {material_id}: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"翻译失败: {str(e)}"
@@ -691,5 +736,5 @@ async def translate_text_endpoint(
         result = await translate_text(text)
         return result
     except Exception as e:
-        print(f"[ERROR] 文本翻译失败: {e}")
+        logger.error(f"文本翻译失败: {e}", exc_info=True)
         return {"translation": text}

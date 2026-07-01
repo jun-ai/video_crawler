@@ -294,7 +294,10 @@ _TRANSCRIBE_UPLOAD_DIR = os.path.abspath(
 os.makedirs(_TRANSCRIBE_UPLOAD_DIR, exist_ok=True)
 
 ALLOWED_VIDEO_EXTS = {".mp4", ".mov", ".mkv", ".webm", ".avi", ".flv", ".m4v"}
-MAX_VIDEO_SIZE_MB = 500  # 超过 500MB 拒绝
+# P1-4 (6-29 体检): 用 settings.max_video_size_mb 替代 hardcoded 常量
+# 可通过 .env MAX_VIDEO_SIZE_MB 覆盖, 默认 500MB
+MAX_VIDEO_SIZE_MB = settings.max_video_size_mb
+MAX_SUBTITLE_SIZE_MB = 5  # 字幕文件 (SRT) 一般 100KB-2MB, 5MB 足够
 
 
 @router.post("/transcribe")
@@ -859,6 +862,12 @@ async def replace_subtitle(
     srt_data = await file.read()
     if not srt_data:
         raise HTTPException(status_code=400, detail="上传文件为空")
+    # P1-4 (6-29 体检): 加字幕文件大小验证 (字幕一般 <2MB, 5MB 足够)
+    if len(srt_data) > MAX_SUBTITLE_SIZE_MB * 1024 * 1024:
+        raise HTTPException(
+            status_code=400,
+            detail=f"字幕文件过大（{len(srt_data) // 1024 // 1024}MB），上限 {MAX_SUBTITLE_SIZE_MB}MB",
+        )
     srt_text = None
     for enc in ["utf-8-sig", "utf-8", "gbk", "latin-1"]:
         try:
@@ -918,6 +927,9 @@ async def replace_subtitle(
     # 6. 更新 material
     material.subtitle_path = new_subtitle_path
     material.interpretation_status = "pending"
+    # 初始化实时进度 JSON (前端轮询展示)
+    from app.services.interpretation_tasks import _build_initial_progress
+    material.progress = _build_initial_progress()
 
     await db.commit()
 
@@ -935,20 +947,43 @@ async def replace_subtitle(
 # 模块级后台函数 (BackgroundTasks.add_task 需要可 pickle / 无闭包依赖)
 async def _post_replace(material_id: int):
     import httpx
+    from datetime import datetime
+    from app.services.interpretation_tasks import _set_progress
     try:
+        # Stage 1: parse 已 done (SRT 在 replace_subtitle 端点里已解析)
+        # Stage 2: 调用 translate 接口触发 EN→CN 翻译
+        await _set_progress(material_id, {
+            "parse": {"status": "done", "finished_at": datetime.utcnow().isoformat()},
+            "translate": {"status": "running", "started_at": datetime.utcnow().isoformat()},
+        })
         async with httpx.AsyncClient() as client:
-            await client.post(
+            resp = await client.post(
                 f"http://127.0.0.1:8000/api/materials/{material_id}/translate",
                 json={},
                 timeout=600,
             )
+        if resp.status_code < 400:
+            await _set_progress(material_id, {
+                "translate": {"status": "done", "finished_at": datetime.utcnow().isoformat()}
+            })
+        else:
+            await _set_progress(material_id, {
+                "translate": {"status": "failed", "finished_at": datetime.utcnow().isoformat(), "error": resp.text[:200]}
+            })
     except Exception as e:
         print(f"[WARN] replace-subtitle 翻译失败: {e}")
+        await _set_progress(material_id, {
+            "translate": {"status": "failed", "finished_at": datetime.utcnow().isoformat(), "error": str(e)[:200]}
+        })
+    # Stage 3-6: AI 解读 (用 generate_interpretations_for_material, 内部已自带 stage 进度写入)
     try:
         from app.services.interpretation_tasks import generate_interpretations_for_material
         await generate_interpretations_for_material(material_id)
     except Exception as e:
         print(f"[WARN] replace-subtitle AI 解读失败: {e}")
+        await _set_progress(material_id, {
+            "_fatal": {"status": "failed", "error": str(e)[:200]}
+        })
 
 
 @router.post("/materials/{material_id}/reinterpret")
@@ -1075,6 +1110,26 @@ async def batch_upload_materials(
             file_groups[name_without_ext]['subtitle'] = file
         elif ext in ['.jpg', '.jpeg', '.png']:
             file_groups[name_without_ext]['cover'] = file
+
+    # P1-4 (6-29 体检): 批量上传前 check 每个文件大小
+    # 视频 (.mp4/.webm/.mov): MAX_VIDEO_SIZE_MB (500MB)
+    # 字幕/封面 (.srt/.jpg/.png): MAX_SUBTITLE_SIZE_MB (5MB)
+    over_size = []
+    for file in files:
+        if not file.size:
+            continue
+        ext = Path(file.filename).suffix.lower()
+        if ext in ['.mp4', '.webm', '.mov']:
+            if file.size > MAX_VIDEO_SIZE_MB * 1024 * 1024:
+                over_size.append(f"{file.filename} ({file.size // 1024 // 1024}MB > {MAX_VIDEO_SIZE_MB}MB)")
+        else:  # 字幕/封面
+            if file.size > MAX_SUBTITLE_SIZE_MB * 1024 * 1024:
+                over_size.append(f"{file.filename} ({file.size // 1024 // 1024}MB > {MAX_SUBTITLE_SIZE_MB}MB)")
+    if over_size:
+        raise HTTPException(
+            status_code=400,
+            detail=f"以下文件超过大小限制: {'; '.join(over_size)}",
+        )
 
     storage = get_storage_service()
     results = []
