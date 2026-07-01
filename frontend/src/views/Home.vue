@@ -1,6 +1,47 @@
 <template>
   <div class="home-page">
     <div class="home-container">
+      <!-- H5 + 桌面 通用: 继续学习 — 最近 3 个未完成视频 (从 stats-side 挪出, H5 不再被 stats-side 隐藏) -->
+      <section v-if="userStore.isLoggedIn" class="continue-learning-section">
+        <div class="panel-continue">
+          <div class="pc-head">
+            <Play :size="14" />
+            <span class="pc-title">继续学习</span>
+            <span class="pc-count" v-if="continueLearnItems.length">{{ continueLearnItems.length }} 部</span>
+          </div>
+          <div v-if="continueLearnItems.length > 0" class="pc-list">
+            <div
+              v-for="item in continueLearnItems.slice(0, 3)"
+              :key="item.material_id"
+              class="pc-item"
+              @click="goLearn(item.material_id)"
+            >
+              <div class="pc-cover">
+                <img v-if="item.cover_path" :src="item.cover_path" :alt="item.title" loading="lazy" />
+                <div v-else class="pc-cover-fallback"><Play :size="18" /></div>
+              </div>
+              <div class="pc-info">
+                <div class="pc-title-text">{{ item.title }}</div>
+                <div class="pc-progress-row">
+                  <div class="pc-progress-track">
+                    <div class="pc-progress-fill" :style="{ width: Math.min(100, Math.round(item.progress)) + '%' }"></div>
+                  </div>
+                  <span class="pc-pct">{{ Math.round(item.progress) }}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- 空态: 引导去视频库挑一个新课 -->
+          <div v-else class="pc-empty" @click="$router.push('/materials')">
+            <Sparkles :size="18" />
+            <div class="pc-empty-text">
+              <div class="pc-empty-title">还没有进行中的课</div>
+              <div class="pc-empty-sub">去视频库挑一个开始学吧 →</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- 2+3+4. 两栏布局: 左侧 stats 面板 (固定不随筛选变) | 右侧 视频区 (含筛选) -->
       <div class="home-main">
         <!-- 左侧: 我的学习 stats 面板 -->
@@ -91,45 +132,6 @@
               </div>
             </div>
 
-            <!-- 继续学习: 最近 3 个未完成视频 (横向 mini-card: 封面+标题+进度) -->
-            <div class="panel-divider"></div>
-            <div class="panel-continue">
-              <div class="pc-head">
-                <Play :size="14" />
-                <span class="pc-title">继续学习</span>
-                <span class="pc-count" v-if="continueLearnItems.length">{{ continueLearnItems.length }} 部</span>
-              </div>
-              <div v-if="continueLearnItems.length > 0" class="pc-list">
-                <div
-                  v-for="item in continueLearnItems.slice(0, 3)"
-                  :key="item.material_id"
-                  class="pc-item"
-                  @click="goLearn(item.material_id)"
-                >
-                  <div class="pc-cover">
-                    <img v-if="item.cover_path" :src="item.cover_path" :alt="item.title" loading="lazy" />
-                    <div v-else class="pc-cover-fallback"><Play :size="18" /></div>
-                  </div>
-                  <div class="pc-info">
-                    <div class="pc-title-text">{{ item.title }}</div>
-                    <div class="pc-progress-row">
-                      <div class="pc-progress-track">
-                        <div class="pc-progress-fill" :style="{ width: Math.min(100, Math.round(item.progress)) + '%' }"></div>
-                      </div>
-                      <span class="pc-pct">{{ Math.round(item.progress) }}%</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <!-- 空态: 引导去视频库挑一个新课 -->
-              <div v-else class="pc-empty" @click="$router.push('/materials')">
-                <Sparkles :size="18" />
-                <div class="pc-empty-text">
-                  <div class="pc-empty-title">还没有进行中的课</div>
-                  <div class="pc-empty-sub">去视频库挑一个开始学吧 →</div>
-                </div>
-              </div>
-            </div>
           </div>
         </aside>
         <!-- 右侧: 筛选 + featured + 视频网格 -->
@@ -1175,8 +1177,24 @@ onMounted(async () => {
 }
 
 /* ====== 继续学习 mini-card ====== */
+/* 7-1: 顶层 section — 桌面横排, H5 满宽列表 (从 stats-side 挪出, H5 不再被隐藏) */
+.continue-learning-section {
+  background: var(--color-bg-card, #fff);
+  border: 1px solid var(--color-border, rgba(15, 23, 42, 0.06));
+  border-radius: 14px;
+  padding: 16px 18px 18px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+@media (max-width: 640px) {
+  .continue-learning-section {
+    border-radius: 10px;
+    padding: 12px 14px 14px;
+    margin-bottom: 14px;
+  }
+}
 .panel-continue {
-  padding: 14px 18px 16px;
+  padding: 0;
 }
 .pc-head {
   display: flex;
