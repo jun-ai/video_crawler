@@ -1,7 +1,14 @@
 <template>
   <div class="review-page">
+    <!-- Phase 6 (H5): 极简 header + 返回按钮 -->
+    <header v-if="isMobileView" class="sf-h5-header">
+      <button class="sf-h5-back" type="button" @click="$router.back()" aria-label="返回">
+        <ArrowLeft :size="22" />
+      </button>
+      <h1 class="sf-h5-title">生词复习</h1>
+    </header>
     <!-- 复习统计头部 -->
-    <div class="review-header">
+    <div v-else class="review-header">
       <SfButton type="ghost" size="sm" @click="$router.back()" aria-label="返回上一页">
         <ArrowLeft :size="20" />
       </SfButton>
@@ -157,6 +164,14 @@ import SfProgress from '@/components/ui/SfProgress.vue'
 import { vocabularyAPI } from '@/api'
 import { useUserStore } from '@/stores/user'
 import { useRouter } from 'vue-router'
+
+// Phase 6 (H5): 移动端检测
+const isMobileView = ref(typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches)
+const updateIsMobile = () => {
+  isMobileView.value = window.matchMedia('(max-width: 768px)').matches
+}
+onMounted(() => window.addEventListener('resize', updateIsMobile))
+onUnmounted(() => window.removeEventListener('resize', updateIsMobile))
 
 const router = useRouter()
 const userStore = useUserStore()

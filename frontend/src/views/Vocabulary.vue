@@ -1,7 +1,14 @@
 <template>
   <div class="yt-vocabulary">
-    <!-- 页面标题 -->
-    <PageHeader title="生词本">
+    <!-- Phase 6 (H5): 极简 header + 返回按钮 (移动端) -->
+    <header v-if="isMobileView" class="sf-h5-header">
+      <button class="sf-h5-back" type="button" @click="$router.back()" aria-label="返回">
+        <ArrowLeft :size="22" />
+      </button>
+      <h1 class="sf-h5-title">生词本</h1>
+    </header>
+    <!-- 页面标题 (桌面) -->
+    <PageHeader v-else title="生词本">
       <template #actions>
         <!-- 5-P1-4: 导出按钮 (下拉 JSON / CSV) -->
         <SfDropdown v-if="total > 0">
@@ -466,7 +473,7 @@ import { useRouter } from 'vue-router'
 import { toast } from '@/composables/useToast'
 import { useTTS } from '@/composables/useTTS'
 import { showConfirm } from '@/composables/useConfirm'
-import { Headphones, Play, Flame, Search, X, CheckSquare, Square, CheckCheck, Check, RotateCcw, Trash2, Download, FileJson, FileText, LayoutGrid, Rows3, Star, Infinity as InfinityIcon, ListOrdered } from 'lucide-vue-next'
+import { Headphones, Play, Flame, Search, X, CheckSquare, Square, CheckCheck, Check, RotateCcw, Trash2, Download, FileJson, FileText, LayoutGrid, Rows3, Star, Infinity as InfinityIcon, ListOrdered, ArrowLeft } from 'lucide-vue-next'
 import SfSwitch from '@/components/ui/SfSwitch.vue'
 import SfSelect from '@/components/ui/SfSelect.vue'
 import SfCombobox from '@/components/ui/SfCombobox.vue'
@@ -486,6 +493,14 @@ import { useUserStore } from '@/stores/user'
 const router = useRouter()
 const userStore = useUserStore()
 const { speakText, speakWord, preloadVoices } = useTTS()
+
+// Phase 6 (H5): 移动端检测
+const isMobileView = ref(typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches)
+const updateIsMobile = () => {
+  isMobileView.value = window.matchMedia('(max-width: 768px)').matches
+}
+onMounted(() => window.addEventListener('resize', updateIsMobile))
+onUnmounted(() => window.removeEventListener('resize', updateIsMobile))
 
 const loading = ref(false)
 const vocabularies = ref([])

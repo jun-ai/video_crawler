@@ -403,6 +403,40 @@
       </SheetContent>
     </Sheet>
 
+    <!-- Phase 6 (H5): 移动端 练习模式 Sheet (跟读/听写/复述) -->
+    <Sheet v-model:open="showPracticeSheet">
+      <SheetContent side="bottom" class="sf-practice-sheet">
+        <SheetHeader>
+          <SheetTitle>选择练习模式</SheetTitle>
+        </SheetHeader>
+        <div class="sf-practice-list">
+          <button
+            :class="['sf-practice-opt', { active: learningMode === 'shadowing' }]"
+            @click="selectPracticeMode('shadowing')"
+          >
+            <span class="sf-practice-label">跟读</span>
+            <span class="sf-practice-desc">看字幕跟读模仿</span>
+            <span v-if="learningMode === 'shadowing'" class="sf-practice-check">✓</span>
+          </button>
+          <button
+            :class="['sf-practice-opt', { active: learningMode === 'dictation' }]"
+            @click="selectPracticeMode('dictation')"
+          >
+            <span class="sf-practice-label">听写</span>
+            <span class="sf-practice-desc">听音频默写句子</span>
+            <span v-if="learningMode === 'dictation'" class="sf-practice-check">✓</span>
+          </button>
+          <button
+            :class="['sf-practice-opt']"
+            @click="selectPracticeMode('retelling')"
+          >
+            <span class="sf-practice-label">复述</span>
+            <span class="sf-practice-desc">听后用自己的话复述 (开发中)</span>
+          </button>
+        </div>
+      </SheetContent>
+    </Sheet>
+
     <!-- 快捷键帮助面板 -->
     <transition name="sf-slide">
       <div v-if="showShortcutPanel" class="sf-shortcut-panel">
@@ -540,9 +574,9 @@ const mobileActiveTab = ref(null)  // null = 默认视图
 const mobileTabs = [
   { key: 'subtitle',     label: '字幕', icon: Type,      action: 'openSubtitleSettings' },
   { key: 'playbackRate', label: '倍速', icon: Gauge,     action: 'openPlaybackRate' },
-  { key: 'flashcards',   label: '闪卡', icon: Layers,    action: 'openInterpretation' },
-  { key: 'bookmark',     label: '收藏', icon: Bookmark,  action: 'bookmarkCurrent' },
-  { key: 'practice',     label: '练习', icon: PencilLine, action: 'openPractice' }
+  { key: 'flashcards',   label: '闪卡', icon: Layers,    action: 'openFlashcards' },
+  { key: 'bookmark',     label: '收藏', icon: Bookmark,  action: 'toggleBookmark' },
+  { key: 'practice',     label: '练习', icon: PencilLine, action: 'openPracticeSheet' }
 ]
 const setMobileTab = (key) => {
   const tab = mobileTabs.find(t => t.key === key)
@@ -550,28 +584,70 @@ const setMobileTab = (key) => {
   switch (tab.action) {
     case 'openSubtitleSettings': showSubtitleSettings.value = true; break
     case 'openPlaybackRate':     showPlaybackRateSheet.value = true; break
-    case 'openInterpretation':   interpretationSheetOpen.value = true; break
-    case 'bookmarkCurrent':      bookmarkCurrentSubtitle(); break
-    case 'openPractice':         openPractice(); break
+    case 'openFlashcards':       openFlashcards(); break
+    case 'toggleBookmark':       toggleBookmarkWithFeedback(); break
+    case 'openPracticeSheet':    showPracticeSheet.value = true; break
   }
 }
 
-// Phase 2 (H5): 移动端"练习"入口 — 跳生词复习 (对标 speakvlog 5-icon 末位"练习")
-const openPractice = () => {
+// Phase 6 (H5): 闪卡 → 跳到生词复习页 (带 material_id 限定当前视频的单词)
+const openFlashcards = () => {
   if (!userStore.isLoggedIn) {
     toast.warning('请先登录')
     router.push('/login')
     return
   }
-  router.push(`/vocabulary-review?material_id=${material.value?.id || ''}`)
+  const mid = material.value?.id
+  router.push(mid ? `/vocabulary-review?material_id=${mid}` : '/vocabulary-review')
+}
+
+// Phase 6 (H5): 收藏 → 收藏当前字幕, 已收藏跳 /favorites 列表
+const toggleBookmarkWithFeedback = () => {
+  if (!userStore.isLoggedIn) {
+    toast.warning('请先登录')
+    router.push('/login')
+    return
+  }
+  const sub = subtitles.value[currentIndex.value]
+  if (!sub) {
+    toast.warning('当前没有可收藏的字幕')
+    return
+  }
+  const wasBookmarked = bookmarkedSubtitleIds.value.has(sub.id)
+  toggleBookmark(sub)
+  if (wasBookmarked) {
+    // 已收藏: 取消后给提示, 跳到收藏列表
+    setTimeout(() => router.push('/favorites'), 400)
+  }
+  // 收藏成功的 toast 由 toggleBookmark 内部触发 (不在这里重复)
+}
+
+// Phase 6 (H5): 练习 → 弹 practice sheet (跟读/听写/复述 3 选 1), 在 learn 内切模式, 不跳独立页
+const openPracticeSheet = () => {
+  showPracticeSheet.value = true
+}
+
+const showPracticeSheet = ref(false)
+const selectPracticeMode = (mode) => {
+  // mode: 'shadowing' (跟读) | 'dictation' (听写) | 'retelling' (复述)
+  learningMode.value = mode
+  showPracticeSheet.value = false
+  if (mode === 'dictation') {
+    toast.success('已切换到听写模式')
+  } else if (mode === 'retelling') {
+    toast.info('复述模式开发中, 当前用跟读')
+    learningMode.value = 'shadowing'
+  } else {
+    toast.success('已切换到跟读模式')
+  }
 }
 
 // 工具栏高亮: 各 icon 对应 sheet 打开时, 该 icon active
 const isMobileTabActive = (key) => {
   if (key === 'subtitle' && showSubtitleSettings.value) return true
   if (key === 'playbackRate' && showPlaybackRateSheet.value) return true
-  if (key === 'flashcards' && interpretationSheetOpen.value) return true
-  return mobileActiveTab.value === key
+  if (key === 'practice' && showPracticeSheet.value) return true
+  return false
 }
 
 // Phase 1B Task 5: 移动端宽度检测（用于解读面板 Sheet side 切换）
@@ -2723,6 +2799,73 @@ onUnmounted(() => {
 }
 .sf-rate-label {
   font-feature-settings: 'tnum';
+}
+
+/* ==================== 练习模式 Sheet (Phase 6 H5) ==================== */
+.sf-practice-sheet :deep(.sheet-content) {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 0 16px 24px;
+  background: var(--color-bg-card);
+}
+.sf-practice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+.sf-practice-opt {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 16px 20px;
+  background: var(--color-bg-base, #FAFAF7);
+  border: 1.5px solid var(--color-border);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+  text-align: left;
+}
+.sf-practice-opt:active {
+  transform: scale(0.98);
+}
+.sf-practice-opt.active {
+  background: var(--color-brand-subtle, #E8F0EB);
+  border-color: var(--color-brand, #10B981);
+}
+.sf-practice-label {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+.sf-practice-opt.active .sf-practice-label {
+  color: var(--color-brand, #10B981);
+}
+.sf-practice-desc {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+.sf-practice-check {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  color: var(--color-brand, #10B981);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* ==================== 5-icon 工具栏 active 状态强化 (Phase 6 H5) ==================== */
+.sf-mobile-tab.active {
+  color: var(--color-brand, #10B981);
+  background: var(--color-brand-subtle, #E8F0EB);
+  font-weight: 600;
+}
+.sf-mobile-tab.active svg {
+  stroke: var(--color-brand, #10B981);
 }
 
 /* ==================== 快捷键面板 ==================== */
