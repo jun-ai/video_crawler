@@ -307,13 +307,7 @@ defineExpose({ listRef })
     font-size: 10px;
     min-width: 32px;
   }
-  .sf-subtitle-item__text {
-    font-size: 13px;
-  }
-  .sf-subtitle-item__cn {
-    font-size: 11px;
-    margin-top: 2px;
-  }
+  /* H5: 字幕字号跟随 props.fontSize (Phase 5 hotfix) — 不再硬覆盖 */
 }
 
 .sf-subtitle-item:hover {
@@ -580,9 +574,7 @@ defineExpose({ listRef })
   .sf-subtitle-item {
     padding: 8px 10px;
   }
-  .sf-subtitle-item__text {
-    font-size: 13px;
-  }
+  /* H5: 字幕字号跟随 props.fontSize (Phase 5 hotfix) — 不再硬覆盖 */
   .sf-subtitle-item__time {
     font-size: 10px;
     padding: 2px 6px;
@@ -620,11 +612,6 @@ defineExpose({ listRef })
     padding: 2px 6px;
     min-width: 50px;
   }
-  .sf-subtitle-item__text {
-    font-size: 14px;
-  }
-  .sf-subtitle-item__cn {
-    font-size: 12px;
-  }
+  /* H5: 字幕字号跟随 props.fontSize (Phase 5 hotfix) — 不再硬覆盖 */
 }
 </style>
