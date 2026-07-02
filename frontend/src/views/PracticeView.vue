@@ -94,7 +94,7 @@ onMounted(async () => {
   if (!materialId.value) return
   loading.value = true
   try {
-    const res = await materialAPI.getById(materialId.value)
+    const res = await materialAPI.getDetail(materialId.value)
     materialTitle.value = res.data?.title || res.title || ''
   } catch (e) {
     console.error('加载视频失败', e)
