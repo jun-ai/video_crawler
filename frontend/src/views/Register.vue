@@ -1,5 +1,12 @@
 <template>
   <div class="register-page">
+    <!-- Phase 6 (H5): 极简 header + 返回按钮 -->
+    <header v-if="isMobileView" class="sf-h5-header">
+      <button class="sf-h5-back" type="button" @click="goBack" aria-label="返回">
+        <ArrowLeft :size="22" />
+      </button>
+      <h1 class="sf-h5-title">注册</h1>
+    </header>
     <!-- 装饰背景 -->
     <div class="register-decor">
       <div class="register-glow register-glow-1" />
@@ -88,14 +95,32 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { ArrowLeft } from 'lucide-vue-next'
 import { toast } from '@/composables/useToast'
 import { authAPI } from '@/api'
 import SfButton from '@/components/ui/SfButton.vue'
 import SfInput from '@/components/ui/SfInput.vue'
 
 const router = useRouter()
+
+// Phase 6 (H5): 移动端检测
+const isMobileView = ref(typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches)
+const updateIsMobile = () => {
+  isMobileView.value = window.matchMedia('(max-width: 768px)').matches
+}
+onMounted(() => window.addEventListener('resize', updateIsMobile))
+onUnmounted(() => window.removeEventListener('resize', updateIsMobile))
+
+// Phase 6 (H5): 返回按钮
+const goBack = () => {
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/login')
+  }
+}
 const loading = ref(false)
 
 const form = reactive({

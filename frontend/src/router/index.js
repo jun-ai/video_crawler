@@ -33,6 +33,12 @@ const routes = [
     component: () => import('@/views/VocabularyReview.vue')
   },
   {
+    // Phase 6 (H5): 5-icon 工具栏"练习"独立页 — H5 极简 header + 返回箭头
+    path: '/practice',
+    name: 'Practice',
+    component: () => import('@/views/PracticeView.vue')
+  },
+  {
     path: '/english-cards',
     name: 'EnglishCards',
     component: () => import('@/views/EnglishCards.vue')

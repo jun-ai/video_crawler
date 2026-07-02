@@ -551,7 +551,7 @@ const mobileTabs = [
   { key: 'playbackRate', label: '倍速', icon: Gauge,     action: 'openPlaybackRate' },
   { key: 'flashcards',   label: '闪卡', icon: Layers,    action: 'openFlashcards' },
   { key: 'bookmark',     label: '收藏', icon: Bookmark,  action: 'toggleBookmark' },
-  { key: 'practice',     label: '练习', icon: PencilLine, action: 'openPracticeSheet' }
+  { key: 'practice',     label: '练习', icon: PencilLine, action: 'openPracticePage' }
 ]
 const setMobileTab = (key) => {
   const tab = mobileTabs.find(t => t.key === key)
@@ -561,8 +561,19 @@ const setMobileTab = (key) => {
     case 'openPlaybackRate':     showPlaybackRateSheet.value = true; break
     case 'openFlashcards':       openFlashcards(); break
     case 'toggleBookmark':       toggleBookmarkWithFeedback(); break
-    case 'openPracticeSheet':    showPracticeSheet.value = true; break
+    case 'openPracticePage':     openPracticePage(); break
   }
+}
+
+// Phase 6 (H5): 练习 → 跳独立页 /practice?material_id=N (H5 极简 header + 返回箭头)
+const openPracticePage = () => {
+  if (!userStore.isLoggedIn) {
+    toast.warning('请先登录')
+    router.push('/login')
+    return
+  }
+  const mid = material.value?.id
+  router.push(mid ? `/practice?material_id=${mid}` : '/practice')
 }
 
 // Phase 6 (H5): 闪卡 → 跳到生词复习页 (带 material_id 限定当前视频的单词)

@@ -1,5 +1,12 @@
 <template>
   <div class="forgot-page">
+    <!-- Phase 6 (H5): 极简 header + 返回按钮 -->
+    <header v-if="isMobileView" class="sf-h5-header">
+      <button class="sf-h5-back" type="button" @click="goBack" aria-label="返回">
+        <ArrowLeft :size="22" />
+      </button>
+      <h1 class="sf-h5-title">忘记密码</h1>
+    </header>
     <div class="forgot-decor">
       <div class="forgot-glow forgot-glow-1" />
       <div class="forgot-glow forgot-glow-2" />
@@ -81,14 +88,32 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { ArrowLeft } from 'lucide-vue-next'
 import { authAPI } from '@/api'
 import SfButton from '@/components/ui/SfButton.vue'
 import SfInput from '@/components/ui/SfInput.vue'
 
 const router = useRouter()
 const loading = ref(false)
+
+// Phase 6 (H5): 移动端检测
+const isMobileView = ref(typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches)
+const updateIsMobile = () => {
+  isMobileView.value = window.matchMedia('(max-width: 768px)').matches
+}
+onMounted(() => window.addEventListener('resize', updateIsMobile))
+onUnmounted(() => window.removeEventListener('resize', updateIsMobile))
+
+// Phase 6 (H5): 返回按钮
+const goBack = () => {
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/login')
+  }
+}
 
 const form = reactive({
   phone: '',

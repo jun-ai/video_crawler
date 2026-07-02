@@ -1,5 +1,12 @@
 <template>
   <div class="login-page">
+    <!-- Phase 6 (H5): 极简 header + 返回按钮 -->
+    <header v-if="isMobileView" class="sf-h5-header">
+      <button class="sf-h5-back" type="button" @click="goBack" aria-label="返回">
+        <ArrowLeft :size="22" />
+      </button>
+      <h1 class="sf-h5-title">登录</h1>
+    </header>
     <!-- 装饰背景 -->
     <div class="login-decor">
       <div class="login-glow login-glow-1" />
@@ -71,8 +78,9 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { ArrowLeft } from 'lucide-vue-next'
 import { toast } from '@/composables/useToast'
 import { useUserStore } from '@/stores/user'
 import SfButton from '@/components/ui/SfButton.vue'
@@ -81,6 +89,26 @@ import SfInput from '@/components/ui/SfInput.vue'
 const router = useRouter()
 const userStore = useUserStore()
 const loading = ref(false)
+
+// Phase 6 (H5): 移动端检测
+const isMobileView = ref(typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches)
+const updateIsMobile = () => {
+  isMobileView.value = window.matchMedia('(max-width: 768px)').matches
+}
+onMounted(() => window.addEventListener('resize', updateIsMobile))
+onUnmounted(() => window.removeEventListener('resize', updateIsMobile))
+
+// Phase 6 (H5): 返回按钮 — 优先回 redirect, 否则 history.back, 否则去首页
+const goBack = () => {
+  const redirect = router.currentRoute.value.query.redirect
+  if (typeof redirect === 'string' && redirect.startsWith('/')) {
+    router.push(redirect)
+  } else if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/')
+  }
+}
 
 const form = reactive({
   phone: '',
