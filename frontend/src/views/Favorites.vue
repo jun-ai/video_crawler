@@ -1,19 +1,20 @@
 <template>
   <div class="yt-favorites">
+    <!-- Phase 6 (H5): 极简 header 始终显示, 让未登录用户也能返回 -->
+    <header v-if="isMobileView" class="sf-h5-header">
+      <button class="sf-h5-back" type="button" @click="$router.back()" aria-label="返回">
+        <ArrowLeft :size="22" />
+      </button>
+      <h1 class="sf-h5-title">我的收藏</h1>
+    </header>
+
     <SfEmpty v-if="!userStore.isLoggedIn" description="请先登录查看收藏">
       <SfButton type="primary" @click="$router.push('/login')">去登录</SfButton>
     </SfEmpty>
 
     <template v-else>
-      <!-- Phase 6 (H5): 极简 header + 返回按钮 -->
-      <header v-if="isMobileView" class="sf-h5-header">
-        <button class="sf-h5-back" type="button" @click="$router.back()" aria-label="返回">
-          <ArrowLeft :size="22" />
-        </button>
-        <h1 class="sf-h5-title">我的收藏</h1>
-      </header>
-      <!-- 页面头部 -->
-      <div v-else class="fav-page-header">
+      <!-- 页面头部 (桌面) -->
+      <div class="fav-page-header">
         <SfButton type="ghost" size="sm" class="fav-back-btn" @click="$router.back()">
           <ArrowLeft :size="18" />
         </SfButton>
