@@ -288,33 +288,8 @@
       </button>
     </nav>
 
-    <!-- 解读面板 Sheet — Phase 1B Task 5: mobile bottom / desktop right -->
-    <Sheet v-if="isMobileView" v-model:open="interpretationSheetOpen">
-      <SheetContent side="bottom" class="sf-interpretation-sheet sf-interpretation-sheet--mobile">
-        <SheetHeader>
-          <SheetTitle>词汇解读</SheetTitle>
-        </SheetHeader>
-        <InterpretationDrawer
-          :data="interpretation"
-          :tab="interpretationTab"
-          :filter="interpretationFilter"
-          :hide-cn="hideInterpretationCn"
-          :learning-status="learningStatus"
-          :loading="interpretationLoading"
-          :is-generating="isGenerating"
-          :generating-status="interpretationGeneratingStatus"
-          @generate="generateInterpretation"
-          @update:tab="interpretationTab = $event"
-          @update:filter="interpretationFilter = $event"
-          @update:hide-cn="hideInterpretationCn = $event"
-          @set-status="setLearningStatus"
-          @interpretation-click="handleInterpretationClick"
-          @seek-subtitle="seekToSubtitle"
-          @add-vocabulary="addToVocabulary"
-        />
-      </SheetContent>
-    </Sheet>
-    <Sheet v-else v-model:open="interpretationSheetOpen">
+    <!-- 解读面板 Sheet — desktop right side, H5 已砍 (phase 6 俊哥: AI 智能解读 H5 去掉, 桌面保留) -->
+    <Sheet v-model:open="interpretationSheetOpen">
       <SheetContent side="right" class="sf-interpretation-sheet">
         <SheetHeader>
           <SheetTitle>词汇解读</SheetTitle>
