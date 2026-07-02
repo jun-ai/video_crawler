@@ -1,5 +1,5 @@
 <template>
-  <div class="sf-subtitle-list">
+  <div class="sf-subtitle-list" :style="{ '--sf-subtitle-font-size': fontSize + 'px' }">
     <div class="sf-subtitle-panel">
       <!-- 面板头部 -->
       <div class="sf-subtitle-panel__header">
@@ -146,7 +146,9 @@ const props = defineProps({
   pageSize: { type: Number, default: 10 },
   playMode: { type: String, default: 'single' },
   playModeLabel: { type: String, default: '单次播放' },
-  getAnnotatedText: { type: Function, default: (sub) => sub.text_en }
+  getAnnotatedText: { type: Function, default: (sub) => sub.text_en },
+  // Phase 2 H5 字幕字号 (px): 14 / 16 / 18 / 20 — 列表字幕同步主字幕
+  fontSize: { type: Number, default: 16 }
 })
 
 const emit = defineEmits([
@@ -387,9 +389,9 @@ defineExpose({ listRef })
   margin-bottom: 2px;
 }
 
-/* 英文: 14px (不变) + 优化断行 (中长词可任意断) */
+/* 英文: 跟随 props.fontSize (Phase 2 H5: 字幕设置 sheet 修 bug) + 优化断行 (中长词可任意断) */
 .sf-subtitle-item__text {
-  font-size: 14px;
+  font-size: var(--sf-subtitle-font-size, 14px);
   font-weight: 500;
   line-height: 1.55;
   color: var(--sf-text-primary);
@@ -404,9 +406,9 @@ defineExpose({ listRef })
   font-weight: 600;
 }
 
-/* 中文: 12px 保持,断行优化 */
+/* 中文: 跟随主字号 (Phase 2 H5: 字幕设置 sheet 修 bug) */
 .sf-subtitle-item__cn {
-  font-size: 12px;
+  font-size: calc(var(--sf-subtitle-font-size, 14px) * 0.85);
   font-weight: 400;
   color: var(--sf-text-secondary);
   line-height: 1.5;
@@ -599,14 +601,7 @@ defineExpose({ listRef })
     padding: 3px 8px;
     min-width: 56px;
   }
-  .sf-subtitle-item__text {
-    font-size: 15px;
-    line-height: 1.5;
-  }
-  .sf-subtitle-item__cn {
-    font-size: 13px;
-    margin-top: 4px;
-  }
+  /* H5: 列表字幕字号跟随 props.fontSize (Phase 2 H5: 字幕设置 sheet 修 bug) — 不再硬覆盖 */
   .sf-subtitle-item__actions button {
     width: 32px;
     height: 32px;

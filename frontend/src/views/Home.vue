@@ -1489,15 +1489,59 @@ onMounted(async () => {
   }
 }
 
+/* ====== Phase 5 (H5): Home 16:9 视频通栏 ====== */
+/* H5 (≤ 640px): 视频网格本身扩展到屏幕边缘 (通栏 16:9) — YouTube/B站 风格
+   .home-container 有 16px 横向 padding, 用负 margin 抵消让 .video-grid 真正"贴边"
+   标题/计数 (.section-head) 保留在容器内, 只视频卡片通栏
+   同时增加卡片间距, 大标题字体, 适配手机阅读 */
+@media (max-width: 640px) {
+  .video-grid {
+    grid-template-columns: 1fr;
+    gap: 22px;                /* 卡片之间留呼吸空间 */
+    margin: 0 -16px;          /* 抵消 .home-container padding: 0 16px — 通栏 */
+  }
+  /* 卡片在 H5 端去掉圆角阴影外框, 走"视频流"风 */
+  .video-grid .video-card {
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+  }
+  .video-grid .video-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  .video-grid .video-info {
+    padding: 12px 16px 8px;
+  }
+  .video-grid .video-title {
+    font-size: 18px;
+    line-height: 1.4;
+    margin-bottom: 6px;
+  }
+  .video-grid .video-description {
+    font-size: 13px;
+  }
+  .video-grid .duration {
+    bottom: 10px;
+    right: 10px;
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+  .video-grid .fav-heart {
+    top: 10px;
+    right: 10px;
+    width: 34px;
+    height: 34px;
+  }
+}
+
 /* H5 (≤ 640px): 隐藏"我的学习"面板 — H5 不要这块, 留出空间给视频流 */
 @media (max-width: 640px) {
   .stats-side {
     display: none;
   }
   .home-main {
-    grid-template-columns: 1fr;
-  }
-  .video-grid {
     grid-template-columns: 1fr;
   }
   /* 隐藏底部"学习消息/学习指南/联系我们" — H5 端不要这堆引导内容 */

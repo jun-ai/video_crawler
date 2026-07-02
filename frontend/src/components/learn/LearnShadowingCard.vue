@@ -7,8 +7,8 @@
         <span class="sf-shadowing-card__time">{{ formatTime(currentSubtitle.start_time) }}</span>
       </div>
 
-      <!-- 字幕内容 -->
-      <div class="sf-shadowing-card__body">
+      <!-- 字幕内容 — font-size 由 props.fontSize 控制 (Phase 2 H5: 字幕设置 sheet 修 bug) -->
+      <div class="sf-shadowing-card__body" :style="{ '--sf-subtitle-font-size': fontSize + 'px' }">
         <div class="sf-shadowing-card__en" v-if="!showOnlyChinese">{{ currentSubtitle.text_en }}</div>
         <transition name="sf-fade">
           <div class="sf-shadowing-card__cn" v-if="showTranslation && currentSubtitle.text_cn && !showOnlyChinese">
@@ -182,7 +182,9 @@ defineProps({
   recordedBlob: { type: Object, default: null },
   pronunciationResult: { type: Object, default: null },
   evaluationLoading: { type: Boolean, default: false },
-  isLoggedIn: { type: Boolean, default: false }
+  isLoggedIn: { type: Boolean, default: false },
+  // Phase 2 H5 字幕字号 (px): 14 / 16 / 18 / 20
+  fontSize: { type: Number, default: 16 }
 })
 
 defineEmits([
@@ -243,9 +245,9 @@ const getScoreClass = (score) => {
   margin-bottom: 16px;
 }
 
-/* 英文区 */
+/* 英文区 — 用 CSS 变量控制字号 (Phase 2 H5: 字幕设置 sheet 修 bug) */
 .sf-shadowing-card__en {
-  font-size: 26px;
+  font-size: var(--sf-subtitle-font-size, 16px);
   font-weight: 700;
   color: var(--color-text-primary);
   line-height: 1.45;
@@ -266,9 +268,9 @@ const getScoreClass = (score) => {
   border-radius: 2px;
 }
 
-/* 中文翻译区 */
+/* 中文翻译区 — 字号跟随主字号 (Phase 2 H5: 字幕设置 sheet 修 bug) */
 .sf-shadowing-card__cn {
-  font-size: 14px;
+  font-size: calc(var(--sf-subtitle-font-size, 16px) * 0.78);
   color: var(--color-text-secondary);
   line-height: 1.6;
   padding: 12px 14px;
@@ -279,7 +281,7 @@ const getScoreClass = (score) => {
 }
 
 .sf-shadowing-card__cn-only {
-  font-size: 16px;
+  font-size: var(--sf-subtitle-font-size, 16px);
   color: var(--color-text-primary);
   line-height: 1.6;
 }

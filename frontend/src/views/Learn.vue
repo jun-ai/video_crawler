@@ -114,6 +114,7 @@
               :pronunciation-result="pronunciationResult"
               :evaluation-loading="evaluationLoading"
               :is-logged-in="userStore.isLoggedIn"
+              :font-size="subtitleFontSize"
               @prev="prevSubtitle"
               @next="nextSubtitle"
               @replay="replaySubtitle"
@@ -149,6 +150,7 @@
             :play-mode="playMode"
             :play-mode-label="playModeLabel"
             :get-annotated-text="getAnnotatedText"
+            :font-size="subtitleFontSize"
             @subtitle-click="handleSubtitleClick"
             @replay-subtitle="replaySpecificSubtitle"
             @record-subtitle="startRecordingForSubtitle"
@@ -621,8 +623,19 @@ const currentSubtitleIndexInPage = computed(() => {
 // 字幕翻译相关
 const showTranslation = ref(true)  // 默认显示中英翻译
 const showOnlyChinese = ref(false)  // 仅显示中文模式
-// Phase 2 (H5): 字幕设置 sheet 用的派生状态
-const subtitleFontSize = ref(16)  // 字幕字体大小 (px)
+// Phase 2 (H5): 字幕设置 sheet 用的派生状态 — 从 localStorage 恢复, 刷新保持用户选择
+const SUBTITLE_FONT_SIZE_KEY = 'sf_subtitle_font_size'
+const VALID_FONT_SIZES = [14, 16, 18, 20]
+const _savedFontSize = (() => {
+  try {
+    const v = parseInt(localStorage.getItem(SUBTITLE_FONT_SIZE_KEY) || '16', 10)
+    return VALID_FONT_SIZES.includes(v) ? v : 16
+  } catch { return 16 }
+})()
+const subtitleFontSize = ref(_savedFontSize)
+watch(subtitleFontSize, (v) => {
+  try { localStorage.setItem(SUBTITLE_FONT_SIZE_KEY, String(v)) } catch {}
+})
 const subtitleMode = computed(() => {
   if (showOnlyChinese.value) return 'cn-only'
   if (!showTranslation.value) return 'en-only'
