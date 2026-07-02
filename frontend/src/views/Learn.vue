@@ -2997,41 +2997,47 @@ onUnmounted(() => {
     display: none !important;
   }
 
-  /* ====== H5 (≤ 768px): 视频播放器 sticky 固定, 滑动字幕列表时不滚走 ====== */
-  /* 触发条件: default tab (无 data-mobile-tab 即 video tab) + shadowing tab
-     视频区在 sf-left-column 第一个 .sf-card-inner 内 */
+  /* ====== H5 (≤ 768px): 视频播放器固定不滚 (滑动字幕列表时) ====== */
+  /* sticky 失效原因: .sf-left-column 高度 432 < viewport 844, sticky 触发条件不满足
+     改 fixed + main-content padding-top 让出空间 */
   .sf-left-column .sf-card-inner:first-child {
-    position: sticky;
-    top: 50px;  /* h5 header 高度 (10+22+10+border≈52), 略小于它 */
+    position: fixed;
+    top: 50px;  /* h5 header 底 */
+    left: 0;
+    right: 0;
+    max-height: 220px;
     z-index: 11;
     background: var(--color-bg-page);
-    margin: 0 -12px;  /* 视频通栏 */
+    margin: 0;
     padding: 8px 12px;
     border-radius: 0;
   }
-  /* video 元素限制高度, 不然 16:9 会占满屏 */
   .sf-left-column .sf-card-inner:first-child video {
-    max-height: 220px;
+    max-height: 200px;
     width: 100%;
     border-radius: var(--sf-radius-md);
     object-fit: contain;
   }
-  /* middle column (字幕列表) 不要 sticky (之前是 desktop 配置, mobile 改成 normal flow)
-     让字幕列表在 video 下方独立滚动, 视频始终在顶部 */
+  /* 给 main-content 上移 240px 让出 fixed video 空间 */
+  .sf-main-content {
+    padding-top: 240px;
+  }
+  /* middle column 不要 sticky (之前是 desktop 配置, mobile 改成 normal flow) */
   .sf-middle-column {
     position: static !important;
     max-height: none !important;
     top: auto !important;
   }
-  /* h5 header 加高 z-index, 保证在 sticky video 之上 */
+  /* h5 header 高 z-index, 保证覆盖 fixed video */
   .sf-h5-header {
     z-index: 20;
   }
 
   /* H5 (≤ 768px): 隐藏 video 下面的桌面控件 (倍速按钮 + 循环开关) + 视频简介
-     倍速已有 5-icon 工具栏的"倍速"sheet 接管, 简介在 H5 浪费空间 */
-  .sf-left-column .video-controls,
-  .sf-left-column .video-info-card {
+     倍速已有 5-icon 工具栏的"倍速"sheet 接管, 简介在 H5 浪费空间
+     用 :deep() 穿透子组件 LearnVideoPlayer scoped style */
+  .sf-left-column :deep(.video-controls),
+  .sf-left-column :deep(.video-info-card) {
     display: none !important;
   }
 }
