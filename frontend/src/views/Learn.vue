@@ -2996,6 +2996,44 @@ onUnmounted(() => {
   .sf-interpretation-trigger {
     display: none !important;
   }
+
+  /* ====== H5 (≤ 768px): 视频播放器 sticky 固定, 滑动字幕列表时不滚走 ====== */
+  /* 触发条件: default tab (无 data-mobile-tab 即 video tab) + shadowing tab
+     视频区在 sf-left-column 第一个 .sf-card-inner 内 */
+  .sf-left-column .sf-card-inner:first-child {
+    position: sticky;
+    top: 50px;  /* h5 header 高度 (10+22+10+border≈52), 略小于它 */
+    z-index: 11;
+    background: var(--color-bg-page);
+    margin: 0 -12px;  /* 视频通栏 */
+    padding: 8px 12px;
+    border-radius: 0;
+  }
+  /* video 元素限制高度, 不然 16:9 会占满屏 */
+  .sf-left-column .sf-card-inner:first-child video {
+    max-height: 220px;
+    width: 100%;
+    border-radius: var(--sf-radius-md);
+    object-fit: contain;
+  }
+  /* middle column (字幕列表) 不要 sticky (之前是 desktop 配置, mobile 改成 normal flow)
+     让字幕列表在 video 下方独立滚动, 视频始终在顶部 */
+  .sf-middle-column {
+    position: static !important;
+    max-height: none !important;
+    top: auto !important;
+  }
+  /* h5 header 加高 z-index, 保证在 sticky video 之上 */
+  .sf-h5-header {
+    z-index: 20;
+  }
+
+  /* H5 (≤ 768px): 隐藏 video 下面的桌面控件 (倍速按钮 + 循环开关) + 视频简介
+     倍速已有 5-icon 工具栏的"倍速"sheet 接管, 简介在 H5 浪费空间 */
+  .sf-left-column .video-controls,
+  .sf-left-column .video-info-card {
+    display: none !important;
+  }
 }
 
 /* ========== Phase 1B Task 2: 移动端底部 Tab Bar ========== */
