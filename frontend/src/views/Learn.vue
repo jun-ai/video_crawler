@@ -329,12 +329,10 @@
       </nav>
     </div>
 
-    <!-- 解读面板 Sheet — desktop right side, H5 bottom 全屏 (phase 10: 不被 toolbar/AI bar 覆盖) -->
+    <!-- 解读面板 Sheet — desktop right side, H5 bottom 全屏 (phase 10: 不被 toolbar/AI bar 覆盖)
+         phase 11: 移除重复 SheetHeader (Drawer 自带 "视频解读" h3) + shadcn 默认 X 隐藏 (Drawer 自带大 X) -->
     <Sheet v-model:open="interpretationSheetOpen">
       <SheetContent :side="isMobileView ? 'bottom' : 'right'" class="sf-interpretation-sheet">
-        <SheetHeader>
-          <SheetTitle>词汇解读</SheetTitle>
-        </SheetHeader>
         <InterpretationDrawer
           :data="interpretation"
           :tab="interpretationTab"
@@ -352,6 +350,7 @@
           @interpretation-click="handleInterpretationClick"
           @seek-subtitle="seekToSubtitle"
           @add-vocabulary="addToVocabulary"
+          @close="interpretationSheetOpen = false"
         />
       </SheetContent>
     </Sheet>
@@ -2499,6 +2498,13 @@ watch(() => videoPlayerRef.value?.playerRef, (el) => {
   if (el) videoRef.value = el
 }, { immediate: true })
 
+// Phase 11: 解读 sheet 打开时自动暂停视频 (关闭不自动恢复, 用户可手动)
+watch(interpretationSheetOpen, (open) => {
+  if (open && videoRef.value && !videoRef.value.paused) {
+    videoRef.value.pause()
+  }
+})
+
 onMounted(() => {
   loadMaterial()
   // 确保获取最新用户信息
@@ -3698,6 +3704,10 @@ onUnmounted(() => {
 <style>
 .sf-interpretation-sheet {
   z-index: 250; /* 提到 toolbar (200) 之上, 避免被遮 */
+}
+.sf-interpretation-sheet [data-dismissable-layer] > button[class*="absolute"][class*="right-4"][class*="top-4"] {
+  /* Phase 11: 隐藏 shadcn 默认的 16px X (opacity 0.7 看不见), Drawer 自带大 X */
+  display: none !important;
 }
 
 @media (max-width: 768px) {

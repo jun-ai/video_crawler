@@ -1,21 +1,36 @@
 <template>
   <div class="sf-interp-panel">
+    <!-- Phase 11 (H5): iOS 风格顶部 drag handle, 视觉提示可下滑关闭 -->
+    <div class="sf-interp-drag-handle" aria-hidden="true">
+      <span class="sf-interp-drag-handle__bar"></span>
+    </div>
+
     <!-- 面板头部 -->
     <div class="sf-interp-panel__header">
       <h3 class="sf-interp-panel__title">视频解读</h3>
-      <button
-        v-if="hasData"
-        class="sf-btn sf-btn--ghost sf-btn--sm"
-        :disabled="isGenerating"
-        @click="$emit('generate')"
-      >
-        <Loader2 class="is-loading" :size="16" v-if="isGenerating" /><RefreshCw v-else :size="16" />
-        {{ isGenerating ? '生成中...' : '重新生成' }}
-      </button>
+      <div class="sf-interp-panel__header-actions">
+        <button
+          v-if="hasData"
+          class="sf-btn sf-btn--ghost sf-btn--sm"
+          :disabled="isGenerating"
+          @click="$emit('generate')"
+        >
+          <Loader2 class="is-loading" :size="16" v-if="isGenerating" /><RefreshCw v-else :size="16" />
+          {{ isGenerating ? '生成中...' : '重新生成' }}
+        </button>
+        <!-- Phase 11: 显式大 X 关闭按钮, 替代 shadcn 默认看不见的 16px X -->
+        <button
+          class="sf-interp-panel__close"
+          @click="$emit('close')"
+          aria-label="关闭"
+        >
+          <X :size="18" />
+        </button>
+      </div>
     </div>
 
-    <!-- Tab 导航：下划线指示器风格 -->
-    <div class="sf-tabs">
+    <!-- Tab 导航: H5 横向滚动 + 桌面平铺 -->
+    <div class="sf-tabs sf-tabs--scrollable">
       <button class="sf-tabs__item" :class="{ active: tab === 'words' }" @click="$emit('update:tab', 'words')">
         单词 <span class="sf-tabs__count">{{ data.words.length }}</span>
       </button>
@@ -31,7 +46,7 @@
     </div>
 
     <!-- 筛选栏 + 操作按钮 -->
-    <div class="sf-filter-bar" v-if="hasData">
+    <div class="sf-filter-bar sf-filter-bar--scrollable" v-if="hasData">
       <button
         v-for="f in filterOptions"
         :key="f.value"
@@ -41,7 +56,7 @@
         {{ f.label }} <span class="sf-chip__count">{{ filterCounts[f.value] }}</span>
       </button>
       <div class="sf-spacer"></div>
-      <button class="sf-btn sf-btn--ghost sf-btn--sm" @click="$emit('update:hideCn', !hideCn)">
+      <button class="sf-btn sf-btn--ghost sf-btn--sm sf-btn--hide-on-mobile" @click="$emit('update:hideCn', !hideCn)">
         <Eye :size="14" />
         {{ hideCn ? '显示中文' : '隐藏中文' }}
       </button>
@@ -391,7 +406,7 @@
 import { computed, ref } from 'vue'
 import {
   Loader2, ArrowRight, RefreshCw, Headphones,
-  Eye, MessageCircle, Wand2, Plus, ChevronDown
+  Eye, MessageCircle, Wand2, Plus, ChevronDown, X
 } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -411,7 +426,7 @@ const props = defineProps({
 const emit = defineEmits([
   'generate', 'update:tab', 'update:filter',
   'update:hideCn', 'set-status', 'interpretation-click',
-  'seek-subtitle', 'add-vocabulary'
+  'seek-subtitle', 'add-vocabulary', 'close'
 ])
 
 // 展开状态
@@ -532,12 +547,64 @@ const getStatusBarClass = (id) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 16px;
+  gap: 10px;
+  padding: 14px 18px 12px;
   border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-card);
   flex-shrink: 0;
-  background: var(--color-bg-elevated);
 }
 
+/* Phase 11: header 右侧 action 容器 (重新生成 + 大 X) */
+.sf-interp-panel__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Phase 11: 显式大 X 关闭按钮, 替代 shadcn 默认看不见的 16px X */
+.sf-interp-panel__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: var(--color-bg-elevated);
+  color: var(--color-text-secondary);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+}
+.sf-interp-panel__close:hover {
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
+}
+.sf-interp-panel__close:active {
+  transform: scale(0.92);
+}
+
+/* Phase 11: iOS 风格顶部 drag handle, 视觉提示可下滑关闭 */
+.sf-interp-drag-handle {
+  display: none; /* 默认桌面隐藏 */
+  justify-content: center;
+  padding: 8px 0 4px;
+  flex-shrink: 0;
+}
+.sf-interp-drag-handle__bar {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-border);
+  opacity: 0.6;
+}
+@media (max-width: 768px) {
+  .sf-interp-drag-handle { display: flex; }
+  .sf-interp-panel__header { padding: 4px 18px 10px; } /* drag handle 已占空间, 头部少一截 */
+  /* Phase 11: H5 隐藏 "隐藏中文" 按钮 (H5 用 更多 sheet 切字幕模式) */
+  .sf-btn--hide-on-mobile { display: none; }
+}
 .sf-interp-panel__title {
   margin: 0;
   font-size: 15px;
@@ -554,6 +621,9 @@ const getStatusBarClass = (id) => {
   scrollbar-width: none;
   flex-shrink: 0;
   background: var(--color-bg-elevated);
+  /* Phase 11: 平滑横向滚动 + scroll-snap */
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
 }
 .sf-tabs::-webkit-scrollbar { display: none; }
 
@@ -562,6 +632,8 @@ const getStatusBarClass = (id) => {
   align-items: center;
   gap: 5px;
   padding: 10px 14px;
+  flex-shrink: 0; /* Phase 11: 不缩小, 触发横向滚动 */
+  scroll-snap-align: start;
   font-size: 13px;
   font-weight: 500;
   color: var(--color-text-muted);
@@ -613,6 +685,16 @@ const getStatusBarClass = (id) => {
   flex-wrap: wrap;
   flex-shrink: 0;
 }
+/* Phase 11: H5 改横向滚动, 不换行, 隐藏中文按钮用 hide-on-mobile 隐藏 */
+.sf-filter-bar--scrollable {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 14px;
+}
+.sf-filter-bar--scrollable::-webkit-scrollbar { display: none; }
+.sf-filter-bar--scrollable .sf-chip { flex-shrink: 0; }
 
 .sf-chip {
   display: inline-flex;
