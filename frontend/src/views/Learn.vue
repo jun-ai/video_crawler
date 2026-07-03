@@ -329,9 +329,9 @@
       </nav>
     </div>
 
-    <!-- 解读面板 Sheet — desktop right side, H5 已砍 (phase 6 俊哥: AI 智能解读 H5 去掉, 桌面保留) -->
+    <!-- 解读面板 Sheet — desktop right side, H5 bottom 全屏 (phase 10: 不被 toolbar/AI bar 覆盖) -->
     <Sheet v-model:open="interpretationSheetOpen">
-      <SheetContent side="right" class="sf-interpretation-sheet">
+      <SheetContent :side="isMobileView ? 'bottom' : 'right'" class="sf-interpretation-sheet">
         <SheetHeader>
           <SheetTitle>词汇解读</SheetTitle>
         </SheetHeader>
@@ -2836,12 +2836,13 @@ onUnmounted(() => {
   width: 400px !important;
   max-width: 90vw;
 }
+/* Phase 10: Sheet 用 Teleport 渲染到 body, 不在 Learn.vue DOM 树内, scoped [data-v-hash] 不命中
+   解: 把 z-index / H5 样式放非 scoped <style> 块 (文件末尾) */
 
 .sf-interpretation-sheet :deep(.sheet-content) {
   height: 100%;
   max-height: 100vh;
 }
-
 .sf-interpretation-sheet :deep(.sheet-header) {
   padding: 16px 20px;
   border-bottom: 1px solid var(--color-border);
@@ -3689,5 +3690,24 @@ onUnmounted(() => {
 }
 :deep(.annotation-highlight.jump-flash) {
   animation: sf-jump-flash 0.3s ease;
+}
+</style>
+
+<!-- Phase 10: Sheet 用 Teleport 渲染到 body, 不在 Learn.vue DOM 树内, scoped [data-v-hash] 不命中
+     放非 scoped <style> 块: 直接匹配 .sf-interpretation-sheet -->
+<style>
+.sf-interpretation-sheet {
+  z-index: 250; /* 提到 toolbar (200) 之上, 避免被遮 */
+}
+
+@media (max-width: 768px) {
+  .sf-interpretation-sheet {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 90dvh !important;
+    max-height: 90dvh !important;
+    border-radius: 16px 16px 0 0 !important;
+    /* z-index 250 继承, 在 toolbar 200 + AI bar 12 之上 */
+  }
 }
 </style>
