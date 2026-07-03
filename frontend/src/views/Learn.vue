@@ -275,18 +275,33 @@
     <div class="sf-toolbox-overlay" v-if="showToolboxDrawer" @click="showToolboxDrawer = false"></div>
 
     <!-- Phase 1B Task 2 + Phase 2 (H5): 移动端 5-icon 工具栏 (SpeakVlog 规范: 字幕/倍速/闪卡/收藏/练习) -->
-    <nav class="sf-mobile-tabs" v-if="!loading">
-      <button
-        v-for="tab in mobileTabs"
-        :key="tab.key"
-        :class="['sf-mobile-tab', { active: isMobileTabActive(tab.key) }]"
-        @click="setMobileTab(tab.key)"
-        :aria-label="tab.label"
-      >
-        <component :is="tab.icon" :size="20" />
-        <span class="sf-mobile-tab-label">{{ tab.label }}</span>
-      </button>
-    </nav>
+    <!-- Phase 8: 拆 2 行 — 次行 2-icon (循环+更多) + 主行 5-icon, 单次显示当前 play mode -->
+    <div class="sf-mobile-tabs-wrap" v-if="!loading">
+      <nav class="sf-mobile-tabs sf-mobile-tabs--secondary">
+        <button
+          v-for="tab in mobileTabsSecondary"
+          :key="tab.key"
+          :class="['sf-mobile-tab', 'sf-mobile-tab--compact', { active: isMobileTabActive(tab.key) }]"
+          @click="setMobileTab(tab.key)"
+          :aria-label="tab.label"
+        >
+          <component :is="tab.icon" :size="16" />
+          <span class="sf-mobile-tab-label">{{ tab.label }}</span>
+        </button>
+      </nav>
+      <nav class="sf-mobile-tabs sf-mobile-tabs--primary">
+        <button
+          v-for="tab in mobileTabs"
+          :key="tab.key"
+          :class="['sf-mobile-tab', { active: isMobileTabActive(tab.key) }]"
+          @click="setMobileTab(tab.key)"
+          :aria-label="tab.label"
+        >
+          <component :is="tab.icon" :size="20" />
+          <span class="sf-mobile-tab-label">{{ tab.label }}</span>
+        </button>
+      </nav>
+    </div>
 
     <!-- 解读面板 Sheet — desktop right side, H5 已砍 (phase 6 俊哥: AI 智能解读 H5 去掉, 桌面保留) -->
     <Sheet v-model:open="interpretationSheetOpen">
@@ -412,6 +427,78 @@
       </SheetContent>
     </Sheet>
 
+    <!-- Phase 8 (H5): 移动端 播放模式 Sheet (单次/循环/连续/单句) -->
+    <Sheet v-model:open="showPlayModeSheet">
+      <SheetContent side="bottom" class="sf-playmode-sheet">
+        <SheetHeader>
+          <SheetTitle>播放模式</SheetTitle>
+        </SheetHeader>
+        <div class="sf-playmode-list">
+          <button
+            v-for="opt in [
+              { key: 'single',         label: '单次播放', desc: '播完当前视频就停' },
+              { key: 'single-loop',    label: '单集循环', desc: '当前视频循环播放' },
+              { key: 'continuous',     label: '连续播放', desc: '播完自动播下一个' },
+              { key: 'sentence-loop',  label: '单句循环', desc: '当前字幕循环' }
+            ]"
+            :key="opt.key"
+            :class="['sf-playmode-opt', { active: playMode === opt.key }]"
+            @click="selectPlayMode(opt.key)"
+          >
+            <span class="sf-playmode-label">{{ opt.label }}</span>
+            <span class="sf-playmode-desc">{{ opt.desc }}</span>
+            <span v-if="playMode === opt.key" class="sf-playmode-check">✓</span>
+          </button>
+        </div>
+      </SheetContent>
+    </Sheet>
+
+    <!-- Phase 8 (H5): 移动端 更多 Sheet (字幕模式 / 自动滚动 / 生成解读) -->
+    <Sheet v-model:open="showMoreSheet">
+      <SheetContent side="bottom" class="sf-more-sheet">
+        <SheetHeader>
+          <SheetTitle>更多</SheetTitle>
+        </SheetHeader>
+        <div class="sf-more-list">
+          <button
+            :class="['sf-more-opt', { active: subtitleMode === 'bilingual' }]"
+            @click="setSubtitleMode('bilingual'); showMoreSheet = false"
+          >
+            <span class="sf-more-label">双语字幕</span>
+            <span v-if="subtitleMode === 'bilingual'" class="sf-more-check">✓</span>
+          </button>
+          <button
+            :class="['sf-more-opt', { active: subtitleMode === 'en-only' }]"
+            @click="setSubtitleMode('en-only'); showMoreSheet = false"
+          >
+            <span class="sf-more-label">仅英文</span>
+            <span v-if="subtitleMode === 'en-only'" class="sf-more-check">✓</span>
+          </button>
+          <button
+            :class="['sf-more-opt', { active: subtitleMode === 'cn-only' }]"
+            @click="setSubtitleMode('cn-only'); showMoreSheet = false"
+          >
+            <span class="sf-more-label">仅中文</span>
+            <span v-if="subtitleMode === 'cn-only'" class="sf-more-check">✓</span>
+          </button>
+          <button
+            :class="['sf-more-opt']"
+            @click="toggleAutoScroll()"
+          >
+            <span class="sf-more-label">{{ autoScroll ? '关闭自动滚动' : '开启自动滚动' }}</span>
+            <span v-if="autoScroll" class="sf-more-check">✓</span>
+          </button>
+          <button
+            v-if="!hasInterpretation"
+            :class="['sf-more-opt', { disabled: isGenerating }]"
+            @click="!isGenerating && generateInterpretation()"
+          >
+            <span class="sf-more-label">{{ isGenerating ? 'AI 分析中...' : 'AI 智能解读' }}</span>
+          </button>
+        </div>
+      </SheetContent>
+    </Sheet>
+
     <!-- 快捷键帮助面板 -->
     <transition name="sf-slide">
       <div v-if="showShortcutPanel" class="sf-shortcut-panel">
@@ -467,7 +554,9 @@ import {
   Type,
   Gauge,
   Layers,
-  PencilLine
+  PencilLine,
+  Repeat,
+  MoreHorizontal
 } from 'lucide-vue-next'
 import SfDialog from '@/components/ui/SfDialog.vue'
 import SfInput from '@/components/ui/SfInput.vue'
@@ -512,6 +601,8 @@ const interpretationSheetOpen = ref(false)  // 是否显示解读面板 Sheet
 // Phase 2 (H5): 移动端工具栏抽屉状态
 const showSubtitleSettings = ref(false)   // 字幕设置 sheet (双语/英文/中文/字号)
 const showPlaybackRateSheet = ref(false)  // 倍速选择 sheet
+const showPlayModeSheet = ref(false)      // Phase 8 (H5): 播放模式 sheet (单次/循环/连续/单句)
+const showMoreSheet = ref(false)          // Phase 8 (H5): 更多 sheet (字幕模式/自动滚动/生成解读)
 const showToolboxDrawer = ref(false)      // 兼容旧 API, 移动端工具抽屉
 
 // 工具箱 badge 计数
@@ -539,13 +630,38 @@ const setPlayMode = (mode) => {
   }
 }
 
+// Phase 8 (H5): Sheet 用的 play mode 选择 (关 sheet + toast)
+const selectPlayMode = (mode) => {
+  setPlayMode(mode)
+  showPlayModeSheet.value = false
+  toast.success(`播放: ${playModeLabels[mode] || mode}`)
+}
+
+// Phase 8 (H5): 更多 sheet — 自动滚动开关
+const toggleAutoScroll = () => {
+  autoScroll.value = !autoScroll.value
+  showMoreSheet.value = false
+  toast.success(autoScroll.value ? '自动滚动已开启' : '自动滚动已关闭')
+}
+
 // 学习模式：'shadowing' 跟读模式, 'dictation' 听写模式
 const learningMode = ref('shadowing')
 const dictationIndex = ref(0)  // 听写模式当前索引
 
 // Phase 1B Task 2 + Phase 2 (H5): 移动端 5-icon 工具栏 (SpeakVlog 规范 — 字幕/倍速/闪卡/收藏/练习)
 // H5 不是"砍剩 1 个", 也不是"PC 平移" — 跟对标保持 5 入口, 各打开对应 sheet/动作
+// Phase 8: 顶部 play mode + 更多 整合成次行 2-icon (循环/更多), 主行不变
 const mobileActiveTab = ref(null)  // null = 默认视图
+
+// Phase 8: 次行 (循环 + 更多) — 紧凑样式, 显示当前 play mode 在 label
+const mobileTabsSecondary = computed(() => [
+  { key: 'playMode', label: playModeShortLabel.value, icon: Repeat, action: 'openPlayMode' },
+  { key: 'more',     label: '更多',                   icon: MoreHorizontal, action: 'openMore' }
+])
+const playModeShortLabel = computed(() => ({
+  single: '单次', 'single-loop': '循环', continuous: '连续', 'sentence-loop': '单句'
+}[playMode.value] || '单次'))
+
 const mobileTabs = [
   { key: 'subtitle',     label: '字幕', icon: Type,      action: 'openSubtitleSettings' },
   { key: 'playbackRate', label: '倍速', icon: Gauge,     action: 'openPlaybackRate' },
@@ -553,7 +669,12 @@ const mobileTabs = [
   { key: 'bookmark',     label: '收藏', icon: Bookmark,  action: 'toggleBookmark' },
   { key: 'practice',     label: '练习', icon: PencilLine, action: 'openPracticePage' }
 ]
+
 const setMobileTab = (key) => {
+  // 先查次行
+  const sec = mobileTabsSecondary.value.find(t => t.key === key)
+  if (sec) { handleSecAction(sec.action); return }
+  // 再查主行
   const tab = mobileTabs.find(t => t.key === key)
   if (!tab) return
   switch (tab.action) {
@@ -562,6 +683,13 @@ const setMobileTab = (key) => {
     case 'openFlashcards':       openFlashcards(); break
     case 'toggleBookmark':       toggleBookmarkWithFeedback(); break
     case 'openPracticePage':     openPracticePage(); break
+  }
+}
+
+const handleSecAction = (action) => {
+  switch (action) {
+    case 'openPlayMode':  showPlayModeSheet.value = true; break
+    case 'openMore':      showMoreSheet.value = true; break
   }
 }
 
@@ -633,6 +761,8 @@ const isMobileTabActive = (key) => {
   if (key === 'subtitle' && showSubtitleSettings.value) return true
   if (key === 'playbackRate' && showPlaybackRateSheet.value) return true
   if (key === 'practice' && showPracticeSheet.value) return true
+  if (key === 'playMode' && showPlayModeSheet.value) return true
+  if (key === 'more' && showMoreSheet.value) return true
   return false
 }
 
@@ -2844,6 +2974,110 @@ onUnmounted(() => {
   font-weight: 700;
 }
 
+/* ==================== Phase 8 (H5): 播放模式 Sheet ==================== */
+.sf-playmode-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+.sf-playmode-opt {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 16px 20px;
+  background: var(--color-bg-base, #FAFAF7);
+  border: 1.5px solid var(--color-border);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+  text-align: left;
+}
+.sf-playmode-opt:active { transform: scale(0.98); }
+.sf-playmode-opt.active {
+  background: var(--color-brand-subtle, #E8F0EB);
+  border-color: var(--color-brand, #10B981);
+}
+.sf-playmode-label {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+.sf-playmode-opt.active .sf-playmode-label {
+  color: var(--color-brand, #10B981);
+}
+.sf-playmode-desc {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+.sf-playmode-check {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  color: var(--color-brand, #10B981);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* ==================== Phase 8 (H5): 更多 Sheet ==================== */
+.sf-more-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+.sf-more-opt {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: var(--color-bg-base, #FAFAF7);
+  border: 1.5px solid var(--color-border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+  text-align: left;
+}
+.sf-more-opt:active { transform: scale(0.98); }
+.sf-more-opt.active {
+  background: var(--color-brand-subtle, #E8F0EB);
+  border-color: var(--color-brand, #10B981);
+}
+.sf-more-opt.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.sf-more-label {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+.sf-more-opt.active .sf-more-label {
+  color: var(--color-brand, #10B981);
+  font-weight: 600;
+}
+.sf-more-check {
+  color: var(--color-brand, #10B981);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* ==================== Phase 8 (H5): 次行 2-icon 紧凑样式 ==================== */
+.sf-mobile-tab--compact {
+  min-height: 36px;
+  font-size: 10px;
+  gap: 2px;
+}
+.sf-mobile-tab--compact .sf-mobile-tab-label {
+  font-size: 10px;
+}
+
 /* ==================== 5-icon 工具栏 active 状态强化 (Phase 6 H5) ==================== */
 .sf-mobile-tab.active {
   color: var(--color-brand, #10B981);
@@ -3057,7 +3291,7 @@ onUnmounted(() => {
 @media (max-width: 768px) {
   .sf-learn-page {
     padding: 0;          /* H5 端视频通栏, 不要 12px 边距 */
-    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); /* 给底 tab bar 留空间 */
+    padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px)); /* Phase 8: 给底 2 行 tab bar (40+64) 留空间 */
   }
   .sf-page-header {
     margin-bottom: 10px;
@@ -3172,22 +3406,35 @@ onUnmounted(() => {
 }
 
 /* ========== Phase 1B Task 2: 移动端底部 Tab Bar ========== */
-.sf-mobile-tabs {
+.sf-mobile-tabs-wrap {
   display: none;
 }
+/* Phase 8: 桌面隐藏, H5 显示 2 行 (次行 2-icon + 主行 5-icon) */
+.sf-mobile-tabs {
+  display: flex;
+}
 @media (max-width: 768px) {
-  .sf-mobile-tabs {
+  .sf-mobile-tabs-wrap {
     display: flex;
+    flex-direction: column;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 64px;
     background: var(--color-bg-card);
     border-top: 1px solid var(--color-border);
     z-index: 200;
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
     padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  /* Phase 8: 次行 2-icon (循环+更多) — 紧凑, 浅色背景区分 */
+  .sf-mobile-tabs--secondary {
+    height: 40px;
+    background: var(--color-bg-elevated, #f8f8fa);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .sf-mobile-tabs--primary {
+    height: 64px;
   }
   .sf-mobile-tab {
     flex: 1;

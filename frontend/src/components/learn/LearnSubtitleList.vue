@@ -226,14 +226,11 @@ defineExpose({ listRef })
   flex-shrink: 0;
 }
 
-/* Phase 2 (H5): 移动端隐藏桌面控件 (播放模式 + 更多), 整合到 Learn.vue 5-icon 工具栏 */
-@media (max-width: 768px) {
-  .sf-subtitle-panel__header {
-    padding: 10px 14px;
-  }
-  .sf-subtitle-panel__actions {
-    display: none;
-  }
+/* Phase 8 (H5): 顶部 播放模式 + 更多 整合到底部 7-icon 工具栏 (2 行: 循环/更多 次行 + 5-icon 主行) */
+.sf-subtitle-panel__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .sf-subtitle-panel__title {
@@ -255,10 +252,14 @@ defineExpose({ listRef })
   font-weight: 400;
 }
 
-.sf-subtitle-panel__actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+@media (max-width: 768px) {
+  .sf-subtitle-panel__header {
+    padding: 10px 14px;
+  }
+  /* Phase 8: 顶部播放模式 + 更多 整合到底部 7-icon 工具栏, H5 隐藏 */
+  .sf-subtitle-panel__actions {
+    display: none;
+  }
 }
 
 /* 字幕列表 */
