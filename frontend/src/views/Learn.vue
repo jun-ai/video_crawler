@@ -129,6 +129,32 @@
           </div>
         </div>
 
+        <!-- Phase 9 (H5): AI 智能解读 + 开始跟读 sticky 操作条, 视频下方固定, 永远可见 1-tap 入口 -->
+        <div class="sf-ai-action-bar">
+          <button
+            class="sf-ai-action-bar__btn sf-ai-action-bar__btn--ai"
+            :class="{ 'sf-ai-action-bar__btn--done': hasInterpretation, 'sf-ai-action-bar__btn--loading': isGenerating }"
+            :disabled="isGenerating"
+            @click="handleAiAction"
+            aria-label="AI 智能解读"
+          >
+            <Sparkles v-if="!hasInterpretation && !isGenerating" :size="18" />
+            <span v-else-if="isGenerating" class="sf-ai-action-bar__spinner"></span>
+            <Check v-else :size="18" />
+            <span class="sf-ai-action-bar__label">
+              {{ isGenerating ? 'AI 分析中' : (hasInterpretation ? '已解读' : 'AI 智能解读') }}
+            </span>
+          </button>
+          <button
+            class="sf-ai-action-bar__btn sf-ai-action-bar__btn--shadow"
+            @click="openPracticePage"
+            aria-label="开始跟读"
+          >
+            <Play :size="18" />
+            <span class="sf-ai-action-bar__label">开始跟读</span>
+          </button>
+        </div>
+
         <!-- 中栏：字幕列表区域 -->
         <div class="sf-middle-column">
           <div class="sf-card-inner">
@@ -482,18 +508,20 @@
             <span v-if="subtitleMode === 'cn-only'" class="sf-more-check">✓</span>
           </button>
           <button
-            :class="['sf-more-opt']"
+            class="sf-more-opt"
             @click="toggleAutoScroll()"
           >
             <span class="sf-more-label">{{ autoScroll ? '关闭自动滚动' : '开启自动滚动' }}</span>
             <span v-if="autoScroll" class="sf-more-check">✓</span>
           </button>
+          <!-- Phase 9: AI 智能解读 移到视频下 sticky bar (1-tap), 此处只显示说明, 已生成时变 "查看解读" -->
           <button
-            v-if="!hasInterpretation"
-            :class="['sf-more-opt', { disabled: isGenerating }]"
-            @click="!isGenerating && generateInterpretation()"
+            :class="['sf-more-opt']"
+            @click="handleAiAction"
+            v-if="hasInterpretation"
           >
-            <span class="sf-more-label">{{ isGenerating ? 'AI 分析中...' : 'AI 智能解读' }}</span>
+            <span class="sf-more-label">查看 AI 解读</span>
+            <span class="sf-more-check">✓</span>
           </button>
         </div>
       </SheetContent>
@@ -556,7 +584,8 @@ import {
   Layers,
   PencilLine,
   Repeat,
-  MoreHorizontal
+  MoreHorizontal,
+  Sparkles
 } from 'lucide-vue-next'
 import SfDialog from '@/components/ui/SfDialog.vue'
 import SfInput from '@/components/ui/SfInput.vue'
@@ -642,6 +671,18 @@ const toggleAutoScroll = () => {
   autoScroll.value = !autoScroll.value
   showMoreSheet.value = false
   toast.success(autoScroll.value ? '自动滚动已开启' : '自动滚动已关闭')
+}
+
+// Phase 9 (H5): AI 操作条按钮: 有解读 → 打开解读 sheet, 无 → 调 LLM 生成
+const handleAiAction = () => {
+  if (isGenerating.value) return
+  if (hasInterpretation.value) {
+    // 已有解读 → 打开 sheet (桌面右侧 / H5 弹右侧)
+    interpretationSheetOpen.value = true
+  } else {
+    // 没解读 → 调 LLM 生成
+    generateInterpretation()
+  }
 }
 
 // 学习模式：'shadowing' 跟读模式, 'dictation' 听写模式
@@ -3402,6 +3443,80 @@ onUnmounted(() => {
   .sf-left-column :deep(.video-controls),
   .sf-left-column :deep(.video-info-card) {
     display: none !important;
+  }
+
+  /* ====== Phase 9 (H5): AI 智能解读 + 开始跟读 sticky 操作条 ======
+     视频下方固定, 永远可见, 1-tap 入口
+     高度 64px, top: 268 (= 50 header + 220 video 底), z-index 12 在 video 之上 */
+  .sf-ai-action-bar {
+    display: flex;
+    position: fixed;
+    top: 268px;
+    left: 0;
+    right: 0;
+    height: 64px;
+    z-index: 12;
+    background: var(--color-bg-card);
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+    padding: 0 12px;
+    gap: 10px;
+    align-items: center;
+  }
+  .sf-ai-action-bar__btn {
+    flex: 1;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border-radius: 12px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sf-ai-action-bar__btn:active {
+    transform: scale(0.97);
+  }
+  .sf-ai-action-bar__btn:disabled {
+    opacity: 0.7;
+    cursor: wait;
+  }
+  .sf-ai-action-bar__btn--ai {
+    background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+  }
+  .sf-ai-action-bar__btn--ai.sf-ai-action-bar__btn--done {
+    background: var(--color-brand-subtle, #E8F0EB);
+    color: var(--color-brand, #10B981);
+    box-shadow: none;
+  }
+  .sf-ai-action-bar__btn--shadow {
+    background: var(--color-bg-elevated, #f8f8fa);
+    color: var(--color-text-primary);
+    border: 1.5px solid var(--color-border);
+  }
+  .sf-ai-action-bar__label {
+    line-height: 1;
+  }
+  .sf-ai-action-bar__spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  /* main-content padding-top 给视频 + AI bar 让出空间: 240 + 64 + 8 = 312 */
+  .sf-main-content {
+    padding-top: 332px;
   }
 }
 
