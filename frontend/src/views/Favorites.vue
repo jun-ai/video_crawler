@@ -1,12 +1,20 @@
 <template>
-  <div class="yt-favorites">
-    <!-- Phase 6 (H5): 极简 header 始终显示, 让未登录用户也能返回 -->
-    <header v-if="isMobileView" class="sf-h5-header">
+  <!-- Phase 17: H5 砍掉 "我的收藏" 路由 (已从我的页面入口移除), 显示桌面端访问提示 -->
+  <div v-if="isMobileView" class="favorites-mobile-blocked">
+    <header class="sf-h5-header">
       <button class="sf-h5-back" type="button" @click="$router.back()" aria-label="返回">
         <ArrowLeft :size="22" />
       </button>
       <h1 class="sf-h5-title">我的收藏</h1>
     </header>
+    <div class="favorites-mobile-blocked__content">
+      <div class="favorites-mobile-blocked__icon">⭐</div>
+      <div class="favorites-mobile-blocked__title">我的收藏仅在桌面端可用</div>
+      <div class="favorites-mobile-blocked__desc">请使用电脑访问 fluenty.cn 查看我的收藏</div>
+    </div>
+  </div>
+  <div v-else class="yt-favorites">
+    <!-- Phase 6: 桌面端原 fav-page-header (保留, H5 整块不显示, 用上面的 favorites-mobile-blocked 占位) -->
 
     <SfEmpty v-if="!userStore.isLoggedIn" description="请先登录查看收藏">
       <SfButton type="primary" @click="$router.push('/login')">去登录</SfButton>
@@ -1706,6 +1714,38 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Phase 17: H5 砍掉"我的收藏" 路由, 占位样式 */
+.favorites-mobile-blocked {
+  min-height: 100vh;
+  background: var(--color-bg-base);
+}
+.favorites-mobile-blocked__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 32px;
+  text-align: center;
+  gap: 12px;
+}
+.favorites-mobile-blocked__icon {
+  font-size: 56px;
+  line-height: 1;
+  margin-bottom: 12px;
+  opacity: 0.6;
+}
+.favorites-mobile-blocked__title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+}
+.favorites-mobile-blocked__desc {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
 /* ================================================
    Favorites — Phase 2 CSS-only redesign
    Design system: ink green #2563EB + warm orange #F59E0B

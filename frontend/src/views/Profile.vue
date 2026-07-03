@@ -59,10 +59,11 @@
           <div class="stat-value stat-value--accent">{{ stats.streak_days }}</div>
           <div class="stat-label">连续学习</div>
         </div>
-        <div class="stat-card">
+        <!-- Phase 17: H5 砍掉生词本, "生词数量" 永远 0, 隐藏. 桌面端也隐藏 (vocab 模块砍了) -->
+        <!-- <div class="stat-card">
           <div class="stat-value">{{ stats.total_vocabulary }}</div>
           <div class="stat-label">生词数量</div>
-        </div>
+        </div> -->
       </div>
     </div>
 
