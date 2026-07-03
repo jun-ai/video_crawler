@@ -1,57 +1,42 @@
 <template>
   <div class="yt-vocabulary">
-    <!-- Phase 6 (H5): 极简 header + 返回按钮 (移动端) -->
+    <!-- Phase 12 (H5): 极简 header + 返回 + 右侧 "更多" 折叠桌面 5 个 action -->
     <header v-if="isMobileView" class="sf-h5-header">
       <button class="sf-h5-back" type="button" @click="$router.back()" aria-label="返回">
         <ArrowLeft :size="22" />
       </button>
       <h1 class="sf-h5-title">生词本</h1>
+      <SfDropdown v-if="total > 0" placement="bottom-end">
+        <template #trigger>
+          <button class="sf-h5-more" type="button" aria-label="更多">
+            <MoreVertical :size="20" />
+          </button>
+        </template>
+        <div class="vocab-more-item" @click="toggleViewMode">
+          <component :is="viewMode === 'list' ? LayoutGrid : Rows3" :size="14" />
+          {{ viewMode === 'list' ? '卡片视图' : '列表视图' }}
+        </div>
+        <div class="vocab-more-item" @click="infiniteScrollMode = !infiniteScrollMode">
+          <component :is="infiniteScrollMode ? ListOrdered : InfinityIcon" :size="14" />
+          {{ infiniteScrollMode ? '分页模式' : '无限滚动' }}
+        </div>
+        <div class="vocab-more-item" @click="showChinese = !showChinese">
+          <Eye :size="14" />
+          {{ showChinese ? '隐藏中文' : '显示中文' }}
+        </div>
+        <div class="vocab-more-item" @click="showExport = true">
+          <Download :size="14" /> 导出
+        </div>
+        <div class="vocab-more-divider"></div>
+        <div class="vocab-more-item" @click="toggleBatchMode">
+          <component :is="batchMode ? CheckSquare : Square" :size="14" />
+          {{ batchMode ? '退出批量' : '批量操作' }}
+        </div>
+      </SfDropdown>
     </header>
-    <!-- 页面标题 (桌面) -->
+    <!-- Phase 12: 桌面 PageHeader 折叠 (5 个 action → 1 批量 + 1 更多 dropdown) -->
     <PageHeader v-else title="生词本">
       <template #actions>
-        <!-- 5-P1-4: 导出按钮 (下拉 JSON / CSV) -->
-        <SfDropdown v-if="total > 0">
-          <template #trigger>
-            <SfButton type="ghost" size="sm">
-              <Download :size="14" /> 导出
-            </SfButton>
-          </template>
-          <div class="vocab-dropdown-item" @click="exportVocabulary('json')">
-            <FileJson :size="14" /> JSON (完整备份)
-          </div>
-          <div class="vocab-dropdown-item" @click="exportVocabulary('csv')">
-            <FileText :size="14" /> CSV (Anki/Excel)
-          </div>
-        </SfDropdown>
-
-        <!-- 5-P1-5: 视图切换 (列表/卡片) -->
-        <SfButton
-          v-if="total > 0"
-          :type="viewMode === 'list' ? 'primary' : 'ghost'"
-          size="sm"
-          @click="toggleViewMode"
-          :title="viewMode === 'list' ? '切换到卡片模式' : '切换到列表模式 (密度高)'"
-        >
-          <LayoutGrid v-if="viewMode === 'list'" :size="14" />
-          <Rows3 v-else :size="14" />
-          {{ viewMode === 'list' ? '卡片' : '列表' }}
-        </SfButton>
-
-        <!-- 5-P2-7: 分页/无限滚动切换 -->
-        <SfButton
-          v-if="total > 0"
-          :type="infiniteScrollMode ? 'primary' : 'ghost'"
-          size="sm"
-          @click="infiniteScrollMode = !infiniteScrollMode"
-          :title="infiniteScrollMode ? '切换到分页模式' : '切换到无限滚动 (滚到底自动加载)'"
-        >
-          <InfinityIcon v-if="!infiniteScrollMode" :size="14" />
-          <ListOrdered v-else :size="14" />
-          {{ infiniteScrollMode ? '无限滚动' : '分页' }}
-        </SfButton>
-
-        <!-- 5-P0-4: 批量操作模式开关 -->
         <SfButton
           v-if="total > 0"
           :type="batchMode ? 'primary' : 'ghost'"
@@ -60,14 +45,34 @@
         >
           <CheckSquare v-if="batchMode" :size="14" />
           <Square v-else :size="14" />
-          {{ batchMode ? '退出批量' : '批量操作' }}
+          {{ batchMode ? '退出批量' : '批量' }}
         </SfButton>
-
-        <!-- 5-P0-6: 显示中文开关加 label + localStorage 持久化 -->
-        <SfSwitch
-          v-model="showChinese"
-          label="显示中文"
-        />
+        <SfDropdown v-if="total > 0">
+          <template #trigger>
+            <SfButton size="sm" type="ghost">
+              <MoreVertical :size="14" /> 更多
+            </SfButton>
+          </template>
+          <div class="vocab-more-item" @click="toggleViewMode">
+            <component :is="viewMode === 'list' ? LayoutGrid : Rows3" :size="14" />
+            {{ viewMode === 'list' ? '卡片视图' : '列表视图' }}
+          </div>
+          <div class="vocab-more-item" @click="infiniteScrollMode = !infiniteScrollMode">
+            <component :is="infiniteScrollMode ? ListOrdered : InfinityIcon" :size="14" />
+            {{ infiniteScrollMode ? '分页模式' : '无限滚动' }}
+          </div>
+          <div class="vocab-more-item" @click="showChinese = !showChinese">
+            <Eye :size="14" />
+            {{ showChinese ? '隐藏中文' : '显示中文' }}
+          </div>
+          <div class="vocab-more-divider"></div>
+          <div class="vocab-more-item" @click="showExport = true">
+            <FileJson :size="14" /> 导出 JSON
+          </div>
+          <div class="vocab-more-item" @click="exportVocabulary('csv')">
+            <FileText :size="14" /> 导出 CSV (Anki)
+          </div>
+        </SfDropdown>
       </template>
     </PageHeader>
 
@@ -96,86 +101,117 @@
         <div class="banner-arrow">→</div>
       </div>
 
-      <!-- 筛选栏 -->
+      <!-- Phase 12: 筛选栏 极简重设计 (1 行 chip + 1 行搜索) -->
       <div class="filter-bar">
-        <!-- 5-P0-3: 搜索框 (行内, 单词模糊搜索) -->
-        <div class="filter-search">
-          <SfInput
-            v-model="searchKeyword"
-            placeholder="搜索单词 (例: run)"
-            clearable
-            :maxlength="50"
-          >
-            <template #prefix>
-              <Search :size="16" />
-            </template>
-          </SfInput>
-        </div>
-
-        <div class="filter-row">
-          <!-- 5-P2-3: 语料 Combobox (可搜索, 语料多了下拉不好找) -->
-          <div class="filter-section">
-            <span class="filter-label">来源：</span>
-            <SfCombobox
-              v-model="filterMaterialId"
-              :options="materialsList.map(m => ({ value: m.id, label: m.title }))"
-              placeholder="全部语料 (可搜索)"
-              :display-value="filterMaterialTitle"
-              class="filter-combobox"
-            />
-          </div>
-
-          <!-- 排序 -->
-          <div class="filter-section">
-            <span class="filter-label">排序：</span>
-            <SfSelect v-model="sortBy" :options="[
-              { value: 'starred_first', label: '星标优先' },
-              { value: 'next_review_asc', label: '最该复习' },
-              { value: 'newest', label: '最近添加' },
-              { value: 'oldest', label: '最早添加' },
-              { value: 'word_asc', label: 'A → Z' },
-              { value: 'word_desc', label: 'Z → A' },
-              { value: 'next_review_desc', label: '最不急' }
-            ]" />
-          </div>
-
-          <span class="filter-total" v-if="total > 0">共 {{ total }} 词</span>
-        </div>
-
-        <!-- 掌握状态筛选 -->
-        <div class="filter-chips">
+        <!-- 主状态 chip: 3 个核心 + "更多" dropdown (学习中/已掌握) -->
+        <div class="filter-chips-main">
           <FilterChip
             :model-value="filterStatus"
             value="all"
-            label="全部"
+            :label="`全部 ${total || ''}`.trim()"
             @update:model-value="setFilter"
           />
-          <FilterChip
-            :model-value="filterStatus"
-            value="learning"
-            label="学习中"
-            @update:model-value="setFilter"
-          />
-          <FilterChip
-            :model-value="filterStatus"
-            value="mastered"
-            label="已掌握"
-            @update:model-value="setFilter"
-          />
-          <!-- 4-P1-3: 新词独立筛选 (review_count=0) -->
-          <FilterChip
-            :model-value="filterStatus"
-            value="new"
-            label="新词"
-            @update:model-value="setFilter"
-          />
-          <!-- 5-P0-5: 待复习 chip (next_review_at <= now, 未 mastered) -->
           <FilterChip
             :model-value="filterStatus"
             value="due"
-            :label="`待复习 (${reviewStats.total_due})`"
+            :label="`待复习 ${reviewStats.total_due || ''}`.trim()"
             @update:model-value="setFilter"
           />
+          <FilterChip
+            :model-value="filterStatus"
+            value="new"
+            :label="`新词 ${reviewStats.total_due === undefined ? '' : ''}`.trim()"
+            @update:model-value="setFilter"
+          />
+          <!-- Phase 12: 学习中/已掌握 折叠到 dropdown, 不默认展示占位置 -->
+          <SfDropdown>
+            <template #trigger>
+              <button
+                class="filter-chip filter-chip--more"
+                :class="{ active: ['learning', 'mastered'].includes(filterStatus) }"
+                type="button"
+              >
+                {{ filterStatus === 'learning' ? '学习中' : filterStatus === 'mastered' ? '已掌握' : '更多筛选' }}
+                <ChevronDown :size="12" />
+              </button>
+            </template>
+            <div class="vocab-more-item" @click="setFilter('learning')">
+              <span class="vocab-more-dot" style="background: #f59e0b"></span>学习中
+            </div>
+            <div class="vocab-more-item" @click="setFilter('mastered')">
+              <span class="vocab-more-dot" style="background: #10b981"></span>已掌握
+            </div>
+            <div class="vocab-more-divider"></div>
+            <div class="vocab-more-item" @click="setFilter('all')">
+              <span class="vocab-more-dot" style="background: var(--color-text-muted)"></span>查看全部
+            </div>
+          </SfDropdown>
+        </div>
+
+        <!-- 工具行: 搜索 + 来源/排序 (桌面) + 总数 -->
+        <div class="filter-toolbar">
+          <div class="filter-search">
+            <SfInput
+              v-model="searchKeyword"
+              placeholder="搜索单词 (例: run)"
+              clearable
+              :maxlength="50"
+            >
+              <template #prefix>
+                <Search :size="14" />
+              </template>
+            </SfInput>
+          </div>
+
+          <!-- 来源 dropdown (桌面显示, H5 隐藏) -->
+          <SfDropdown v-if="!isMobileView" class="filter-tool-dropdown">
+            <template #trigger>
+              <button class="filter-tool-btn" type="button">
+                <Film :size="13" />
+                <span>{{ filterMaterialTitle || '全部语料' }}</span>
+                <ChevronDown :size="12" />
+              </button>
+            </template>
+            <div class="vocab-more-item" @click="filterMaterialId = null">
+              <span :class="['vocab-more-check', { checked: !filterMaterialId }]">✓</span>全部语料
+            </div>
+            <div
+              v-for="m in materialsList"
+              :key="m.id"
+              class="vocab-more-item"
+              @click="filterMaterialId = m.id"
+            >
+              <span :class="['vocab-more-check', { checked: filterMaterialId === m.id }]">✓</span>
+              {{ m.title }}
+            </div>
+          </SfDropdown>
+
+          <!-- 排序 dropdown (桌面显示, H5 隐藏) -->
+          <SfDropdown v-if="!isMobileView" class="filter-tool-dropdown">
+            <template #trigger>
+              <button class="filter-tool-btn" type="button">
+                <ArrowUpDown :size="13" />
+                <span>{{ sortByLabel }}</span>
+                <ChevronDown :size="12" />
+              </button>
+            </template>
+            <div
+              v-for="opt in sortOptions"
+              :key="opt.value"
+              class="vocab-more-item"
+              @click="sortBy = opt.value"
+            >
+              <span :class="['vocab-more-check', { checked: sortBy === opt.value }]">✓</span>
+              {{ opt.label }}
+            </div>
+          </SfDropdown>
+        </div>
+
+        <!-- info bar: 总数 + 视图提示 -->
+        <div class="filter-info" v-if="total > 0">
+          <span>共 <strong>{{ total }}</strong> 词</span>
+          <span class="filter-info-spacer"></span>
+          <span class="filter-info-tip">{{ viewMode === 'list' ? '列表' : '卡片' }}视图 · 点击单词发音</span>
         </div>
       </div>
 
@@ -473,7 +509,7 @@ import { useRouter } from 'vue-router'
 import { toast } from '@/composables/useToast'
 import { useTTS } from '@/composables/useTTS'
 import { showConfirm } from '@/composables/useConfirm'
-import { Headphones, Play, Flame, Search, X, CheckSquare, Square, CheckCheck, Check, RotateCcw, Trash2, Download, FileJson, FileText, LayoutGrid, Rows3, Star, Infinity as InfinityIcon, ListOrdered, ArrowLeft } from 'lucide-vue-next'
+import { Headphones, Play, Flame, Search, X, CheckSquare, Square, CheckCheck, Check, RotateCcw, Trash2, Download, FileJson, FileText, LayoutGrid, Rows3, Star, Infinity as InfinityIcon, ListOrdered, ArrowLeft, MoreVertical, ChevronDown, Film, ArrowUpDown, Eye } from 'lucide-vue-next'
 import SfSwitch from '@/components/ui/SfSwitch.vue'
 import SfSelect from '@/components/ui/SfSelect.vue'
 import SfCombobox from '@/components/ui/SfCombobox.vue'
@@ -572,6 +608,23 @@ const searchKeyword = ref('')
 
 // 5-P0-5: 复习统计 (banner + 待复习 chip 都用)
 const reviewStats = ref({ total_due: 0, total_learning: 0, total_mastered: 0 })
+
+// Phase 12: 排序选项 (提取到 computed, dropdown 用)
+const sortOptions = [
+  { value: 'starred_first', label: '星标优先' },
+  { value: 'next_review_asc', label: '最该复习' },
+  { value: 'newest', label: '最近添加' },
+  { value: 'oldest', label: '最早添加' },
+  { value: 'word_asc', label: 'A → Z' },
+  { value: 'word_desc', label: 'Z → A' },
+  { value: 'next_review_desc', label: '最不急' }
+]
+const sortByLabel = computed(() => {
+  return sortOptions.find(o => o.value === sortBy.value)?.label || '最近添加'
+})
+
+// Phase 12: 导出 modal
+const showExport = ref(false)
 
 // 单词查询缓存
 const wordInfoCache = reactive({})
@@ -1249,61 +1302,125 @@ onUnmounted(() => {
   color: #FCD34D;
 }
 
-/* ---- 筛选条 ---- */
+/* ---- 筛选条 (Phase 12 重设计: 1 行 chip + 1 行搜索 + info) ---- */
 .filter-bar {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 16px 20px;
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg, 16px);
-  box-shadow: var(--shadow-sm);
+  gap: 10px;
 }
 
-/* 5-P0-3: 搜索框 - 上方独立行, 移动端宽度自适应 */
+/* 主 chip 行: 4 个 (3 核心 + 更多 dropdown) */
+.filter-chips-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* "更多筛选" chip 样式 (跟 FilterChip 一致) */
+.filter-chip--more {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.filter-chip--more:hover { color: var(--color-text-primary); }
+.filter-chip--more.active {
+  background: var(--color-brand-subtle, #E8F0EB);
+  border-color: var(--color-brand, #10B981);
+  color: var(--color-brand, #10B981);
+  font-weight: 600;
+}
+
+/* 工具行: 搜索 + 来源/排序 (桌面) */
+.filter-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 .filter-search {
   display: flex;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   max-width: 360px;
 }
 .filter-search :deep(.sf-input) {
   width: 100%;
 }
 
-.filter-row {
-  display: flex;
+/* 来源/排序 dropdown 按钮 */
+.filter-tool-btn {
+  display: inline-flex;
   align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.filter-section {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.filter-label {
+  gap: 5px;
+  padding: 7px 12px;
   font-size: 13px;
-  color: var(--color-text-secondary);
   font-weight: 500;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+  max-width: 180px;
+}
+.filter-tool-btn > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
+.filter-tool-btn:hover { color: var(--color-text-primary); border-color: var(--color-text-muted); }
 
-.filter-total {
-  font-size: 13px;
-  color: var(--color-text-muted);
-  font-weight: 500;
-  margin-left: auto;
-}
-
-.filter-chips {
+/* info bar: 总数 + 视图提示 */
+.filter-info {
   display: flex;
+  align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  padding: 0 2px;
 }
+.filter-info strong { color: var(--color-text-primary); font-weight: 600; }
+.filter-info-spacer { flex: 1; }
+.filter-info-tip { font-size: 11px; }
+
+/* H5 隐藏 桌面专属 dropdown */
+@media (max-width: 768px) {
+  .filter-tool-dropdown { display: none !important; }
+  .filter-toolbar { gap: 8px; }
+  .filter-search { max-width: 100%; }
+}
+
+/* Phase 12: H5 header 右侧 "更多" 按钮 (跟 sf-h5-back 对称) */
+.sf-h5-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary, #475569);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+}
+.sf-h5-more:hover { background: var(--color-bg-elevated); color: var(--color-text-primary); }
+.sf-h5-more:active { transform: scale(0.92); }
 
 /* ---- 生词列表 ---- */
 .vocab-list {
@@ -2015,11 +2132,11 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
-  cursor: pointer;
+  padding: 10px 14px;
   font-size: 13px;
-  color: var(--color-text-primary, #1e293b);
-  transition: background var(--sf-duration-fast) var(--sf-ease-standard);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: background 0.12s ease;
   white-space: nowrap;
 }
 .vocab-dropdown-item:hover {
@@ -2028,6 +2145,53 @@ onUnmounted(() => {
 .vocab-dropdown-item :deep(svg) {
   flex-shrink: 0;
   color: var(--color-text-secondary, #475569);
+}
+
+/* Phase 12: vocab-more-item 通用 dropdown item 样式 (跟 vocab-dropdown-item 相同, 但支持 divider/check/dot) */
+.vocab-more-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: background 0.12s ease;
+  white-space: nowrap;
+  min-width: 140px;
+}
+.vocab-more-item:hover {
+  background: var(--color-bg-hover, rgba(37, 99, 235, 0.06));
+}
+.vocab-more-item :deep(svg) {
+  flex-shrink: 0;
+  color: var(--color-text-secondary, #475569);
+}
+.vocab-more-divider {
+  height: 1px;
+  background: var(--color-border, #e2e8f0);
+  margin: 4px 0;
+}
+.vocab-more-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-size: 12px;
+  color: transparent;
+  flex-shrink: 0;
+}
+.vocab-more-check.checked {
+  color: var(--color-brand, #10b981);
+  font-weight: 700;
+}
+.vocab-more-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 /* ==================== 5-P2-1: 例句样式 ==================== */
