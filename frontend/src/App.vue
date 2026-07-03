@@ -170,7 +170,7 @@ import { computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useThemeStore } from '@/stores/theme'
-import { Home, GraduationCap, Star, UserCircle, UserCheck, BookOpen, Layers } from 'lucide-vue-next'
+import { Home, GraduationCap, UserCircle, UserCheck } from 'lucide-vue-next'
 import SfProvider from '@/components/ui/SfProvider.vue'
 import SfDropdown from '@/components/ui/SfDropdown.vue'
 import SfAvatar from '@/components/ui/SfAvatar.vue'
@@ -198,11 +198,11 @@ const navItems = computed(() => {
   return items
 })
 
+// Phase 15: H5 砍掉生词本模块 (俊哥: UI 不满意, 整块不要), 只保留桌面端
 const mobileNavItems = computed(() => [
   { path: '/', label: '首页', icon: Home },
   // 学习: 优先跳最近学习, 否则学习中心
   { path: userStore.lastLearningPath || '/learning-center', label: '学习', icon: GraduationCap },
-  { path: '/vocabulary', label: '生词本', icon: BookOpen },
   { path: '/profile', label: '我的', icon: userStore.isLoggedIn ? UserCheck : UserCircle }
 ])
 

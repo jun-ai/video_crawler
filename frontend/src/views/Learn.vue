@@ -700,10 +700,10 @@ const playModeShortLabel = computed(() => ({
   single: '单次', 'single-loop': '循环', continuous: '连续', 'sentence-loop': '单句'
 }[playMode.value] || '单次'))
 
+// Phase 15: 砍掉闪卡 (H5 砍掉生词本, 闪卡目标页 /vocabulary-review 屏蔽, 按钮失效)
 const mobileTabs = [
   { key: 'subtitle',     label: '字幕', icon: Type,      action: 'openSubtitleSettings' },
   { key: 'playbackRate', label: '倍速', icon: Gauge,     action: 'openPlaybackRate' },
-  { key: 'flashcards',   label: '闪卡', icon: Layers,    action: 'openFlashcards' },
   { key: 'practice',     label: '练习', icon: PencilLine, action: 'openPracticePage' }
 ]
 
@@ -717,7 +717,6 @@ const setMobileTab = (key) => {
   switch (tab.action) {
     case 'openSubtitleSettings': showSubtitleSettings.value = true; break
     case 'openPlaybackRate':     showPlaybackRateSheet.value = true; break
-    case 'openFlashcards':       openFlashcards(); break
     case 'openPracticePage':     openPracticePage(); break
   }
 }
@@ -738,17 +737,6 @@ const openPracticePage = () => {
   }
   const mid = material.value?.id
   router.push(mid ? `/practice?material_id=${mid}` : '/practice')
-}
-
-// Phase 6 (H5): 闪卡 → 跳到生词复习页 (带 material_id 限定当前视频的单词)
-const openFlashcards = () => {
-  if (!userStore.isLoggedIn) {
-    toast.warning('请先登录')
-    router.push('/login')
-    return
-  }
-  const mid = material.value?.id
-  router.push(mid ? `/vocabulary-review?material_id=${mid}` : '/vocabulary-review')
 }
 
 // Phase 6 (H5): 练习 → 弹 practice sheet (跟读/听写/复述 3 选 1), 在 learn 内切模式, 不跳独立页

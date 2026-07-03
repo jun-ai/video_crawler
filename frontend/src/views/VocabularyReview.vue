@@ -1,14 +1,21 @@
 <template>
-  <div class="review-page">
-    <!-- Phase 6 (H5): 极简 header + 返回按钮 -->
-    <header v-if="isMobileView" class="sf-h5-header">
+  <!-- Phase 15: H5 砍掉生词本模块, 显示桌面端访问提示 -->
+  <div v-if="isMobileView" class="review-mobile-blocked">
+    <header class="sf-h5-header">
       <button class="sf-h5-back" type="button" @click="$router.back()" aria-label="返回">
         <ArrowLeft :size="22" />
       </button>
       <h1 class="sf-h5-title">生词复习</h1>
     </header>
-    <!-- 复习统计头部 -->
-    <div v-else class="review-header">
+    <div class="review-mobile-blocked__content">
+      <div class="review-mobile-blocked__icon">📚</div>
+      <div class="review-mobile-blocked__title">生词复习仅在桌面端可用</div>
+      <div class="review-mobile-blocked__desc">请使用电脑访问 fluenty.cn 进行生词复习</div>
+    </div>
+  </div>
+  <div v-else class="review-page">
+    <!-- Phase 6: 桌面复习统计头部 -->
+    <div class="review-header">
       <SfButton type="ghost" size="sm" @click="$router.back()" aria-label="返回上一页">
         <ArrowLeft :size="20" />
       </SfButton>
@@ -310,6 +317,38 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* Phase 15: H5 砍掉生词本模块, 占位样式 */
+.review-mobile-blocked {
+  min-height: 100vh;
+  background: var(--color-bg-base);
+}
+.review-mobile-blocked__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 32px;
+  text-align: center;
+  gap: 12px;
+}
+.review-mobile-blocked__icon {
+  font-size: 56px;
+  line-height: 1;
+  margin-bottom: 12px;
+  opacity: 0.6;
+}
+.review-mobile-blocked__title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+}
+.review-mobile-blocked__desc {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
 .review-page {
   max-width: 640px;
   margin: 0 auto;

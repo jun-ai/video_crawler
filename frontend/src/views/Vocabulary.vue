@@ -1,21 +1,21 @@
 <template>
-  <div class="yt-vocabulary">
-    <!-- Phase 13 (H5): 极简 header (生词本是 1 级模块, 无返回箭头)
-         自带完整 CSS (不依赖 Learn.vue scoped style, 之前 data-v hash 不匹配导致完全没样式) -->
-    <header v-if="isMobileView" class="sf-h5-header">
-      <h1 class="sf-h5-title">生词本</h1>
-      <button
-        v-if="total > 0"
-        class="sf-h5-more"
-        type="button"
-        @click="showMoreSheet = true"
-        aria-label="更多"
-      >
-        <MoreVertical :size="22" />
+  <!-- Phase 15: H5 砍掉生词本模块, 显示桌面端访问提示 -->
+  <div v-if="isMobileView" class="vocab-mobile-blocked">
+    <header class="sf-h5-header">
+      <button class="sf-h5-back" type="button" @click="$router.back()" aria-label="返回">
+        <ArrowLeft :size="22" />
       </button>
+      <h1 class="sf-h5-title">生词本</h1>
     </header>
-    <!-- Phase 13: 桌面 PageHeader 折叠 (5 个 action → 1 批量 + 1 更多 dropdown) -->
-    <PageHeader v-else title="生词本">
+    <div class="vocab-mobile-blocked__content">
+      <div class="vocab-mobile-blocked__icon">📖</div>
+      <div class="vocab-mobile-blocked__title">生词本仅在桌面端可用</div>
+      <div class="vocab-mobile-blocked__desc">请使用电脑访问 fluenty.cn 查看生词本</div>
+    </div>
+  </div>
+  <div v-else class="yt-vocabulary">
+    <!-- Phase 15: 桌面 PageHeader (H5 整块不显示, 用上面的 vocab-mobile-blocked 占位) -->
+    <PageHeader v-if="!isMobileView" title="生词本">
       <template #actions>
         <SfButton
           v-if="total > 0"
@@ -1424,6 +1424,38 @@ onUnmounted(() => {
   .filter-tool-dropdown { display: none !important; }
   .filter-toolbar { gap: 8px; }
   .filter-search { max-width: 100%; }
+}
+
+/* Phase 15: H5 砍掉生词本, 显示桌面端访问提示 */
+.vocab-mobile-blocked {
+  min-height: 100vh;
+  background: var(--color-bg-base);
+}
+.vocab-mobile-blocked__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 32px;
+  text-align: center;
+  gap: 12px;
+}
+.vocab-mobile-blocked__icon {
+  font-size: 56px;
+  line-height: 1;
+  margin-bottom: 12px;
+  opacity: 0.6;
+}
+.vocab-mobile-blocked__title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+}
+.vocab-mobile-blocked__desc {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
 }
 
 /* Phase 13: H5 header 自带完整 CSS (之前依赖 Learn.vue scoped, data-v hash 不匹配 → 完全没样式, dropdown 弹错位) */
