@@ -1,40 +1,20 @@
 <template>
   <div class="yt-vocabulary">
-    <!-- Phase 12 (H5): 极简 header + 返回 + 右侧 "更多" 折叠桌面 5 个 action -->
+    <!-- Phase 13 (H5): 极简 header (生词本是 1 级模块, 无返回箭头)
+         自带完整 CSS (不依赖 Learn.vue scoped style, 之前 data-v hash 不匹配导致完全没样式) -->
     <header v-if="isMobileView" class="sf-h5-header">
-      <button class="sf-h5-back" type="button" @click="$router.back()" aria-label="返回">
-        <ArrowLeft :size="22" />
-      </button>
       <h1 class="sf-h5-title">生词本</h1>
-      <SfDropdown v-if="total > 0" placement="bottom-end">
-        <template #trigger>
-          <button class="sf-h5-more" type="button" aria-label="更多">
-            <MoreVertical :size="20" />
-          </button>
-        </template>
-        <div class="vocab-more-item" @click="toggleViewMode">
-          <component :is="viewMode === 'list' ? LayoutGrid : Rows3" :size="14" />
-          {{ viewMode === 'list' ? '卡片视图' : '列表视图' }}
-        </div>
-        <div class="vocab-more-item" @click="infiniteScrollMode = !infiniteScrollMode">
-          <component :is="infiniteScrollMode ? ListOrdered : InfinityIcon" :size="14" />
-          {{ infiniteScrollMode ? '分页模式' : '无限滚动' }}
-        </div>
-        <div class="vocab-more-item" @click="showChinese = !showChinese">
-          <Eye :size="14" />
-          {{ showChinese ? '隐藏中文' : '显示中文' }}
-        </div>
-        <div class="vocab-more-item" @click="showExport = true">
-          <Download :size="14" /> 导出
-        </div>
-        <div class="vocab-more-divider"></div>
-        <div class="vocab-more-item" @click="toggleBatchMode">
-          <component :is="batchMode ? CheckSquare : Square" :size="14" />
-          {{ batchMode ? '退出批量' : '批量操作' }}
-        </div>
-      </SfDropdown>
+      <button
+        v-if="total > 0"
+        class="sf-h5-more"
+        type="button"
+        @click="showMoreSheet = true"
+        aria-label="更多"
+      >
+        <MoreVertical :size="22" />
+      </button>
     </header>
-    <!-- Phase 12: 桌面 PageHeader 折叠 (5 个 action → 1 批量 + 1 更多 dropdown) -->
+    <!-- Phase 13: 桌面 PageHeader 折叠 (5 个 action → 1 批量 + 1 更多 dropdown) -->
     <PageHeader v-else title="生词本">
       <template #actions>
         <SfButton
@@ -76,9 +56,52 @@
       </template>
     </PageHeader>
 
+    <!-- Phase 13: H5 更多 底部 sheet (替代 dropdown, 大尺寸点击区域, 移动端原生体验) -->
+    <Sheet v-model:open="showMoreSheet">
+      <SheetContent side="bottom" class="vocab-more-sheet">
+        <SheetHeader>
+          <SheetTitle>更多操作</SheetTitle>
+        </SheetHeader>
+        <div class="vocab-more-sheet__list">
+          <button class="vocab-more-sheet__item" @click="onMoreAction('viewMode')">
+            <span class="vocab-more-sheet__icon">
+              <LayoutGrid v-if="viewMode === 'list'" :size="20" />
+              <Rows3 v-else :size="20" />
+            </span>
+            <span>{{ viewMode === 'list' ? '卡片视图' : '列表视图' }}</span>
+          </button>
+          <button class="vocab-more-sheet__item" @click="onMoreAction('scrollMode')">
+            <span class="vocab-more-sheet__icon">
+              <ListOrdered v-if="infiniteScrollMode" :size="20" />
+              <InfinityIcon v-else :size="20" />
+            </span>
+            <span>{{ infiniteScrollMode ? '分页模式' : '无限滚动' }}</span>
+          </button>
+          <button class="vocab-more-sheet__item" @click="onMoreAction('toggleChinese')">
+            <span class="vocab-more-sheet__icon"><Eye :size="20" /></span>
+            <span>{{ showChinese ? '隐藏中文' : '显示中文' }}</span>
+          </button>
+          <button class="vocab-more-sheet__item" @click="onMoreAction('export')">
+            <span class="vocab-more-sheet__icon"><Download :size="20" /></span>
+            <span>导出生词本</span>
+          </button>
+          <div class="vocab-more-sheet__divider"></div>
+          <button class="vocab-more-sheet__item" @click="onMoreAction('batchMode')">
+            <span class="vocab-more-sheet__icon">
+              <CheckSquare v-if="batchMode" :size="20" />
+              <Square v-else :size="20" />
+            </span>
+            <span>{{ batchMode ? '退出批量' : '批量操作' }}</span>
+          </button>
+        </div>
+      </SheetContent>
+    </Sheet>
+
     <SfEmpty v-if="!userStore.isLoggedIn" description="请先登录查看生词本">
       <SfButton type="primary" @click="$router.push('/login')">去登录</SfButton>
     </SfEmpty>
+
+    <!-- Phase 13: H5 "更多" 底部 sheet (替代 dropdown, 大尺寸点击区域, 移动端原生体验) -->
 
     <template v-else>
       <!-- 5-P0-5: 复习入口 banner (amber-gold 强调, 待复习>0 才显示) -->
@@ -509,7 +532,8 @@ import { useRouter } from 'vue-router'
 import { toast } from '@/composables/useToast'
 import { useTTS } from '@/composables/useTTS'
 import { showConfirm } from '@/composables/useConfirm'
-import { Headphones, Play, Flame, Search, X, CheckSquare, Square, CheckCheck, Check, RotateCcw, Trash2, Download, FileJson, FileText, LayoutGrid, Rows3, Star, Infinity as InfinityIcon, ListOrdered, ArrowLeft, MoreVertical, ChevronDown, Film, ArrowUpDown, Eye } from 'lucide-vue-next'
+import { Headphones, Play, Flame, Search, X, CheckSquare, Square, CheckCheck, Check, RotateCcw, Trash2, Download, FileJson, FileText, LayoutGrid, Rows3, Star, Infinity as InfinityIcon, ListOrdered, MoreVertical, ChevronDown, Film, ArrowUpDown, Eye } from 'lucide-vue-next'
+import { Sheet, SheetContent } from '@/components/ui/sheet'
 import SfSwitch from '@/components/ui/SfSwitch.vue'
 import SfSelect from '@/components/ui/SfSelect.vue'
 import SfCombobox from '@/components/ui/SfCombobox.vue'
@@ -626,7 +650,6 @@ const sortByLabel = computed(() => {
 // Phase 12: 导出 modal
 const showExport = ref(false)
 
-// 单词查询缓存
 const wordInfoCache = reactive({})
 const lookupLoading = reactive({})
 // 5-P2-2: 跟踪 lookup 失败 (key=word.toLowerCase(), value=true 时表示失败)
@@ -1403,24 +1426,84 @@ onUnmounted(() => {
   .filter-search { max-width: 100%; }
 }
 
-/* Phase 12: H5 header 右侧 "更多" 按钮 (跟 sf-h5-back 对称) */
+/* Phase 13: H5 header 自带完整 CSS (之前依赖 Learn.vue scoped, data-v hash 不匹配 → 完全没样式, dropdown 弹错位) */
+.sf-h5-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--color-bg-card);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.sf-h5-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+  flex: 1;
+}
 .sf-h5-more {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   background: transparent;
   border: none;
-  color: var(--color-text-secondary, #475569);
+  color: var(--color-text-primary);
   border-radius: 50%;
   cursor: pointer;
   transition: background 0.15s ease;
   -webkit-tap-highlight-color: transparent;
   flex-shrink: 0;
 }
-.sf-h5-more:hover { background: var(--color-bg-elevated); color: var(--color-text-primary); }
-.sf-h5-more:active { transform: scale(0.92); }
+.sf-h5-more:hover { background: var(--color-bg-elevated); }
+.sf-h5-more:active { background: var(--color-bg-elevated); transform: scale(0.94); }
+
+/* Phase 13: H5 "更多" sheet 大尺寸点击区, 移动端友好 */
+.vocab-more-sheet {
+  z-index: 250; /* 高于所有底 tab (200) */
+}
+.vocab-more-sheet :deep(.sheet-content) {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 0 env(safe-area-inset-bottom, 12px) 0;
+}
+.vocab-more-sheet__list {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 12px 12px;
+}
+.vocab-more-sheet__item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s ease;
+}
+.vocab-more-sheet__item:hover { background: var(--color-bg-elevated); }
+.vocab-more-sheet__item:active { background: var(--color-bg-elevated); }
+.vocab-more-sheet__item :deep(svg) { color: var(--color-text-secondary); flex-shrink: 0; }
+.vocab-more-sheet__icon { display: inline-flex; align-items: center; justify-content: center; color: var(--color-text-secondary); flex-shrink: 0; }
+.vocab-more-sheet__divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 6px 8px;
+}
 
 /* ---- 生词列表 ---- */
 .vocab-list {
@@ -1823,8 +1906,6 @@ onUnmounted(() => {
   font-weight: 500;
   white-space: nowrap;
 }
-
-
 
 /* ---- 空状态 ---- */
 .vocab-list :deep(.empty-state) {
@@ -2366,5 +2447,25 @@ onUnmounted(() => {
 @keyframes vocab-scroll-hint-pulse {
   0%, 100% { opacity: 0.5; }
   50% { opacity: 1; }
+}
+</style>
+
+<!-- Phase 13: Sheet 用 Teleport 渲染到 body, 不在 Vocabulary.vue DOM 树内, scoped [data-v-hash] 不命中
+     放非 scoped <style> 块 -->
+<style>
+.vocab-more-sheet {
+  z-index: 250 !important; /* 高于 App.vue 底 tab (200) */
+}
+.vocab-more-sheet :deep(.sheet-content) {
+  max-width: 480px !important;
+  margin: 0 auto !important;
+  padding: 0 0 env(safe-area-inset-bottom, 12px) 0 !important;
+  border-radius: 16px 16px 0 0 !important;
+}
+@media (min-width: 481px) {
+  .vocab-more-sheet :deep(.sheet-content) {
+    border-radius: 16px !important;
+    max-width: 480px !important;
+  }
 }
 </style>
