@@ -418,7 +418,7 @@
       </SheetContent>
     </Sheet>
 
-    <!-- Phase 6 (H5): 移动端 练习模式 Sheet (跟读/听写/复述) -->
+    <!-- Phase 6 (H5): 移动端 练习模式 Sheet (跟读/听写) -->
     <Sheet v-model:open="showPracticeSheet">
       <SheetContent side="bottom" class="sf-practice-sheet">
         <SheetHeader>
@@ -440,13 +440,6 @@
             <span class="sf-practice-label">听写</span>
             <span class="sf-practice-desc">听音频默写句子</span>
             <span v-if="learningMode === 'dictation'" class="sf-practice-check">✓</span>
-          </button>
-          <button
-            :class="['sf-practice-opt']"
-            @click="selectPracticeMode('retelling')"
-          >
-            <span class="sf-practice-label">复述</span>
-            <span class="sf-practice-desc">听后用自己的话复述 (开发中)</span>
           </button>
         </div>
       </SheetContent>
@@ -739,21 +732,18 @@ const openPracticePage = () => {
   router.push(mid ? `/practice?material_id=${mid}` : '/practice')
 }
 
-// Phase 6 (H5): 练习 → 弹 practice sheet (跟读/听写/复述 3 选 1), 在 learn 内切模式, 不跳独立页
+// Phase 6 (H5): 练习 → 弹 practice sheet (跟读/听写 2 选 1), 在 learn 内切模式, 不跳独立页
 const openPracticeSheet = () => {
   showPracticeSheet.value = true
 }
 
 const showPracticeSheet = ref(false)
 const selectPracticeMode = (mode) => {
-  // mode: 'shadowing' (跟读) | 'dictation' (听写) | 'retelling' (复述)
+  // mode: 'shadowing' (跟读) | 'dictation' (听写)
   learningMode.value = mode
   showPracticeSheet.value = false
   if (mode === 'dictation') {
     toast.success('已切换到听写模式')
-  } else if (mode === 'retelling') {
-    toast.info('复述模式开发中, 当前用跟读')
-    learningMode.value = 'shadowing'
   } else {
     toast.success('已切换到跟读模式')
   }

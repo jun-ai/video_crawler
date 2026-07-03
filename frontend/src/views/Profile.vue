@@ -59,12 +59,7 @@
           <div class="stat-value stat-value--accent">{{ stats.streak_days }}</div>
           <div class="stat-label">连续学习</div>
         </div>
-        <!-- Phase 17: H5 砍掉生词本, "生词数量" 永远 0, 隐藏. 桌面端也隐藏 (vocab 模块砍了) -->
-        <!-- <div class="stat-card">
-          <div class="stat-value">{{ stats.total_vocabulary }}</div>
-          <div class="stat-label">生词数量</div>
-        </div> -->
-      </div>
+        </div>
     </div>
 
     <!-- 最近学习 -->
@@ -152,14 +147,8 @@ const userStore = useUserStore()
 
 const stats = reactive({
   total_materials: 0,
-  completed_materials: 0,
-  in_progress_materials: 0,
-  total_vocabulary: 0,
-  mastered_vocabulary: 0,
   total_learning_days: 0,
-  this_week_learning_days: 0,
-  streak_days: 0,
-  total_favorites: 0
+  streak_days: 0
 })
 
 const recentLearning = ref([])
@@ -210,14 +199,8 @@ const loadStats = async () => {
   try {
     const res = await learningStatsAPI.getStatistics()
     stats.total_materials = res.total_materials || 0
-    stats.completed_materials = res.completed_materials || 0
-    stats.in_progress_materials = res.in_progress_materials || 0
-    stats.total_vocabulary = res.total_vocabulary || 0
-    stats.mastered_vocabulary = res.mastered_vocabulary || 0
     stats.total_learning_days = res.total_learning_days || 0
-    stats.this_week_learning_days = res.this_week_learning_days || 0
     stats.streak_days = res.streak_days || 0
-    stats.total_favorites = res.total_favorites || 0
   } catch (e) {
     console.error('加载统计失败', e)
   }
@@ -414,7 +397,7 @@ onMounted(() => {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   margin-top: 16px;
 }

@@ -52,16 +52,6 @@
         </div>
         <ChevronRight :size="20" class="mode-arrow" />
       </div>
-      <div class="mode-card" @click="startPractice('retelling')">
-        <div class="mode-icon">
-          <Repeat :size="28" />
-        </div>
-        <div class="mode-info">
-          <h3>复述</h3>
-          <p>听后用自己的话复述，训练表达 (开发中)</p>
-        </div>
-        <ChevronRight :size="20" class="mode-arrow" />
-      </div>
     </div>
   </div>
 </template>
@@ -69,7 +59,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft, Loader2, PartyPopper, Mic, Headphones, Repeat, ChevronRight } from 'lucide-vue-next'
+import { ArrowLeft, Loader2, PartyPopper, Mic, Headphones, ChevronRight } from 'lucide-vue-next'
 import SfButton from '@/components/ui/SfButton.vue'
 import { materialAPI } from '@/api'
 import { toast } from '@/composables/useToast'
@@ -107,11 +97,6 @@ onMounted(async () => {
 const startPractice = (mode) => {
   // shadowing: 跳回 learn/42 (在 learn 内做跟读)
   // dictation: 跳回 learn/42?mode=dictation
-  // retelling: 提示开发中
-  if (mode === 'retelling') {
-    toast.info('复述模式开发中, 用跟读先练')
-    return
-  }
   router.push(`/learn/${materialId.value}?mode=${mode}`)
 }
 </script>
