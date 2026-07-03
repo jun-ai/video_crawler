@@ -89,18 +89,8 @@
       </div>
     </div>
 
-    <!-- 功能菜单 -->
+    <!-- Phase 16: H5 端 砍掉 "我的收藏" + "生词本" 入口 (vocab/favorites 模块都已屏蔽), 只保留 "学习中心" -->
     <div class="profile-menu">
-      <div class="menu-item" @click="$router.push('/favorites')">
-        <Star :size="22" />
-        <span>我的收藏</span>
-        <ArrowRight :size="16" class="menu-arrow" />
-      </div>
-      <div class="menu-item" @click="$router.push('/vocabulary')">
-        <BookOpen :size="22" />
-        <span>生词本</span>
-        <ArrowRight :size="16" class="menu-arrow" />
-      </div>
       <div class="menu-item" @click="$router.push('/learning-center')">
         <BarChart3 :size="22" />
         <span>学习中心</span>
@@ -141,8 +131,6 @@ import { useRouter } from 'vue-router'
 import { toast } from '@/composables/useToast'
 import { showConfirm } from '@/composables/useConfirm'
 import {
-  Star,
-  BookOpen,
   ArrowRight,
   BarChart3,
   Key
