@@ -575,8 +575,6 @@ import {
   HelpCircle,
   Video,
   X,
-  Bookmark,
-  BookmarkCheck,
   Wrench,
   Type,
   Gauge,
@@ -706,7 +704,6 @@ const mobileTabs = [
   { key: 'subtitle',     label: '字幕', icon: Type,      action: 'openSubtitleSettings' },
   { key: 'playbackRate', label: '倍速', icon: Gauge,     action: 'openPlaybackRate' },
   { key: 'flashcards',   label: '闪卡', icon: Layers,    action: 'openFlashcards' },
-  { key: 'bookmark',     label: '收藏', icon: Bookmark,  action: 'toggleBookmark' },
   { key: 'practice',     label: '练习', icon: PencilLine, action: 'openPracticePage' }
 ]
 
@@ -721,7 +718,6 @@ const setMobileTab = (key) => {
     case 'openSubtitleSettings': showSubtitleSettings.value = true; break
     case 'openPlaybackRate':     showPlaybackRateSheet.value = true; break
     case 'openFlashcards':       openFlashcards(); break
-    case 'toggleBookmark':       toggleBookmarkWithFeedback(); break
     case 'openPracticePage':     openPracticePage(); break
   }
 }
@@ -753,27 +749,6 @@ const openFlashcards = () => {
   }
   const mid = material.value?.id
   router.push(mid ? `/vocabulary-review?material_id=${mid}` : '/vocabulary-review')
-}
-
-// Phase 6 (H5): 收藏 → 收藏当前字幕, 已收藏跳 /favorites 列表
-const toggleBookmarkWithFeedback = () => {
-  if (!userStore.isLoggedIn) {
-    toast.warning('请先登录')
-    router.push('/login')
-    return
-  }
-  const sub = subtitles.value[currentIndex.value]
-  if (!sub) {
-    toast.warning('当前没有可收藏的字幕')
-    return
-  }
-  const wasBookmarked = bookmarkedSubtitleIds.value.has(sub.id)
-  toggleBookmark(sub)
-  if (wasBookmarked) {
-    // 已收藏: 取消后给提示, 跳到收藏列表
-    setTimeout(() => router.push('/favorites'), 400)
-  }
-  // 收藏成功的 toast 由 toggleBookmark 内部触发 (不在这里重复)
 }
 
 // Phase 6 (H5): 练习 → 弹 practice sheet (跟读/听写/复述 3 选 1), 在 learn 内切模式, 不跳独立页
