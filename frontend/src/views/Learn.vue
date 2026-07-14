@@ -129,6 +129,29 @@
           </div>
         </div>
 
+        <!-- Phase 20 (H5): 当前字幕 sticky strip (视频下方, 永远可见, 跟视频同步)
+             + 视频 progress bar (进度 / 当前时间 / 总时长) -->
+        <div class="sf-current-subtitle-strip" v-if="isMobileView && material">
+          <div class="sf-current-subtitle-strip__en">
+            {{ currentSubtitle?.text_en || '点击播放开始学习' }}
+          </div>
+          <div class="sf-current-subtitle-strip__cn" v-if="currentSubtitle && showTranslation && !showOnlyChinese">
+            {{ currentSubtitle.text_cn }}
+          </div>
+        </div>
+        <div class="sf-video-progress-bar" v-if="isMobileView"
+             @click="onProgressBarClick"
+             ref="progressBarRef">
+          <div class="sf-video-progress-bar__track">
+            <div class="sf-video-progress-bar__filled"
+                 :style="{ width: videoProgressPercent + '%' }"></div>
+          </div>
+          <div class="sf-video-progress-bar__time">
+            <span>{{ formatTime(videoCurrentTime * 1000) }}</span>
+            <span>{{ formatTime(videoDuration * 1000) }}</span>
+          </div>
+        </div>
+
         <!-- Phase 9 (H5): AI 智能解读 + 开始跟读 sticky 操作条, 视频下方固定, 永远可见 1-tap 入口 -->
         <div class="sf-ai-action-bar">
           <button
@@ -992,6 +1015,35 @@ const currentSubtitle = computed(() => {
   return null
 })
 
+// Phase 20 (H5): 视频实时 currentTime / duration
+// videoRef.value 引用不变 (它只是 video DOM 引用),computed 不会因 currentTime 变化重算
+// 加 progressTick reactive counter, onTimeUpdate 里 +1 触发重算
+const progressTick = ref(0)
+const videoCurrentTime = computed(() => {
+  // 读 progressTick 触发依赖收集
+  void progressTick.value
+  const v = videoRef.value
+  return v && isFinite(v.currentTime) ? v.currentTime : 0
+})
+const videoDuration = computed(() => {
+  void progressTick.value
+  const v = videoRef.value
+  return v && isFinite(v.duration) && v.duration > 0 ? v.duration : 0
+})
+const videoProgressPercent = computed(() => {
+  if (videoDuration.value === 0) return 0
+  return Math.min(100, Math.max(0, (videoCurrentTime.value / videoDuration.value) * 100))
+})
+// 点击 progress bar 跳转
+const progressBarRef = ref(null)
+const onProgressBarClick = (e) => {
+  const v = videoRef.value
+  if (!v || !isFinite(v.duration) || v.duration <= 0) return
+  const rect = e.currentTarget.getBoundingClientRect()
+  const ratio = (e.clientX - rect.left) / rect.width
+  v.currentTime = Math.max(0, Math.min(v.duration, ratio * v.duration))
+}
+
 const onVideoLoaded = () => {
   console.log('视频加载完成')
   // 自动恢复上次播放位置
@@ -1031,6 +1083,9 @@ const setPlaybackRate = () => {
 const onTimeUpdate = () => {
   if (!videoRef.value || isSeeking.value) return
   const currentTime = videoRef.value.currentTime * 1000
+
+  // Phase 20: 触发 progress bar 重算 (videoRef.currentTime 变化 Vue 不感知, 需要手动触发)
+  progressTick.value++
 
   // 循环当前句功能
   if (loopCurrent.value && currentSubtitle.value) {
@@ -3405,13 +3460,82 @@ onUnmounted(() => {
     display: none !important;
   }
 
+  /* ====== Phase 20 (H5): 当前字幕 sticky strip + progress bar ======
+     视频下方固定, 跟视频同步, 永远可见
+     current-subtitle-strip top:268 (视频底) 高度 60
+     progress-bar top:328 高度 36
+     AI bar top:368 (strip 60 + progress 36 + 4 gap)
+     main-content padding-top = 368 + 64 + 8 gap = 440 */
+
+  .sf-current-subtitle-strip {
+    position: fixed;
+    top: 268px;
+    left: 0;
+    right: 0;
+    z-index: 12;
+    background: var(--color-bg-card);
+    padding: 8px 14px 10px;
+    border-bottom: 1px solid var(--color-border);
+    min-height: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+  }
+  .sf-current-subtitle-strip__en {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    line-height: 1.4;
+    word-break: break-word;
+  }
+  .sf-current-subtitle-strip__cn {
+    font-size: 13px;
+    color: var(--color-text-muted);
+    line-height: 1.4;
+    word-break: break-word;
+  }
+
+  .sf-video-progress-bar {
+    position: fixed;
+    top: 328px;
+    left: 0;
+    right: 0;
+    z-index: 12;
+    background: var(--color-bg-card);
+    padding: 4px 14px 6px;
+    border-bottom: 1px solid var(--color-border);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sf-video-progress-bar__track {
+    height: 4px;
+    background: var(--color-bg-elevated, #f0f0f2);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+  .sf-video-progress-bar__filled {
+    height: 100%;
+    background: var(--color-brand-bright, #6366F1);
+    border-radius: 2px;
+    transition: width 0.1s linear;
+  }
+  .sf-video-progress-bar__time {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
   /* ====== Phase 9 (H5): AI 智能解读 + 开始跟读 sticky 操作条 ======
      视频下方固定, 永远可见, 1-tap 入口
-     高度 64px, top: 268 (= 50 header + 220 video 底), z-index 12 在 video 之上 */
+     高度 64px, top: 368 (= 268 strip + 60 + 36 progress + 4 gap), z-index 12 在 video 之上 */
   .sf-ai-action-bar {
     display: flex;
     position: fixed;
-    top: 268px;
+    top: 368px;
     left: 0;
     right: 0;
     height: 64px;
@@ -3474,9 +3598,9 @@ onUnmounted(() => {
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
-  /* main-content padding-top 给视频 + AI bar 让出空间: 240 + 64 + 8 = 312 */
+  /* main-content padding-top 给视频 + strip + progress + AI bar 让出空间: 268 + 60 + 36 + 64 + 8 = 436, round 440 */
   .sf-main-content {
-    padding-top: 332px;
+    padding-top: 440px;
   }
 }
 
