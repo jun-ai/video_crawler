@@ -3474,9 +3474,10 @@ onUnmounted(() => {
     right: 0;
     z-index: 12;
     background: var(--color-bg-card);
-    padding: 8px 14px 10px;
+    padding: 8px 14px 8px;
     border-bottom: 1px solid var(--color-border);
-    min-height: 60px;
+    /* 固定高度: EN 1 行 (15*1.4=21) + gap 4 + CN 1 行 (13*1.4=18.2) + padding 16 + border 1 = 60.2 */
+    height: 60px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -3487,13 +3488,24 @@ onUnmounted(() => {
     font-weight: 600;
     color: var(--color-text-primary);
     line-height: 1.4;
-    word-break: break-word;
+    /* 长 EN 字幕截断为 1 行 + 省略号, 保证 strip 高度固定不破坏 layout chain */
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .sf-current-subtitle-strip__cn {
     font-size: 13px;
     color: var(--color-text-muted);
     line-height: 1.4;
-    word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .sf-video-progress-bar {
