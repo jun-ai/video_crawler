@@ -11,43 +11,54 @@
 <template>
   <header class="h5-header">
     <div class="h5-header-inner">
-      <!-- 左: 返回箭头 (可选) -->
+      <!-- 左: 返回箭头 (showBack 时) -->
       <button v-if="showBack" class="h5-header-btn" aria-label="返回" @click="onBack">
         <ArrowLeft :size="22" />
       </button>
 
-      <!-- 左: Logo + 品牌 (无标题时显示) -->
-      <div v-else class="h5-header-brand" @click="goHome">
+      <!-- 左: 抽屉入口 (showMenu=true 时) -->
+      <button v-else-if="showMenu" class="h5-header-btn" aria-label="菜单" @click="$emit('menu')">
+        <Menu :size="22" />
+      </button>
+
+      <!-- 中: Logo + 品牌 (默认,被 flex:1 撑开;showBack/showMenu=false 时居左) -->
+      <div v-if="!showBack && !title && $slots.default === undefined" class="h5-header-brand" @click="goHome">
         <div class="h5-header-logo">
           <GraduationCap :size="18" :stroke-width="2.4" />
         </div>
         <span class="h5-header-brand-text">fluenty</span>
       </div>
 
-      <!-- 中: 标题 (可覆盖) -->
+      <!-- 中: 标题 (有 title 或 default slot 时优先) -->
       <div v-if="title || $slots.default" class="h5-header-title">
         <slot>{{ title }}</slot>
       </div>
 
-      <!-- 右: 右侧操作插槽 -->
+      <!-- 右: 右侧操作插槽 + 历史/筛选 icon -->
       <div class="h5-header-actions">
         <slot name="actions" />
+        <button v-if="showFilter" class="h5-header-btn" aria-label="历史" @click="$emit('filter')">
+          <Clock :size="20" />
+        </button>
       </div>
     </div>
   </header>
 </template>
 
 <script setup>
-import { ArrowLeft, GraduationCap } from 'lucide-vue-next'
+import { ArrowLeft, GraduationCap, Menu, Clock } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const props = defineProps({
   title: { type: String, default: '' },
   showBack: { type: Boolean, default: false },
+  showMenu: { type: Boolean, default: true },
+  showFilter: { type: Boolean, default: true },
 })
 
-const emit = defineEmits(['back'])
-const router = useRouter()
+const emit = defineEmits(['back', 'menu', 'filter'])
 
 function onBack() {
   emit('back')
@@ -105,6 +116,8 @@ function goHome() {
   gap: 8px;
   cursor: pointer;
   user-select: none;
+  flex: 1;          /* 撑开中间,让右侧 🕐 推到最右 */
+  min-width: 0;
 }
 
 .h5-header-logo {

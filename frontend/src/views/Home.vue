@@ -1,56 +1,14 @@
 <template>
   <div class="home-page">
     <div class="home-container">
-      <!-- ===== Phase 22: H5 独立首页布局 (移动端独占)
-           桌面端 display: none; H5 端 display: block 覆盖
-           设计目标: 月历条 + 双层 Tag + 单列大图卡 + 进度条, 对标 SpeakVlog ===== -->
+      <!-- ===== Phase 23b: H5 简化首页 (移动端独占)
+           砍月历条 + 砍双层 chip = 纯视频流
+           顶部 brand bar (H5Header) 含 ☰ + logo + 🕐 占位
+           设计目标: 内容驱动,5 秒开始看视频 ===== -->
       <div class="home-h5-block" v-if="isMobileView">
         <H5Header />
 
-        <!-- 月历条 (H5 学习闭环可视化) -->
-        <H5CalendarStrip class="h5-home-cal" @pick-date="onPickDate" />
-
-        <!-- 双层 Tag (场景 + 难度) -->
-        <div class="h5-home-tags">
-          <div class="h5-home-tags__row">
-            <span class="h5-home-tags__label">场景</span>
-            <div class="h5-home-tags__chips">
-              <button
-                :class="['chip', { 'is-active': selectedCategory === null }]"
-                @click="selectCategory(null)"
-              >全部</button>
-              <button
-                v-for="cat in categories"
-                :key="cat.name"
-                :class="['chip', { 'is-active': selectedCategory === cat.name }]"
-                @click="selectCategory(cat.name)"
-              >{{ getCategoryLabel(cat.name) }}</button>
-            </div>
-          </div>
-          <div class="h5-home-tags__row">
-            <span class="h5-home-tags__label">难度</span>
-            <div class="h5-home-tags__chips">
-              <button
-                :class="['chip', 'chip--difficulty', { 'is-active': selectedDifficulty === null }]"
-                @click="selectDifficulty(null)"
-              >全部</button>
-              <button
-                v-for="d in difficultyLevels"
-                :key="d.value"
-                :class="['chip', 'chip--difficulty', { 'is-active': selectedDifficulty === d.value }]"
-                @click="selectDifficulty(d.value)"
-              >{{ d.label }}</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 主标题 + 总数 -->
-        <div class="h5-home-head">
-          <h3 class="h5-home-title">视频库</h3>
-          <span class="h5-home-count">共 {{ total }} 个</span>
-        </div>
-
-        <!-- 单列视频卡片流 -->
+        <!-- 视频流卡片列表 (无月历, 无双层 chip, 纯内容) -->
         <div class="h5-home-list" v-loading="loading">
           <article
             v-for="item in h5ListVideos"
@@ -86,7 +44,7 @@
             v-if="!loading && h5ListVideos.length === 0"
             type="welcome"
             title="挑个视频开始吧"
-            description="切换场景/难度或去全部语料库"
+            description="看完一段换下一段"
           >
             <template #actions>
               <SfButton type="primary" @click="selectCategory(null)">看全部</SfButton>
@@ -363,9 +321,8 @@ import { BarChart3, Calendar, Clock, Play, Flame, Sprout, Dumbbell, Star, Trophy
 import SfTooltip from '@/components/ui/SfTooltip.vue'
 import SfProgress from '@/components/ui/SfProgress.vue'
 import SfButton from '@/components/ui/SfButton.vue'
-// Phase 22: H5 专用组件
+// Phase 23b: 砍 H5CalendarStrip import (月历已删, 组件文件保留后续复用)
 import H5Header from '@/components/h5/H5Header.vue'
-import H5CalendarStrip from '@/components/h5/H5CalendarStrip.vue'
 import { useMobileView } from '@/composables/useMobileView'
 
 const router = useRouter()
@@ -553,24 +510,12 @@ const selectCategory = (category) => {
   loadMaterials()
 }
 
-// Phase 22: H5 难度筛选 (复用 selectCategory 链路, 但走 selectDifficulty)
-const selectedDifficulty = ref(null)
-const difficultyLevels = [
-  { value: 1, label: '入门' },
-  { value: 2, label: '基础' },
-  { value: 3, label: '中级' },
-  { value: 4, label: '进阶' },
-  { value: 5, label: '高级' },
-]
+// Phase 23b: 砍 selectedDifficulty / difficultyLevels / selectDifficulty / onPickDate (双层 chip 已删)
 const difficultyLabel = (d) => {
+  // 难度标签映射 (1-5: 入门/基础/中级/进阶/高级), 兼容历史难度值
+  const map = { 1: '入门', 2: '基础', 3: '中级', 4: '进阶', 5: '高级' }
   if (!d) return ''
-  const lvl = difficultyLevels.find(x => x.value === d)
-  return lvl ? lvl.label : `Lv${d}`
-}
-function selectDifficulty(d) {
-  selectedDifficulty.value = d
-  page.value = 1
-  loadMaterials()
+  return map[d] || `Lv${d}`
 }
 // H5 列表: 现阶段跟桌面共用 materials, 后续可单独翻页
 const h5ListVideos = computed(() => materials.value || [])
@@ -579,11 +524,6 @@ function formatDuration(seconds) {
   const m = Math.floor(seconds / 60)
   const s = Math.floor(seconds % 60)
   return `${m}:${String(s).padStart(2, '0')}`
-}
-function onPickDate(date) {
-  // 暂不跳转, console.log 占位 (后续可对接 /materials?date=xxx)
-  // eslint-disable-next-line no-console
-  console.log('[H5] pick date', date)
 }
 
 const getProgress = (materialId) => {
@@ -633,10 +573,7 @@ const loadMaterials = async () => {
     if (selectedCategory.value) {
       params.category = selectedCategory.value
     }
-    // Phase 22: 透传 H5 难度筛选
-    if (selectedDifficulty.value) {
-      params.difficulty = selectedDifficulty.value
-    }
+    // Phase 23b: 砍难度筛选 (双层 chip 已删, selectedDifficulty 不存在)
 
     const res = await materialAPI.getList(params)
     if (page.value === 1) {
@@ -1799,69 +1736,6 @@ onMounted(async () => {
     padding: 0 !important;
     gap: 0 !important;
   }
-}
-
-/* 月历条 (封装在组件内) 跟 H5Head 间距 */
-.h5-home-cal {
-  margin-top: 12px;
-}
-
-/* 双层 Tag 行 */
-.h5-home-tags {
-  padding: 0 16px 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.h5-home-tags__row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.h5-home-tags__label {
-  font-size: 12px;
-  color: var(--color-text-muted, #94A3B8);
-  flex-shrink: 0;
-  width: 28px;
-  font-weight: 500;
-}
-.h5-home-tags__chips {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  flex: 1;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.h5-home-tags__chips::-webkit-scrollbar { display: none; }
-
-.chip {
-  flex-shrink: 0;
-  padding: 6px 12px;
-  font-size: 13px;
-  font-weight: 500;
-  border-radius: 9999px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  background: white;
-  color: var(--color-text-secondary, #475569);
-  cursor: pointer;
-  transition: all 120ms ease;
-  -webkit-tap-highlight-color: transparent;
-}
-.chip:active { transform: scale(0.96); }
-.chip.is-active {
-  background: linear-gradient(135deg, #4DA06C 0%, #3F8A5B 100%);
-  color: white;
-  border-color: transparent;
-  font-weight: 600;
-  box-shadow: 0 1px 2px rgba(63, 138, 91, 0.2);
-}
-.chip--difficulty {
-  position: relative;
-}
-.chip--difficulty.is-active {
-  background: linear-gradient(135deg, #34D399 0%, #10B981 100%);
-  box-shadow: 0 1px 2px rgba(16, 185, 129, 0.2);
 }
 
 /* 标题区 */
