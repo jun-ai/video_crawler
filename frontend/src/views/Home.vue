@@ -353,7 +353,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { materialAPI, learningStatsAPI } from '@/api'
+import { materialAPI, learningStatsAPI, favoriteAPI } from '@/api'
 import { useUserStore } from '@/stores/user'
 import FilterChip from '@/components/common/FilterChip.vue'
 import VideoCard from '@/components/common/VideoCard.vue'
