@@ -1,11 +1,11 @@
 <!--
-  H5TabBar — Phase 22: H5 底部 4-tab 导航
-  替换 App.vue mobile-tab-bar (原 3-tab), 升级为 4-tab (首页/学习/卡片/我的)
-
+  H5TabBar — Phase 23b Task 4: 砍到 2-tab (首页 / 我的)
+  对标 SpeakVlog 极简底栏: 内容驱动 + 个人入口
+  学习中心/卡片 从 tab 移除, 搬进 Profile 菜单
   设计原则:
-  - 4 个入口, 等分宽度, 居中图标 + 文字
-  - 激活态: 文字加粗 + 蓝色 + 顶部小蓝点 (SpeakVlog 视觉签名)
-  - 默认隐藏 (桌面), 通过父容器 CSS @media 控制
+  - 2 个入口, 等分宽度, 居中图标 + 文字
+  - 激活态: 文字加粗 + 墨绿 + 顶部小绿点 (Phase 22 视觉签名)
+  - 默认隐藏 (桌面), 通过 @media 控制
   - 高度: 56px + iOS safe-area bottom padding
 -->
 <template>
@@ -30,25 +30,21 @@
 <script setup>
 import { useRoute, useRouter } from 'vue-router'
 import { computed } from 'vue'
-import { Home, GraduationCap, Layers, UserCircle, UserCheck } from 'lucide-vue-next'
+import { Home, UserCheck } from 'lucide-vue-next'
 import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 
+// Phase 23b Task 4: 砍到 2-tab (首页 / 我的)
+// 学习中心/卡片 从 tab 移除, 搬进 Profile 菜单
 const items = computed(() => [
   { path: '/', label: '首页', icon: Home },
-  // 学习: 优先跳最近学习, 否则学习中心
-  { path: userStore.lastLearningPath || '/learning-center', label: '学习', icon: GraduationCap },
-  { path: '/english-cards', label: '卡片', icon: Layers },
-  { path: '/profile', label: '我的', icon: userStore.isLoggedIn ? UserCheck : UserCircle },
+  { path: '/profile', label: '我的', icon: UserCheck },
 ])
 
 function isActive(path) {
-  if (path === '/') return route.path === '/'
-  // 学习 tab 可能在 /learn/<id> 时也保持激活
-  if (path.startsWith('/learn') && route.path.startsWith('/learn') && path.startsWith('/learn')) return true
   return route.path === path || route.path.startsWith(path + '/')
 }
 

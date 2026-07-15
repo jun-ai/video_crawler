@@ -66,11 +66,16 @@
       </div>
     </div>
 
-    <!-- Phase 16: H5 端 砍掉 "我的收藏" + "生词本" 入口 (vocab/favorites 模块都已屏蔽), 只保留 "学习中心" -->
+    <!-- Phase 23b Task 4: 4-tab → 2-tab 后, 学习中心/卡片 入口搬到 Profile 菜单 -->
     <div class="profile-menu">
       <div class="menu-item" @click="$router.push('/learning-center')">
         <BarChart3 :size="22" />
         <span>学习中心</span>
+        <ArrowRight :size="16" class="menu-arrow" />
+      </div>
+      <div class="menu-item" @click="$router.push('/english-cards')">
+        <Layers :size="22" />
+        <span>卡片</span>
         <ArrowRight :size="16" class="menu-arrow" />
       </div>
     </div>
@@ -113,6 +118,7 @@ import {
   BookOpen,
   CalendarDays,
   Flame,
+  Layers,
   Pencil
 } from 'lucide-vue-next'
 import SfDialog from '@/components/ui/SfDialog.vue'
