@@ -151,32 +151,6 @@
           </div>
         </div>
 
-        <!-- Phase 9 (H5): AI 智能解读 + 开始跟读 sticky 操作条, 视频下方固定, 永远可见 1-tap 入口 -->
-        <div class="sf-ai-action-bar">
-          <button
-            class="sf-ai-action-bar__btn sf-ai-action-bar__btn--ai"
-            :class="{ 'sf-ai-action-bar__btn--done': hasInterpretation, 'sf-ai-action-bar__btn--loading': isGenerating }"
-            :disabled="isGenerating"
-            @click="handleAiAction"
-            aria-label="AI 智能解读"
-          >
-            <Sparkles v-if="!hasInterpretation && !isGenerating" :size="18" />
-            <span v-else-if="isGenerating" class="sf-ai-action-bar__spinner"></span>
-            <Check v-else :size="18" />
-            <span class="sf-ai-action-bar__label">
-              {{ isGenerating ? 'AI 分析中' : (hasInterpretation ? '已解读' : 'AI 智能解读') }}
-            </span>
-          </button>
-          <button
-            class="sf-ai-action-bar__btn sf-ai-action-bar__btn--shadow"
-            @click="openPracticePage"
-            aria-label="开始跟读"
-          >
-            <Play :size="18" />
-            <span class="sf-ai-action-bar__label">开始跟读</span>
-          </button>
-        </div>
-
         <!-- 中栏：字幕列表区域 -->
         <div class="sf-middle-column">
           <div class="sf-card-inner">
@@ -3549,78 +3523,10 @@ onUnmounted(() => {
     font-variant-numeric: tabular-nums;
   }
 
-  /* ====== Phase 9 (H5): AI 智能解读 + 开始跟读 sticky 操作条 ======
-     视频下方固定, 永远可见, 1-tap 入口
-     高度 64px, top: 368 (= 268 strip + 60 + 36 progress + 4 gap), z-index 12 在 video 之上 */
-  .sf-ai-action-bar {
-    display: flex;
-    position: fixed;
-    top: 368px;
-    left: 0;
-    right: 0;
-    height: 64px;
-    z-index: 12;
-    background: var(--color-bg-card);
-    border-top: 1px solid var(--color-border);
-    border-bottom: 1px solid var(--color-border);
-    padding: 0 12px;
-    gap: 10px;
-    align-items: center;
-  }
-  .sf-ai-action-bar__btn {
-    flex: 1;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    border-radius: 12px;
-    border: none;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .sf-ai-action-bar__btn:active {
-    transform: scale(0.97);
-  }
-  .sf-ai-action-bar__btn:disabled {
-    opacity: 0.7;
-    cursor: wait;
-  }
-  .sf-ai-action-bar__btn--ai {
-    background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
-    color: #fff;
-    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
-  }
-  .sf-ai-action-bar__btn--ai.sf-ai-action-bar__btn--done {
-    background: var(--color-brand-subtle, #E8F0EB);
-    color: var(--color-brand, #10B981);
-    box-shadow: none;
-  }
-  .sf-ai-action-bar__btn--shadow {
-    background: var(--color-bg-elevated, #f8f8fa);
-    color: var(--color-text-primary);
-    border: 1.5px solid var(--color-border);
-  }
-  .sf-ai-action-bar__label {
-    line-height: 1;
-  }
-  .sf-ai-action-bar__spinner {
-    width: 16px;
-    height: 16px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-  }
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-  /* main-content padding-top 给视频 + strip + progress + AI bar 让出空间: 268 + 60 + 36 + 64 + 8 = 436, round 440 */
+  /* Phase 23a: AI bar 砍掉, 相关 CSS 一并清理 */
+  /* main-content padding-top 给视频 + strip + progress 让出空间: 268 + 60 + 36 + 12 = 376 (Phase 23a: 砍 AI bar -64, -12 gap 调整) */
   .sf-main-content {
-    padding-top: 440px;
+    padding-top: 376px;
   }
 }
 
