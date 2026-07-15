@@ -241,3 +241,30 @@ html {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* ============================================================== */
+/* Phase 22: 关键词高亮 (SpeakVlog 绿色下划线视觉签名)              */
+/* 不带 scoped, 在所有 .text_en 渲染处生效                           */
+/* ============================================================== */
+.kw-word,
+.kw-prop,
+.kw-year {
+  position: relative;
+  color: #047857;
+  font-weight: 600;
+  cursor: help;
+  background-image: linear-gradient(transparent calc(100% - 4px), rgba(16, 185, 129, 0.18) calc(100% - 4px));
+  padding: 0 1px;
+  border-radius: 2px;
+  transition: background-color 150ms ease;
+}
+.kw-word:hover,
+.kw-prop:hover,
+.kw-year:hover {
+  background-color: rgba(16, 185, 129, 0.1);
+}
+.kw-year {
+  color: #B45309;
+  background-image: linear-gradient(transparent calc(100% - 4px), rgba(245, 158, 11, 0.18) calc(100% - 4px));
+  font-variant-numeric: tabular-nums;
+}

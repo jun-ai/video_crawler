@@ -1,8 +1,8 @@
 <template>
   <SfProvider>
     <div :class="themeStore.theme === 'dark' ? 'dark' : ''" style="min-height: 100vh; background: var(--color-bg-base)">
-      <!-- 顶部导航栏 — SpeakVlog 毛玻璃 -->
-      <header class="fixed top-0 left-0 right-0 h-16 flex items-center justify-between px-6 z-[1000]"
+      <!-- 顶部导航栏 — SpeakVlog 毛玻璃 (Phase 22: H5 端隐藏, 由 H5Header 接管) -->
+      <header v-show="!isMobileView" class="fixed top-0 left-0 right-0 h-16 flex items-center justify-between px-6 z-[1000]"
               style="background: var(--color-bg-frosted); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0,0,0,0.04)">
         <div class="flex items-center gap-8">
           <!-- Logo -->
@@ -88,7 +88,7 @@
                 登录
               </span>
               <button class="px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all duration-200"
-                      style="background: linear-gradient(#60A5FA 0%, #3B82F6 100%)"
+                      style="background: linear-gradient(#4DA06C 0%, #3F8A5B 100%)"
                       @mouseenter="$event.target.style.opacity = '0.9'"
                       @mouseleave="$event.target.style.opacity = '1'"
                       @click="$router.push('/login')">
@@ -108,7 +108,7 @@
         </router-view>
       </main>
 
-      <!-- 全局 Footer — SpeakVlog 浅绿底（Phase 0+） -->
+      <!-- 全局 Footer — SpeakVlog 浅绿底 (Phase 22: H5 隐藏, 已在 CSS 中处理) -->
       <footer class="app-footer">
         <div class="app-footer-inner">
           <div class="app-footer-brand">
@@ -147,20 +147,9 @@
         </div>
       </footer>
 
-      <!-- 移动端底部导航 — SpeakVlog 4 入口 (对标规范) -->
-      <!-- 在 /learn/* 视频学习页隐藏, 因为 Learn.vue 内部有自己的 5-icon 视频工具栏 -->
-      <!-- CSS 通过 @media (max-width: 1023px) 控制显示, 默认桌面隐藏 -->
-      <nav v-if="!isLearnRoute" class="mobile-tab-bar" aria-label="主导航">
-        <div
-          v-for="item in mobileNavItems"
-          :key="item.path"
-          :class="['mobile-tab-item', { 'is-active': isActiveRoute(item.path) }]"
-          @click="navigateTo(item.path)"
-        >
-          <component :is="item.icon" :size="22" :stroke-width="isActiveRoute(item.path) ? 2.4 : 1.8" />
-          <span class="mobile-tab-label">{{ item.label }}</span>
-        </div>
-      </nav>
+      <!-- 移动端底部导航 — Phase 22 升级为 H5TabBar 组件 (4 入口: 首页/学习/卡片/我的)
+           在 /learn/* 视频学习页隐藏, 因为 Learn.vue 内部有自己的 5-icon 视频工具栏 -->
+      <H5TabBar v-if="!isLearnRoute" />
     </div>
   </SfProvider>
 </template>
@@ -174,6 +163,10 @@ import { Home, GraduationCap, UserCircle, UserCheck } from 'lucide-vue-next'
 import SfProvider from '@/components/ui/SfProvider.vue'
 import SfDropdown from '@/components/ui/SfDropdown.vue'
 import SfAvatar from '@/components/ui/SfAvatar.vue'
+// Phase 22: H5 专用组件
+import H5TabBar from '@/components/h5/H5TabBar.vue'
+import H5Header from '@/components/h5/H5Header.vue'
+import { useMobileView } from '@/composables/useMobileView'
 
 const route = useRoute()
 const router = useRouter()
@@ -198,13 +191,11 @@ const navItems = computed(() => {
   return items
 })
 
-// Phase 15: H5 砍掉生词本模块 (俊哥: UI 不满意, 整块不要), 只保留桌面端
-const mobileNavItems = computed(() => [
-  { path: '/', label: '首页', icon: Home },
-  // 学习: 优先跳最近学习, 否则学习中心
-  { path: userStore.lastLearningPath || '/learning-center', label: '学习', icon: GraduationCap },
-  { path: '/profile', label: '我的', icon: userStore.isLoggedIn ? UserCheck : UserCircle }
-])
+// Phase 22: H5 视口判断 (App.vue 自身桌面 header 在 H5 隐藏, 由 H5Header 接管)
+const { isMobile: isMobileView } = useMobileView()
+
+// Phase 22: mobileNavItems 已迁出到 H5TabBar.vue, 此处不再需要
+
 
 const isActiveRoute = (path) => {
   if (path === '/') return route.path === '/'
@@ -237,71 +228,10 @@ const logout = () => {
   padding-bottom: 0;
 }
 
-/* === 移动端底 tab bar (SpeakVlog 4 入口) === */
-/* 默认桌面隐藏, 只在 <= 1023px 显示 (避免跟 Tailwind lg:hidden 冲突) */
-.mobile-tab-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  display: none;
-  z-index: 1000;
-  height: calc(56px + env(safe-area-inset-bottom, 0px));
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  background: rgba(255, 255, 255, 0.95);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  backdrop-filter: blur(20px) saturate(180%);
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 0 -1px 12px rgba(0, 0, 0, 0.04);
-}
-@media (max-width: 1023px) {
-  .mobile-tab-bar {
-    display: flex;
-  }
-}
-.mobile-tab-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  cursor: pointer;
-  transition: color 0.15s ease, transform 0.1s ease;
-  color: var(--color-text-muted, #777);
-  -webkit-tap-highlight-color: transparent;
-  position: relative;
-}
-.mobile-tab-item:active {
-  transform: scale(0.92);
-}
-.mobile-tab-item.is-active {
-  color: var(--color-brand, #10B981);
-}
-.mobile-tab-item.is-active::before {
-  /* 顶部小圆点 active 指示器 */
-  content: '';
-  position: absolute;
-  top: 4px;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--color-brand, #10B981);
-}
-.mobile-tab-label {
-  font-size: 10px;
-  font-weight: 500;
-  line-height: 1;
-  letter-spacing: 0.2px;
-}
-
-/* 手机端给底部导航栏留空间, 隐藏全屏 footer */
+/* H5 给底部 tab 栏预留位置, 避免内容被遮挡 */
 @media (max-width: 1023px) {
   .app-main {
-    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
-  }
-  .app-footer {
-    display: none;
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -312,6 +242,17 @@ const logout = () => {
 .page-slide-enter-from,
 .page-slide-leave-to {
   opacity: 0;
+}
+
+/* (Phase 22: mobile-tab-bar 已迁出到 H5TabBar.vue, 此处保留 CSS 防止旧引用出错)
+   .h5-tab-bar 默认在 H5TabBar.vue 内置 display: none + @media 控制,
+   父容器 .app-main 的 padding-bottom 也由 H5TabBar 自身高度决定 */
+
+/* 手机端隐藏全屏 footer (H5TabBar 已经撑出底栏位置) */
+@media (max-width: 1023px) {
+  .app-footer {
+    display: none;
+  }
 }
 
 /* ====== 全局 Footer — SpeakVlog 浅绿底（Phase 0+） ====== */

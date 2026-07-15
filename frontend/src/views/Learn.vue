@@ -132,8 +132,7 @@
         <!-- Phase 20 (H5): 当前字幕 sticky strip (视频下方, 永远可见, 跟视频同步)
              + 视频 progress bar (进度 / 当前时间 / 总时长) -->
         <div class="sf-current-subtitle-strip" v-if="isMobileView && material">
-          <div class="sf-current-subtitle-strip__en">
-            {{ currentSubtitle?.text_en || '点击播放开始学习' }}
+          <div class="sf-current-subtitle-strip__en" v-html="currentSubtitleEnHtml">
           </div>
           <div class="sf-current-subtitle-strip__cn" v-if="currentSubtitle && showTranslation && !showOnlyChinese">
             {{ currentSubtitle.text_cn }}
@@ -605,6 +604,7 @@ import SfInput from '@/components/ui/SfInput.vue'
 import SfTooltip from '@/components/ui/SfTooltip.vue'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { materialAPI, learningAPI, favoriteAPI, vocabularyAPI, pronunciationAPI, interpretationAPI, speechAPI, annotationAPI, subtitleBookmarkAPI } from '@/api'
+import { highlightKeyWords as hlKeyWords } from '@/lib/highlightText'
 import { useUserStore } from '@/stores/user'
 import DictationMode from './DictationMode.vue'
 import FilterChip from '@/components/common/FilterChip.vue'
@@ -1013,6 +1013,13 @@ const currentSubtitle = computed(() => {
     return subtitles.value[currentIndex.value]
   }
   return null
+})
+
+// Phase 22: 当前字幕的英文 HTML (含关键词高亮)
+const currentSubtitleEnHtml = computed(() => {
+  const cs = currentSubtitle.value
+  if (!cs) return '点击播放开始学习'
+  return hlKeyWords(cs.text_en || '')
 })
 
 // Phase 20 (H5): 视频实时 currentTime / duration
@@ -2242,7 +2249,8 @@ const getAnnotatedText = (subtitle) => {
   }
 
   if (highlightRanges.length === 0) {
-    return text
+    // Phase 22: 没有后端标注时, 客户端启发式高亮 (年份/专有名词/高频长词)
+    return hlKeyWords(text)
   }
 
   // 排序区间

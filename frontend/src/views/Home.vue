@@ -1,6 +1,107 @@
 <template>
   <div class="home-page">
     <div class="home-container">
+      <!-- ===== Phase 22: H5 独立首页布局 (移动端独占)
+           桌面端 display: none; H5 端 display: block 覆盖
+           设计目标: 月历条 + 双层 Tag + 单列大图卡 + 进度条, 对标 SpeakVlog ===== -->
+      <div class="home-h5-block" v-if="isMobileView">
+        <H5Header />
+
+        <!-- 月历条 (H5 学习闭环可视化) -->
+        <H5CalendarStrip class="h5-home-cal" @pick-date="onPickDate" />
+
+        <!-- 双层 Tag (场景 + 难度) -->
+        <div class="h5-home-tags">
+          <div class="h5-home-tags__row">
+            <span class="h5-home-tags__label">场景</span>
+            <div class="h5-home-tags__chips">
+              <button
+                :class="['chip', { 'is-active': selectedCategory === null }]"
+                @click="selectCategory(null)"
+              >全部</button>
+              <button
+                v-for="cat in categories"
+                :key="cat.name"
+                :class="['chip', { 'is-active': selectedCategory === cat.name }]"
+                @click="selectCategory(cat.name)"
+              >{{ getCategoryLabel(cat.name) }}</button>
+            </div>
+          </div>
+          <div class="h5-home-tags__row">
+            <span class="h5-home-tags__label">难度</span>
+            <div class="h5-home-tags__chips">
+              <button
+                :class="['chip', 'chip--difficulty', { 'is-active': selectedDifficulty === null }]"
+                @click="selectDifficulty(null)"
+              >全部</button>
+              <button
+                v-for="d in difficultyLevels"
+                :key="d.value"
+                :class="['chip', 'chip--difficulty', { 'is-active': selectedDifficulty === d.value }]"
+                @click="selectDifficulty(d.value)"
+              >{{ d.label }}</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 主标题 + 总数 -->
+        <div class="h5-home-head">
+          <h3 class="h5-home-title">视频库</h3>
+          <span class="h5-home-count">共 {{ total }} 个</span>
+        </div>
+
+        <!-- 单列视频卡片流 -->
+        <div class="h5-home-list" v-loading="loading">
+          <article
+            v-for="item in h5ListVideos"
+            :key="item.id"
+            class="h5-home-card"
+            @click="goLearn(item.id)"
+          >
+            <div class="h5-home-card__cover">
+              <img v-if="item.cover_path" :src="item.cover_path" :alt="item.title" loading="lazy" />
+              <div v-else class="h5-home-card__cover-fallback">
+                <Play :size="20" />
+              </div>
+              <span v-if="item.duration" class="h5-home-card__duration">
+                {{ formatDuration(item.duration) }}
+              </span>
+              <span class="h5-home-card__diff" :data-diff="item.difficulty">
+                {{ difficultyLabel(item.difficulty) }}
+              </span>
+            </div>
+            <div class="h5-home-card__body">
+              <div class="h5-home-card__title">{{ item.title }}</div>
+              <div class="h5-home-card__meta">
+                <span class="h5-home-card__cat">{{ getCategoryLabel(item.category) }}</span>
+                <span class="h5-home-card__views">{{ item.view_count || 0 }} 次观看</span>
+              </div>
+              <div class="h5-home-card__progress" v-if="getProgress(item.id) > 0">
+                <div class="h5-home-card__progress-fill" :style="{ width: getProgress(item.id) + '%' }" />
+              </div>
+            </div>
+          </article>
+
+          <EmptyState
+            v-if="!loading && h5ListVideos.length === 0"
+            type="welcome"
+            title="挑个视频开始吧"
+            description="切换场景/难度或去全部语料库"
+          >
+            <template #actions>
+              <SfButton type="primary" @click="selectCategory(null)">看全部</SfButton>
+            </template>
+          </EmptyState>
+
+          <div class="h5-home-loadmore" v-if="hasMore && !loading">
+            <button class="h5-home-loadmore__btn" @click="loadMore" :disabled="loadingMore">
+              {{ loadingMore ? '加载中…' : '加载更多' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 以下是桌面端原始布局 (H5 隐藏) ===== -->
       <!-- 2+3+4. 两栏布局: 左侧 stats 面板 (固定不随筛选变) | 右侧 视频区 (含筛选) -->
       <!-- 改动: .stats-side 作为 .home-container direct child (不再包在 .home-main 内)
            .home-container grid 320+1fr, stats-side 占第 1 列, home-main (装 videos-side) 占第 2 列 -->
@@ -262,9 +363,16 @@ import { BarChart3, Calendar, Clock, Play, Flame, Sprout, Dumbbell, Star, Trophy
 import SfTooltip from '@/components/ui/SfTooltip.vue'
 import SfProgress from '@/components/ui/SfProgress.vue'
 import SfButton from '@/components/ui/SfButton.vue'
+// Phase 22: H5 专用组件
+import H5Header from '@/components/h5/H5Header.vue'
+import H5CalendarStrip from '@/components/h5/H5CalendarStrip.vue'
+import { useMobileView } from '@/composables/useMobileView'
 
 const router = useRouter()
 const userStore = useUserStore()
+
+// H5 视口判断
+const { isMobile: isMobileView } = useMobileView()
 
 const loading = ref(true)
 const loadingMore = ref(false)
@@ -445,6 +553,39 @@ const selectCategory = (category) => {
   loadMaterials()
 }
 
+// Phase 22: H5 难度筛选 (复用 selectCategory 链路, 但走 selectDifficulty)
+const selectedDifficulty = ref(null)
+const difficultyLevels = [
+  { value: 1, label: '入门' },
+  { value: 2, label: '基础' },
+  { value: 3, label: '中级' },
+  { value: 4, label: '进阶' },
+  { value: 5, label: '高级' },
+]
+const difficultyLabel = (d) => {
+  if (!d) return ''
+  const lvl = difficultyLevels.find(x => x.value === d)
+  return lvl ? lvl.label : `Lv${d}`
+}
+function selectDifficulty(d) {
+  selectedDifficulty.value = d
+  page.value = 1
+  loadMaterials()
+}
+// H5 列表: 现阶段跟桌面共用 materials, 后续可单独翻页
+const h5ListVideos = computed(() => materials.value || [])
+function formatDuration(seconds) {
+  if (!seconds || seconds <= 0) return ''
+  const m = Math.floor(seconds / 60)
+  const s = Math.floor(seconds % 60)
+  return `${m}:${String(s).padStart(2, '0')}`
+}
+function onPickDate(date) {
+  // 暂不跳转, console.log 占位 (后续可对接 /materials?date=xxx)
+  // eslint-disable-next-line no-console
+  console.log('[H5] pick date', date)
+}
+
 const getProgress = (materialId) => {
   return learningProgress.value[materialId] || 0
 }
@@ -491,6 +632,10 @@ const loadMaterials = async () => {
     }
     if (selectedCategory.value) {
       params.category = selectedCategory.value
+    }
+    // Phase 22: 透传 H5 难度筛选
+    if (selectedDifficulty.value) {
+      params.difficulty = selectedDifficulty.value
     }
 
     const res = await materialAPI.getList(params)
@@ -1622,4 +1767,269 @@ onMounted(async () => {
   }
   .featured-info { padding: 20px 18px; }
 }
+
+/* ============================================================ */
+/* Phase 22: H5 端 (iPhone 等 ≤768px) — 独立紧凑单列布局          */
+/* 设计原则:                                                     */
+/*   - 月历条驱动 (H5 学习闭环可视化)                            */
+/*   - 双层 Tag (场景 + 难度, 替代桌面横排)                      */
+/*   - 单列大图卡 (16:9 封面 + 原图无蒙层, 跟现有飘绿蒙层划清)  */
+/*   - 进度条 (已学视频显示绿色细线)                            */
+/* ============================================================ */
+.home-h5-block { display: none; }
+@media (max-width: 768px) {
+  .home-h5-block {
+    display: block;
+    padding-top: 8px;
+  }
+  /* 桌面端 stats-side / home-main / activation-banner / video-grid-section
+     / filter-row / home-footer 等在 H5 时全部隐藏 */
+  .stats-side,
+  .home-main,
+  .home-footer,
+  .filter-row,
+  .video-grid-section,
+  .activation-banner {
+    display: none !important;
+  }
+  /* H5 时 home-container 取消 grid, 单列流 */
+  .home-container {
+    display: block !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+}
+
+/* 月历条 (封装在组件内) 跟 H5Head 间距 */
+.h5-home-cal {
+  margin-top: 12px;
+}
+
+/* 双层 Tag 行 */
+.h5-home-tags {
+  padding: 0 16px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.h5-home-tags__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.h5-home-tags__label {
+  font-size: 12px;
+  color: var(--color-text-muted, #94A3B8);
+  flex-shrink: 0;
+  width: 28px;
+  font-weight: 500;
+}
+.h5-home-tags__chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  flex: 1;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.h5-home-tags__chips::-webkit-scrollbar { display: none; }
+
+.chip {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 9999px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: white;
+  color: var(--color-text-secondary, #475569);
+  cursor: pointer;
+  transition: all 120ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.chip:active { transform: scale(0.96); }
+.chip.is-active {
+  background: linear-gradient(135deg, #4DA06C 0%, #3F8A5B 100%);
+  color: white;
+  border-color: transparent;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(63, 138, 91, 0.2);
+}
+.chip--difficulty {
+  position: relative;
+}
+.chip--difficulty.is-active {
+  background: linear-gradient(135deg, #34D399 0%, #10B981 100%);
+  box-shadow: 0 1px 2px rgba(16, 185, 129, 0.2);
+}
+
+/* 标题区 */
+.h5-home-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 8px 16px 12px;
+}
+.h5-home-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-text-primary, #0F172A);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.h5-home-count {
+  font-size: 12px;
+  color: var(--color-text-muted, #94A3B8);
+  font-weight: 500;
+}
+
+/* 单列视频卡片流 */
+.h5-home-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 0 16px 16px;
+}
+
+.h5-home-card {
+  background: white;
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 0 0 1px rgba(15, 23, 42, 0.04);
+  -webkit-tap-highlight-color: transparent;
+}
+.h5-home-card:active {
+  transform: scale(0.99);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(15, 23, 42, 0.06);
+}
+
+.h5-home-card__cover {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
+  overflow: hidden;
+}
+.h5-home-card__cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.h5-home-card__cover-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted, #94A3B8);
+}
+
+.h5-home-card__duration {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+}
+
+.h5-home-card__diff {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--color-text-primary, #0F172A);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.h5-home-card__diff[data-diff="1"] { background: rgba(16, 185, 129, 0.15); color: #047857; }
+.h5-home-card__diff[data-diff="2"] { background: rgba(59, 130, 246, 0.15); color: #1D4ED8; }
+.h5-home-card__diff[data-diff="3"] { background: rgba(245, 158, 11, 0.15); color: #B45309; }
+.h5-home-card__diff[data-diff="4"] { background: rgba(239, 68, 68, 0.15); color: #B91C1C; }
+.h5-home-card__diff[data-diff="5"] { background: rgba(14, 165, 233, 0.15); color: #0369A1; }
+
+.h5-home-card__body {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.h5-home-card__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-primary, #0F172A);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.h5-home-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-text-muted, #94A3B8);
+}
+.h5-home-card__cat {
+  padding: 2px 6px;
+  background: rgba(15, 23, 42, 0.04);
+  border-radius: 4px;
+  font-weight: 500;
+  color: var(--color-text-secondary, #475569);
+}
+.h5-home-card__views::before {
+  content: '·';
+  margin-right: 6px;
+  opacity: 0.5;
+}
+
+.h5-home-card__progress {
+  height: 4px;
+  background: rgba(15, 23, 42, 0.05);
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.h5-home-card__progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #34D399 0%, #10B981 100%);
+  border-radius: 9999px;
+  transition: width 200ms ease;
+}
+
+/* 加载更多按钮 */
+.h5-home-loadmore {
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+}
+.h5-home-loadmore__btn {
+  padding: 10px 24px;
+  background: white;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary, #475569);
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+.h5-home-loadmore__btn:active { background: rgba(15, 23, 42, 0.04); }
+.h5-home-loadmore__btn:disabled { opacity: 0.5; }
 </style>

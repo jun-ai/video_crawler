@@ -9,7 +9,7 @@
 
       <!-- 字幕内容 — font-size 由 props.fontSize 控制 (Phase 2 H5: 字幕设置 sheet 修 bug) -->
       <div class="sf-shadowing-card__body" :style="{ '--sf-subtitle-font-size': fontSize + 'px' }">
-        <div class="sf-shadowing-card__en" v-if="!showOnlyChinese">{{ currentSubtitle.text_en }}</div>
+        <div class="sf-shadowing-card__en" v-if="!showOnlyChinese" v-html="enHtml"></div>
         <transition name="sf-fade">
           <div class="sf-shadowing-card__cn" v-if="showTranslation && currentSubtitle.text_cn && !showOnlyChinese">
             {{ currentSubtitle.text_cn }}
@@ -167,11 +167,12 @@ import {
   MessageCircle, BookOpen, BarChart3, FileText, Send, MoreHorizontal,
   Crosshair, Lightbulb
 } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { highlightKeyWords as hlKeyWords } from '@/lib/highlightText'
 
 const showMoreTools = ref(false)
 
-defineProps({
+const props = defineProps({
   currentSubtitle: { type: Object, default: null },
   currentIndex: { type: Number, default: -1 },
   totalSubtitles: { type: Number, default: 0 },
@@ -185,6 +186,13 @@ defineProps({
   isLoggedIn: { type: Boolean, default: false },
   // Phase 2 H5 字幕字号 (px): 14 / 16 / 18 / 20
   fontSize: { type: Number, default: 16 }
+})
+
+// Phase 22: 客户端启发式关键词高亮 (年份/专有名词/高频长词)
+const enHtml = computed(() => {
+  const text = props.currentSubtitle?.text_en || ''
+  if (!text) return ''
+  return hlKeyWords(text)
 })
 
 defineEmits([
@@ -672,5 +680,17 @@ const getScoreClass = (score) => {
     font-size: 12px;
     padding: 8px 12px;
   }
+}
+
+/* (Phase 22: .kw-* 走 global.css, v-html 注入的 DOM 没有 data-v-hash 所以 scoped 不生效)
+   这里加一份 :deep() 兜底, 防止用户切换主题时漂移 */
+.sf-shadowing-card :deep(.kw-word),
+.sf-shadowing-card :deep(.kw-prop),
+.sf-shadowing-card :deep(.kw-year) {
+  font-weight: 600;
+  cursor: help;
+}
+.sf-shadowing-card :deep(.kw-year) {
+  color: #B45309;
 }
 </style>
