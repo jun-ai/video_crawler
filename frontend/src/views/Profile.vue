@@ -12,54 +12,35 @@
             <span v-if="userStore.user?.created_at">加入于 {{ formatDate(userStore.user.created_at) }}</span>
           </p>
         </div>
-        <SfButton type="primary" class="profile-edit-btn" @click="showEditDialog = true">
-          编辑资料
-        </SfButton>
+        <!-- 编辑入口:文字链接,取代 SfButton (更轻,不抢 hero 视觉) -->
+        <button v-if="userStore.isLoggedIn" class="profile-edit-link" @click="showEditDialog = true">
+          <Pencil :size="14" />
+          <span>编辑</span>
+        </button>
       </div>
     </div>
 
-    <!-- 9. 激活信息 (P0 商业化: 用户查看自己激活码/状态/时间) -->
-    <div v-if="userStore.user?.activation_code_id" class="profile-section">
-      <PageHeader title="激活信息" />
-      <div class="activation-info">
-        <div class="activation-info-row">
-          <span class="activation-info-label">激活码 ID</span>
-          <span class="activation-info-value">#{{ userStore.user.activation_code_id }}</span>
-        </div>
-        <div class="activation-info-row">
-          <span class="activation-info-label">账号状态</span>
-          <span :class="['activation-info-tag', `tag-${userStore.user.status || 'pending'}`]">
-            {{ statusLabel(userStore.user.status) }}
-          </span>
-        </div>
-        <div class="activation-info-row" v-if="userStore.user.activated_at">
-          <span class="activation-info-label">激活时间</span>
-          <span class="activation-info-value">{{ formatDateTime(userStore.user.activated_at) }}</span>
-        </div>
-        <div class="activation-info-hint">
-          <Key :size="13" />
-          账号永久有效，可在不同设备登录使用
-        </div>
-      </div>
-    </div>
-
-    <!-- 学习统计 -->
+    <!-- Phase 23b: 砍"激活信息"整块 — 开发者视角残留,搬到学习中心"账号与安全"里 -->
+    <!-- 学习统计 (Phase 23b: 保留,加图标增强视觉权重) -->
     <div class="profile-section">
       <PageHeader title="学习统计" />
       <div class="stats-grid">
         <div class="stat-card">
-          <div class="stat-value">{{ stats.total_materials }}</div>
+          <div class="stat-icon"><BookOpen :size="18" /></div>
+          <div class="stat-value">{{ stats.total_materials || '—' }}</div>
           <div class="stat-label">学习语料</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value">{{ stats.total_learning_days }}</div>
+          <div class="stat-icon"><CalendarDays :size="18" /></div>
+          <div class="stat-value">{{ stats.total_learning_days || '—' }}</div>
           <div class="stat-label">学习天数</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value stat-value--accent">{{ stats.streak_days }}</div>
+          <div class="stat-icon stat-icon--accent"><Flame :size="18" /></div>
+          <div class="stat-value stat-value--accent">{{ stats.streak_days || '—' }}</div>
           <div class="stat-label">连续学习</div>
         </div>
-        </div>
+      </div>
     </div>
 
     <!-- 最近学习 -->
@@ -129,7 +110,10 @@ import { showConfirm } from '@/composables/useConfirm'
 import {
   ArrowRight,
   BarChart3,
-  Key
+  BookOpen,
+  CalendarDays,
+  Flame,
+  Pencil
 } from 'lucide-vue-next'
 import SfDialog from '@/components/ui/SfDialog.vue'
 import SfButton from '@/components/ui/SfButton.vue'
@@ -169,27 +153,7 @@ const formatDate = (dateStr) => {
   })
 }
 
-// 9. 激活信息 helpers
-const formatDateTime = (dateStr) => {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
-const statusLabel = (status) => {
-  const map = {
-    approved: '已激活',
-    pending: '待审核',
-    rejected: '已拒绝'
-  }
-  return map[status] || '未知'
-}
+// Phase 23b: 砍 statusLabel/formatDateTime (激活信息整块已删,这两个 helper 只它用)
 
 const goLearn = (id) => {
   router.push(`/learn/${id}`)
@@ -264,78 +228,16 @@ onMounted(() => {
   font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* ── 9. 激活信息 ── */
-.activation-info {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 16px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.activation-info-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 14px;
-  min-height: 28px;
-}
-
-.activation-info-label {
-  color: var(--color-text-secondary);
-  font-weight: 500;
-}
-
-.activation-info-value {
-  color: var(--color-text-primary);
-  font-weight: 600;
-  font-family: 'SF Mono', 'Menlo', monospace;
-}
-
-.activation-info-tag {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 12px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.activation-info-tag.tag-approved {
-  background: rgba(16, 185, 129, 0.12);
-  color: #059669;
-}
-
-.activation-info-tag.tag-pending {
-  background: rgba(245, 158, 11, 0.12);
-  color: #D97706;
-}
-
-.activation-info-tag.tag-rejected {
-  background: rgba(239, 68, 68, 0.12);
-  color: #DC2626;
-}
-
-.activation-info-hint {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--color-text-secondary);
-  padding-top: 8px;
-  border-top: 1px dashed var(--color-border);
-  margin-top: 4px;
-}
-
 /* ── Hero 用户信息 ── */
 .profile-hero {
   margin-bottom: 24px;
-  background: var(--sf-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%));
+  /* Phase 23b: 显式墨绿渐变 (原 var(--sf-cta-gradient) fallback 到蓝色,跟墨绿色调不一致) */
+  background: linear-gradient(135deg, #4DA06C 0%, #0F4C3A 100%);
   border-radius: var(--radius-lg);
   padding: 28px 32px;
   color: #fff;
+  position: relative;
+  overflow: hidden;
 }
 
 .profile-hero-inner {
@@ -371,18 +273,27 @@ onMounted(() => {
   margin: 0;
 }
 
-.profile-edit-btn {
-  background: rgba(255, 255, 255, 0.18) !important;
-  border: 1px solid rgba(255, 255, 255, 0.4) !important;
-  color: #fff !important;
-  border-radius: var(--radius-md);
-  transition: background var(--sf-duration-normal), border-color var(--sf-duration-normal);
-  white-space: nowrap;
+.profile-edit-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 120ms ease;
+  -webkit-tap-highlight-color: transparent;
+  align-self: flex-start;
 }
-
-.profile-edit-btn:hover {
-  background: rgba(255, 255, 255, 0.28) !important;
-  border-color: rgba(255, 255, 255, 0.6) !important;
+.profile-edit-link:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.profile-edit-link:active {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 /* ── 统计区域 ── */
@@ -415,6 +326,22 @@ onMounted(() => {
 .stat-card:hover {
   border-color: var(--color-border);
   transform: translateY(-1px);
+}
+
+.stat-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 6px;
+  border-radius: 8px;
+  background: rgba(15, 76, 58, 0.08);    /* 墨绿淡底 */
+  color: #0F4C3A;                          /* 显式墨绿,不依赖 --color-brand (仍是亮蓝) */
+}
+.stat-icon--accent {
+  background: rgba(245, 158, 11, 0.12);   /* 橙色淡底(连续学习用) */
+  color: #D97706;
 }
 
 .stat-value {
