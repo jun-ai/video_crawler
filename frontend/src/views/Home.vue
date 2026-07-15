@@ -2,10 +2,11 @@
   <div class="home-page">
     <div class="home-container">
       <!-- 2+3+4. 两栏布局: 左侧 stats 面板 (固定不随筛选变) | 右侧 视频区 (含筛选) -->
-      <div class="home-main">
-        <!-- 左侧: 我的学习 stats 面板 -->
-        <aside class="stats-side" v-if="userStore.isLoggedIn">
-          <div class="stats-panel">
+      <!-- 改动: .stats-side 作为 .home-container direct child (不再包在 .home-main 内)
+           .home-container grid 320+1fr, stats-side 占第 1 列, home-main (装 videos-side) 占第 2 列 -->
+      <!-- 左侧: 我的学习 stats 面板 -->
+      <aside class="stats-side" v-if="userStore.isLoggedIn">
+        <div class="stats-panel">
             <!-- 顶部带渐变条 + 标题 -->
             <div class="panel-header">
               <div class="panel-header-icon"><BarChart3 :size="18" /></div>
@@ -86,15 +87,58 @@
                         'has-record': day.hasRecord
                       }]"
                     >{{ day.date }}</span>
-                  </SfTooltip>
-                </div>
-              </div>
-            </div>
+                    </SfTooltip>
+                    </div>
+                    </div>
+                    </div>
 
-          </div>
-        </aside>
-        <!-- 右侧: 筛选 + featured + 视频网格 -->
-        <div class="videos-side">
+                    <!-- 继续学习 (孤儿代码复活) -->
+                    <section class="continue-learning-section panel-continue" data-audit="continue-learning">
+                    <div class="pc-head">
+                    <Play :size="14" />
+                    <span class="pc-title">继续学习</span>
+                    <span v-if="continueLearnItems.length > 0" class="pc-count">{{ continueLearnItems.length }} 个</span>
+                    </div>
+
+                    <div v-if="continueLearnItems.length > 0" class="pc-list">
+                    <div
+                    v-for="item in continueLearnItems"
+                    :key="item.material_id"
+                    class="pc-item"
+                    @click="goLearn(item.material_id)"
+                    >
+                    <div class="pc-cover">
+                    <img v-if="item.cover_path" :src="item.cover_path" :alt="item.title" />
+                    <div v-else class="pc-cover-fallback">
+                     <Play :size="14" />
+                    </div>
+                    </div>
+                    <div class="pc-info">
+                    <div class="pc-title-text">{{ item.title }}</div>
+                    <div class="pc-progress-row">
+                     <div class="pc-progress-track">
+                       <div class="pc-progress-fill" :style="{ width: item.progress + '%' }"></div>
+                     </div>
+                     <span class="pc-pct">{{ item.progress }}%</span>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+
+                    <div v-else class="pc-empty" @click="$refs.filterBar?.$el?.scrollIntoView({behavior: 'smooth'})">
+                    <div class="pc-empty-text">
+                    <div class="pc-empty-title">开始你的第一次学习</div>
+                    <div class="pc-empty-sub">下方挑一个感兴趣的视频开始</div>
+                    </div>
+                    </div>
+                    </section>
+
+                    </div>
+                    </aside>
+                    <!-- 右侧: 筛选 + featured + 视频网格 -->
+                    <!-- home-main 包住 videos-side (放第 2 列) -->
+                    <div class="home-main">
+                    <div class="videos-side">
           <!-- 7. P0 商业化: 激活码引导横幅 — 未登录用户第一眼看到 -->
           <div v-if="!userStore.isLoggedIn" class="activation-banner">
             <div class="activation-banner__content">
@@ -188,23 +232,17 @@
             <div class="load-more" v-if="hasMore && !loading">
               <SfButton @click="loadMore" :loading="loadingMore">加载更多</SfButton>
             </div>
-          </section>
-        </div>
-      </div>
+            </section>
+            </div>
+            </div>
+            <!-- home-main 结束 -->
 
+            <!-- 5. 底部（学习消息 / 学习指南 / 联系） — H5 端隐藏 (核心 only) -->
       <!-- 5. 底部（学习消息 / 学习指南 / 联系） — H5 端隐藏 (核心 only) -->
       <footer class="home-footer home-footer--h5-hide">
         <div class="footer-col">
           <div class="footer-col-title">学习消息</div>
           <p class="footer-text">坚持每天 15 分钟，三个月看到进步。</p>
-        </div>
-        <div class="footer-col">
-          <div class="footer-col-title">学习指南</div>
-          <p class="footer-text">看 → 听 → 读 → 说，四步走，循序渐进。</p>
-        </div>
-        <div class="footer-col">
-          <div class="footer-col-title">联系我们</div>
-          <p class="footer-text">微信：fluenty-study</p>
         </div>
       </footer>
     </div>
@@ -676,6 +714,13 @@ onMounted(async () => {
   max-width: 1380px;
   margin: 0 auto;
   padding: 0 32px;
+  display: block;
+}
+@media (max-width: 1100px) {
+  .home-container {
+    grid-template-columns: 280px 1fr;
+    gap: 20px;
+  }
 }
 
 /* ====== 1. 筛选条 row ====== */
@@ -857,19 +902,32 @@ onMounted(async () => {
   color: rgba(255, 255, 255, 0.88);
 }
 
-/* ====== 2+3+4. 两栏布局: 左侧 stats 面板 (固定不随筛选变) | 右侧 视频区 ====== */
+/* ====== 2+3+4. 两栏布局: 左侧 stats 面板 (固定不随筛选变) | 右侧 视频区 ======
+   改动: .stats-side 移出 .home-main 作为 .home-container direct child
+   .home-container 用 grid 320+1fr, .home-main 现在只装 videos-side */
 .home-main {
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 24px;
-  align-items: start;
+  margin-left: 344px;  /* 320 stats + 24 gap */
+  min-width: 0;
   margin-bottom: 32px;
 }
 
-/* 左侧 sticky */
+/* 左侧真正固定 - position: fixed 脱离所有 container, 永远不滚 */
 .stats-side {
-  position: sticky;
-  top: 16px;
+  position: fixed;
+  top: 88px;
+  left: max(32px, calc(50vw - 690px + 32px));
+  width: 320px;
+  max-height: calc(100vh - 104px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  z-index: 10;
+  flex-shrink: 0;
+}
+@media (max-width: 1100px) {
+  .stats-side {
+    width: 280px;
+  }
 }
 
 /* ============ 单 panel, 去嵌套, 轻量设计 ============ */
@@ -1428,7 +1486,7 @@ onMounted(async () => {
 
 .video-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 20px;
   min-height: 120px;
 }
@@ -1441,9 +1499,7 @@ onMounted(async () => {
 
 /* ====== 5. 底部 ====== */
 .home-footer {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  display: block;
   padding: 28px 0 8px;
   border-top: 1px solid var(--color-border);
 }
@@ -1475,17 +1531,16 @@ onMounted(async () => {
 
 @media (max-width: 900px) {
   .home-main {
-    grid-template-columns: 1fr;  /* 窄屏堆叠, stats 框在上 */
+    margin-left: 0;  /* H5: 取消 PC 的 344px margin,占满 viewport */
   }
   .stats-side {
-    position: static;  /* 堆叠时不再 sticky */
+    display: none;  /* H5: 隐藏 stats-side (mobile 不显示) */
   }
   .video-grid {
     grid-template-columns: repeat(2, 1fr);
   }
   .home-footer {
-    grid-template-columns: 1fr;
-    gap: 16px;
+    display: block;
   }
 }
 
