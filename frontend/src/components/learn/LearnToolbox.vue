@@ -158,10 +158,13 @@ const dashOffset = computed(() => {
   height: 100%;
 }
 .sf-progress-ring__track {
-  stroke: rgba(255,255,255,0.12);
+  stroke: rgba(255,255,255,0.25);
 }
 .sf-progress-ring__fill {
-  stroke: var(--color-brand-bright, #3B82F6);
+  /* Phase 28+1: 改纯白 + 1.2px shadow, 0% 时描边也跟深绿背景有强对比
+     (原 var(--color-brand-bright) 在 phase 23 墨绿后跟背景色接近, 0% 完全看不见) */
+  stroke: #fff;
+  filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.6));
   transition: stroke-dashoffset var(--sf-duration-slower) ease;
 }
 .sf-progress-ring__text {
