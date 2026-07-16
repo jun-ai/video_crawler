@@ -1057,13 +1057,13 @@ onMounted(() => {
   display: inline-block;
   margin-left: 4px;
   padding: 2px 8px;
-  background: rgba(15, 76, 58, 0.08);
-  color: #0F4C3A;
+  background: rgba(47, 61, 53, 0.08);
+  color: var(--color-brand);
   font-family: var(--sf-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
   font-size: 12px;
   font-weight: 600;
   border-radius: 6px;
-  border: 1px solid rgba(15, 76, 58, 0.18);
+  border: 1px solid rgba(47, 61, 53, 0.18);
 }
 
 /* 详细解释: 段落化 + 区分小标题和正文 */
@@ -1090,7 +1090,7 @@ onMounted(() => {
   margin: 0;
   font-size: 13px;
   font-weight: 700;
-  color: #0F4C3A;
+  color: var(--color-brand);
   letter-spacing: 0.2px;
 }
 .ec-analysis-p {
@@ -1114,8 +1114,8 @@ onMounted(() => {
   flex-direction: column;
   gap: 4px;
   padding: 10px 12px;
-  background: linear-gradient(135deg, rgba(15, 76, 58, 0.04), rgba(16, 185, 129, 0.04));
-  border: 1px solid rgba(15, 76, 58, 0.12);
+  background: linear-gradient(135deg, rgba(47, 61, 53, 0.04), rgba(16, 185, 129, 0.04));
+  border: 1px solid rgba(47, 61, 53, 0.12);
   border-radius: 8px;
 }
 .ec-analysis-origin-text {

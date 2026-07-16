@@ -128,8 +128,8 @@ function goHome() {
   align-items: center;
   justify-content: center;
   color: white;
-  background: linear-gradient(135deg, #4DA06C 0%, #0F4C3A 100%);
-  box-shadow: 0 1px 2px rgba(15, 76, 58, 0.25);
+  background: linear-gradient(135deg, #4DA06C 0%, var(--color-brand) 100%);
+  box-shadow: 0 1px 2px rgba(47, 61, 53, 0.25);
 }
 
 .h5-header-brand-text {

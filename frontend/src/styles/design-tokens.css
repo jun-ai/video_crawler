@@ -154,8 +154,10 @@
   --yt-bg-secondary: var(--sf-bg-card);
   --yt-bg-tertiary: var(--sf-bg-elevated);
   --yt-border: var(--sf-border);
+  /* ========== 旧 yt-* / sf-* token (Phase 23c 贴对标 SV) ==========
+     SV 实测: 主文字 #2F3D35, CTA 渐变 #4DA06C→#3F8A5B, 极浅底 #F6FAF5 */
   --yt-highlight-bg: var(--sf-brand-subtle);
-  --yt-highlight-border: rgba(37, 99, 235, 0.3);
+  --yt-highlight-border: rgba(77, 160, 108, 0.3);
   --yt-study-divider: var(--sf-border);
   /* 注: 不要在这里反向定义 --color-success/warning/danger/info →
      会跟 L31-34 的 --sf-* 形成循环引用, CSS var() 解析降级到空,
@@ -174,15 +176,15 @@
   --transition-fast: var(--sf-duration-fast);
   --transition-normal: var(--sf-duration-normal);
   --transition-slow: var(--sf-duration-slow);
-  --yt-brand-gradient: linear-gradient(135deg, #2563EB 0%, #3B82F6 50%, #F59E0B 100%);
-  --yt-cta-gradient: linear-gradient(#3B82F6 0%, #2563EB 100%);  /* CTA 按钮渐变 (兼容旧名) */
-  --sf-cta-gradient: linear-gradient(#3B82F6 0%, #2563EB 100%); /* 5-P0 (UI 统一): 替代 --yt-cta-gradient */
-  --sf-brand-gradient: linear-gradient(135deg, #2563EB 0%, #3B82F6 50%, #F59E0B 100%); /* 5-P0 (UI 统一): 替代 --yt-brand-gradient */
-  --yt-bg-gradient: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 25%, #F8FAFC 100%);
-  --sf-bg-gradient: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 25%, #F8FAFC 100%); /* 5-P0 (UI 统一): 替代 --yt-bg-gradient */
-  --glass-bg: rgba(255, 255, 255, 0.9);
+  --yt-brand-gradient: linear-gradient(135deg, #2F3D35 0%, #4DA06C 50%, #F59E0B 100%);       /* Phase 23c: 贴对标 SV */
+  --yt-cta-gradient: linear-gradient(#4DA06C 0%, #3F8A5B 100%);                              /* Phase 23c: 对标 CTA 渐变 */
+  --sf-cta-gradient: linear-gradient(#4DA06C 0%, #3F8A5B 100%);                             /* Phase 23c: 对标 CTA 渐变 */
+  --sf-brand-gradient: linear-gradient(135deg, #2F3D35 0%, #4DA06C 50%, #F59E0B 100%);     /* Phase 23c: 对标 hero */
+  --yt-bg-gradient: linear-gradient(180deg, #FAFAF7 0%, #F5F5F0 25%, #FAFAF7 100%);          /* Phase 23c: 米白底 */
+  --sf-bg-gradient: linear-gradient(180deg, #FAFAF7 0%, #F5F5F0 25%, #FAFAF7 100%);          /* Phase 23c: 米白底 */
+  --glass-bg: rgba(246, 250, 245, 0.9);                                                     /* Phase 23c: 浅绿毛玻璃 */
   --glass-blur: blur(12px);
-  --glass-border: 1px solid rgba(37, 99, 235, 0.1);
+  --glass-border: 1px solid rgba(77, 160, 108, 0.12);                                       /* Phase 23c: 浅绿边 */
 
   /* ========== Admin 后台独立令牌 (P0 硬编码颜色变量化) ========== */
   --sf-admin-bg: #F5F7F5;            /* 后台底色(暖灰白) */
@@ -207,8 +209,8 @@
   --yt-bg-secondary: var(--color-bg-card);
   --yt-bg-tertiary: var(--color-bg-elevated);
   --yt-border: var(--color-border);
-  --yt-highlight-bg: rgba(37, 99, 235, 0.1);
-  --yt-highlight-border: rgba(37, 99, 235, 0.3);
+  --yt-highlight-bg: rgba(77, 160, 108, 0.1);                                  /* Phase 23c: 暗色模式浅绿高亮 */
+  --yt-highlight-border: rgba(77, 160, 108, 0.3);                                /* Phase 23c: 暗色模式浅绿边框 */
   /* 注: 不要在 .dark 下自我引用 --color-text-primary/secondary/border →
      CSS var() 解析降级到空。需要 dark 值直接在 .dark 写实际值。 */
   --color-text-tertiary: var(--color-text-muted);
@@ -219,12 +221,12 @@
   --color-bg-tertiary: var(--color-bg-elevated);
   --color-bg-hover: var(--color-bg-elevated);
   --color-bg-mask: rgba(0, 0, 0, 0.7);
-  --yt-brand-gradient: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+  --yt-brand-gradient: linear-gradient(135deg, #4DA06C 0%, #3F8A5B 100%);           /* Phase 23c: 暗色也贴对标 CTA 渐变 */
   --yt-bg-gradient: linear-gradient(180deg, #1a1a2e 0%, #252540 15%, #1a1a2e 100%);  /* P2: 暗色背景渐变 */
-  --sf-brand-gradient: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);  /* 5-P0 (UI 统一): 暗色 */
+  --sf-brand-gradient: linear-gradient(135deg, #4DA06C 0%, #3F8A5B 100%);            /* Phase 23c: 暗色也贴对标 */
   --sf-bg-gradient: linear-gradient(180deg, #1a1a2e 0%, #252540 15%, #1a1a2e 100%);  /* 5-P0 (UI 统一): 暗色 */
-  --glass-bg: rgba(37, 37, 64, 0.9);  /* P2: 暗色玻璃背景 */
-  --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+  --glass-bg: rgba(46, 46, 64, 0.9);  /* P2: 暗色玻璃背景 */
+  --glass-border: 1px solid rgba(77, 160, 108, 0.16);                                 /* Phase 23c: 暗色 mode 边框浅绿 */
 
   /* ========== Admin 后台暗色主题 ========== */
   --sf-admin-bg: #1a1a2e;            /* P2: 暗色后台底 */

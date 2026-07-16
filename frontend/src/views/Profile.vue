@@ -238,7 +238,7 @@ onMounted(() => {
 .profile-hero {
   margin-bottom: 24px;
   /* Phase 23b: 显式墨绿渐变 (原 var(--sf-cta-gradient) fallback 到蓝色,跟墨绿色调不一致) */
-  background: linear-gradient(135deg, #4DA06C 0%, #0F4C3A 100%);
+  background: linear-gradient(135deg, #4DA06C 0%, var(--color-brand) 100%);
   border-radius: var(--radius-lg);
   padding: 28px 32px;
   color: #fff;
@@ -342,8 +342,8 @@ onMounted(() => {
   height: 32px;
   margin: 0 auto 6px;
   border-radius: 8px;
-  background: rgba(15, 76, 58, 0.08);    /* 墨绿淡底 */
-  color: #0F4C3A;                          /* 显式墨绿,不依赖 --color-brand (仍是亮蓝) */
+  background: rgba(47, 61, 53, 0.08);    /* 墨绿淡底 */
+  color: var(--color-brand);                          /* 显式墨绿,不依赖 --color-brand (仍是亮蓝) */
 }
 .stat-icon--accent {
   background: rgba(245, 158, 11, 0.12);   /* 橙色淡底(连续学习用) */

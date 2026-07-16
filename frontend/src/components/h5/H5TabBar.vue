@@ -107,7 +107,7 @@ function onClick(item) {
 }
 
 .h5-tab-item.is-active {
-  color: var(--color-brand, #0F4C3A);
+  color: var(--color-brand, #2F3D35);
 }
 
 .h5-tab-label {

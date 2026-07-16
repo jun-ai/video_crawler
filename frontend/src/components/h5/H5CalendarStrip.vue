@@ -267,7 +267,7 @@ function onPick(d) {
 }
 
 .h5-cal-day.is-today .h5-cal-daylabel {
-  color: var(--color-brand, #0F4C3A);
+  color: var(--color-brand, #2F3D35);
   font-weight: 600;
 }
 

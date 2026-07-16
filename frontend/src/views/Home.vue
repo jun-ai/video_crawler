@@ -793,15 +793,27 @@ onMounted(async () => {
 }
 
 .home-container {
-  max-width: 1380px;
+  max-width: 1536px;       /* Phase 23b+1: 1440 视口几乎贴边 */
   margin: 0 auto;
   padding: 0 32px;
-  display: block;
+  /* Phase 23b+2: 改 grid 双栏让 stats-side 在左列 (我的学习) */
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 24px;
 }
 @media (max-width: 1100px) {
   .home-container {
     grid-template-columns: 280px 1fr;
     gap: 20px;
+  }
+}
+@media (max-width: 900px) {
+  .home-container {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .home-main {
+    grid-column: 1;       /* 单列时回到 col 1 */
   }
 }
 
@@ -988,27 +1000,37 @@ onMounted(async () => {
    改动: .stats-side 移出 .home-main 作为 .home-container direct child
    .home-container 用 grid 320+1fr, .home-main 现在只装 videos-side */
 .home-main {
-  margin-left: 344px;  /* 320 stats + 24 gap */
+  /* Phase 23b+1: sidebar 是 fixed 不占位, 不再让 margin-left:344 */
   min-width: 0;
   margin-bottom: 32px;
 }
 
-/* 左侧真正固定 - position: fixed 脱离所有 container, 永远不滚 */
+/* Phase 23b+2: 我的学习在 grid 流左列(非 fixed)
+   桌面 grid 320+1fr, stats-side 第 1 列, home-main 第 2 列 */
 .stats-side {
-  position: fixed;
-  top: 88px;
-  left: max(32px, calc(50vw - 690px + 32px));
+  grid-column: 1;
+  position: relative;
+  top: auto;
+  left: auto;
   width: 320px;
-  max-height: calc(100vh - 104px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: thin;
-  z-index: 10;
+  align-self: start;
   flex-shrink: 0;
+  max-height: none;
+  overflow: visible;
+}
+.home-main {
+  grid-column: 2;       /* Phase 23b+2: 显式占第 2 列,即使 stats-side 不渲染也固定位置 */
+  min-width: 0;
+  margin-bottom: 32px;
 }
 @media (max-width: 1100px) {
   .stats-side {
     width: 280px;
+  }
+}
+@media (max-width: 640px) {
+  .stats-side {
+    display: none;  /* 移动端走 H5 独立首页 */
   }
 }
 
@@ -1036,11 +1058,11 @@ onMounted(async () => {
   height: 30px;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0F4C3A, #1A6B52);
+  background: linear-gradient(135deg, var(--color-brand), #1A6B52);
   color: #fff;
   border-radius: 9px;
   flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(15, 76, 58, 0.2);
+  box-shadow: 0 2px 6px rgba(47, 61, 53, 0.2);
 }
 .panel-header-title {
   font-size: 15px;
@@ -1053,8 +1075,8 @@ onMounted(async () => {
   font-size: 11px;
   font-weight: 600;
   padding: 3px 9px;
-  background: rgba(15, 76, 58, 0.08);
-  color: #0F4C3A;
+  background: rgba(47, 61, 53, 0.08);
+  color: var(--color-brand);
   border-radius: 999px;
   letter-spacing: 0.3px;
 }
@@ -1103,10 +1125,10 @@ onMounted(async () => {
 }
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #0F4C3A 0%, #10B981 60%, #34D399 100%);
+  background: linear-gradient(90deg, var(--color-brand) 0%, #10B981 60%, #34D399 100%);
   border-radius: 999px;
   transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-  box-shadow: 0 0 0 1px rgba(15, 76, 58, 0.1), 0 0 12px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 0 1px rgba(47, 61, 53, 0.1), 0 0 12px rgba(16, 185, 129, 0.4);
   position: relative;
 }
 .progress-fill::after {
@@ -1126,7 +1148,7 @@ onMounted(async () => {
   font-size: 12px;
 }
 .progress-pct {
-  color: #0F4C3A;
+  color: var(--color-brand);
   font-weight: 700;
 }
 .progress-hint {
@@ -1164,7 +1186,7 @@ onMounted(async () => {
   border-radius: 8px;
   margin-bottom: 2px;
 }
-.qs-icon-total { background: rgba(15, 76, 58, 0.10); color: #0F4C3A; }
+.qs-icon-total { background: rgba(47, 61, 53, 0.10); color: var(--color-brand); }
 .qs-icon-unlearned { background: rgba(217, 119, 6, 0.10); color: #D97706; }
 .qs-icon-streak { background: rgba(239, 68, 68, 0.10); color: #EF4444; }
 .qs-value {
@@ -1269,10 +1291,10 @@ onMounted(async () => {
   font-weight: 700;
 }
 .cal-day.today {
-  background: linear-gradient(135deg, #0F4C3A, #10B981);
+  background: linear-gradient(135deg, var(--color-brand), #10B981);
   color: #fff;
   font-weight: 700;
-  box-shadow: 0 2px 6px rgba(15, 76, 58, 0.3);
+  box-shadow: 0 2px 6px rgba(47, 61, 53, 0.3);
 }
 
 /* ====== 继续学习 mini-card ====== */
@@ -1302,7 +1324,7 @@ onMounted(async () => {
   margin-bottom: 12px;
   color: var(--color-text-secondary);
 }
-.pc-head svg { color: #0F4C3A; }
+.pc-head svg { color: var(--color-brand); }
 .pc-title {
   font-size: 14px;
   font-weight: 700;
@@ -1314,8 +1336,8 @@ onMounted(async () => {
   font-size: 11px;
   font-weight: 600;
   padding: 2px 8px;
-  background: rgba(15, 76, 58, 0.08);
-  color: #0F4C3A;
+  background: rgba(47, 61, 53, 0.08);
+  color: var(--color-brand);
   border-radius: 999px;
 }
 .pc-list { display: flex; flex-direction: column; gap: 10px; }
@@ -1330,7 +1352,7 @@ onMounted(async () => {
   background: transparent;
 }
 .pc-item:hover {
-  background: rgba(15, 76, 58, 0.04);
+  background: rgba(47, 61, 53, 0.04);
   transform: translateX(2px);
 }
 .pc-cover {
@@ -1371,13 +1393,13 @@ onMounted(async () => {
 .pc-progress-track {
   flex: 1;
   height: 4px;
-  background: rgba(15, 76, 58, 0.08);
+  background: rgba(47, 61, 53, 0.08);
   border-radius: 2px;
   overflow: hidden;
 }
 .pc-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #0F4C3A, #10B981);
+  background: linear-gradient(90deg, var(--color-brand), #10B981);
   border-radius: 2px;
   transition: width 0.4s ease;
 }
@@ -1394,15 +1416,15 @@ onMounted(async () => {
   align-items: center;
   padding: 12px 14px;
   border-radius: 10px;
-  background: linear-gradient(135deg, rgba(15, 76, 58, 0.04), rgba(16, 185, 129, 0.04));
-  border: 1px dashed rgba(15, 76, 58, 0.18);
+  background: linear-gradient(135deg, rgba(47, 61, 53, 0.04), rgba(16, 185, 129, 0.04));
+  border: 1px dashed rgba(47, 61, 53, 0.18);
   cursor: pointer;
   transition: all 0.2s ease;
-  color: #0F4C3A;
+  color: var(--color-brand);
 }
 .pc-empty:hover {
-  background: linear-gradient(135deg, rgba(15, 76, 58, 0.08), rgba(16, 185, 129, 0.08));
-  border-color: rgba(15, 76, 58, 0.3);
+  background: linear-gradient(135deg, rgba(47, 61, 53, 0.08), rgba(16, 185, 129, 0.08));
+  border-color: rgba(47, 61, 53, 0.3);
 }
 .pc-empty-text { display: flex; flex-direction: column; gap: 2px; flex: 1; }
 .pc-empty-title { font-size: 13px; font-weight: 600; }

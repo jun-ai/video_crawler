@@ -51,19 +51,24 @@
 }
 
 @theme {
-  /* ========== 品牌色 (清新蓝系 — Phase 5) ========== */
-  --color-brand: #2563EB;            /* 主品牌色 — 亮蓝 */
-  --color-brand-hover: #1D4ED8;      /* 悬停 — 更深蓝 */
-  --color-brand-light: #93C5FD;      /* 浅蓝 — 文字背景 */
-  --color-brand-subtle: #EFF6FF;     /* 极浅蓝 — 高亮背景 */
+  /* ========== 品牌色 (草绿系 — Phase 23c 全贴对标 SpeakVlog 实测值) ==========
+     对标源: https://speakvlog.com/ (扒的实际 css)
+       主文字: rgb(47, 61, 53) = #2F3D35
+       主 CTA 渐变: rgb(77, 160, 108) → rgb(63, 138, 91) = #4DA06C → #3F8A5B
+       极浅底:    rgb(246, 250, 245) = #F6FAF5
+  */
+  --color-brand: #2F3D35;            /* 主品牌色 — 墨绿(SV 主文字实测) */
+  --color-brand-hover: #4DA06C;      /* 悬停 — 对标 CTA 渐变亮端(SV 实测 rgb 77,160,108) */
+  --color-brand-light: #E8F3EA;      /* 浅绿(SV 卡片底实测 rgb 232,243,234)*/
+  --color-brand-subtle: #F6FAF5;     /* 极浅绿(SV nav/footer 底实测 rgba 246,250,245)*/
 
-  /* ========== 品牌色 (亮色辅助 — Phase 5) ========== */
-  --color-brand-bright: #3B82F6;       /* 品牌亮蓝 — CTA 渐变用 */
-  --color-brand-bright-hover: #60A5FA; /* 亮蓝 hover / 渐变亮端 */
-  --color-bg-frosted: rgba(248, 250, 252, 0.85); /* 导航毛玻璃底 */
-  --color-bg-pale: #F5F9FF;           /* 极浅蓝背景 */
-  --color-bg-mint: #E0EFFC;           /* 淡蓝背景 */
-  --color-footer: #F0F6FF;            /* footer 底色 */
+  /* ========== 品牌色 (亮色辅助 — Phase 23c 贴对标) ========== */
+  --color-brand-bright: #4DA06C;       /* CTA 渐变亮端 — 对标 SV 实测 */
+  --color-brand-bright-hover: #3F8A5B; /* CTA 渐变深端 — 对标 SV 实测 */
+  --color-bg-frosted: rgba(246, 250, 245, 0.85); /* nav 毛玻璃 — 对标 SV 实测 */
+  --color-bg-pale: #F6FAF5;           /* 极浅绿背景 — 对标 SV section 底 */
+  --color-bg-mint: #E8F3EA;           /* 薄荷绿背景 — 对标 SV 卡片底 */
+  --color-footer: #F1F6EE;            /* footer 底色 — 对标 SV 实测 */
 
   /* ========== 强调色 (琥珀金 — Phase 5) ========== */
   --color-accent: #F59E0B;           /* 强调 — 琥珀金 */

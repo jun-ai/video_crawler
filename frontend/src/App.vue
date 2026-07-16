@@ -100,7 +100,7 @@
       </header>
 
       <!-- 主内容区 -->
-      <main class="app-main mt-16 px-6 max-w-[1440px] mx-auto">
+      <main class="app-main mt-16 px-6 max-w-[1536px] mx-auto">
         <router-view v-slot="{ Component }">
           <transition name="page-slide" mode="in-out">
             <component :is="Component" />
