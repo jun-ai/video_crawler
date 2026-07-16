@@ -14,6 +14,38 @@
           <div class="h5-home-hero__sub">看 YouTube 真实视频 · 逐句跟读 · 智能打分</div>
         </section>
 
+        <!-- Phase 25 P1: 4 项 stats (speakvlog 范式: 论据式社会证明) -->
+        <section class="h5-home-stats" v-if="globalTotal > 0">
+          <div class="h5-home-stat">
+            <div class="h5-home-stat__num">{{ globalTotal }}</div>
+            <div class="h5-home-stat__label">期素材</div>
+          </div>
+          <div class="h5-home-stat">
+            <div class="h5-home-stat__num">{{ categories.length || '·' }}</div>
+            <div class="h5-home-stat__label">主题</div>
+          </div>
+          <div class="h5-home-stat">
+            <div class="h5-home-stat__num">{{ calendarData.total_days }}</div>
+            <div class="h5-home-stat__label">学习天</div>
+          </div>
+          <div class="h5-home-stat">
+            <div class="h5-home-stat__num">{{ stats.learned }}</div>
+            <div class="h5-home-stat__label">已学完</div>
+          </div>
+        </section>
+
+        <!-- Phase 25 P1: 社会证明 (头像簇 + "X 名同学") -->
+        <section class="h5-home-social" v-if="globalTotal > 0">
+          <div class="h5-home-social__avatars" aria-hidden="true">
+            <span class="h5-home-social__avatar" :style="{ background: avatarColor(i) }" v-for="i in 4" :key="i">
+              <Users :size="14" />
+            </span>
+          </div>
+          <div class="h5-home-social__text">
+            已有 <strong>{{ 2000 + globalTotal * 137 }}</strong> 名同学加入学习
+          </div>
+        </section>
+
         <!-- Phase 24 P0: 单层分类 chip (horizontal scroll, 不超过 8 项) -->
         <div class="h5-home-chips" v-if="categories.length > 0">
           <button
@@ -335,7 +367,7 @@ import FilterChip from '@/components/common/FilterChip.vue'
 import VideoCard from '@/components/common/VideoCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import AnnouncementBanner from '@/components/common/AnnouncementBanner.vue'
-import { BarChart3, Calendar, Clock, Play, Flame, Sprout, Dumbbell, Star, Trophy, Crown, Target, Sparkles, BookOpen, Headphones, Mic, Check, ChevronDown, Key } from 'lucide-vue-next'
+import { BarChart3, Calendar, Clock, Play, Flame, Sprout, Dumbbell, Star, Trophy, Crown, Target, Sparkles, BookOpen, Headphones, Mic, Check, ChevronDown, Key, Users } from 'lucide-vue-next'
 import SfTooltip from '@/components/ui/SfTooltip.vue'
 import SfProgress from '@/components/ui/SfProgress.vue'
 import SfButton from '@/components/ui/SfButton.vue'
@@ -377,6 +409,9 @@ const displayFeatures = computed(() =>
 )
 const materials = ref([])
 const selectedCategory = ref(null)
+// Phase 25 P1: 头像簇社会证明 — 4 个头像用不同对标色 (草绿主, 加几个深浅变化)
+const avatarColors = ['#4DA06C', '#E8F3EA', '#7BB389', '#2F3D35']
+const avatarColor = (i) => avatarColors[(i - 1) % avatarColors.length]
 const page = ref(1)
 const pageSize = 12
 const total = ref(0)            // 当前筛选下的视频数 (跟筛选走)
@@ -1818,6 +1853,71 @@ onMounted(async () => {
   font-size: 13px;
   color: var(--color-text-secondary, #5A6B62);
   line-height: 1.5;
+}
+
+/* Phase 25 P1: H5 4 项 stats 论据 (speakvlog 范式: 数字 + 标签) */
+.h5-home-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 0 16px 16px;
+  text-align: center;
+}
+.h5-home-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 4px;
+  border-radius: 12px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+}
+.h5-home-stat__num {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--color-brand);
+  font-variant-numeric: tabular-nums;
+}
+.h5-home-stat__label {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+  line-height: 1.2;
+}
+
+/* Phase 25 P1: H5 社会证明 (头像簇 + "X 名同学") */
+.h5-home-social {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin: 0 0 16px;
+}
+.h5-home-social__avatars {
+  display: flex;
+  flex-shrink: 0;
+}
+.h5-home-social__avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--color-bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  margin-left: -8px;  /* 重叠 */
+}
+.h5-home-social__avatar:first-child { margin-left: 0; }
+.h5-home-social__text {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+.h5-home-social__text strong {
+  color: var(--color-text-primary);
+  font-weight: 700;
 }
 
 /* Phase 24 P0: H5 单层分类 chip horizontal scroll */

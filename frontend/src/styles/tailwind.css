@@ -69,7 +69,7 @@
   --color-brand-subtle: #F6FAF5;     /* 极浅绿(SV nav/footer 底实测) */
 
   /* ========== 品牌色 (亮色辅助 — Phase 23c 贴对标) ========== */
-  --color-brand-bright: #4DA06C;       /* CTA 渐变亮端 — 对标 SV 实测 */
+  --color-brand-bright: #5DBA80;       /* Phase 25 P1: 提亮一档让 brand-bright → brand 渐变有区分 (#4DA06C vs #5DBA80 30L 差) */
   --color-brand-bright-hover: #3F8A5B; /* CTA 渐变深端 — 对标 SV 实测 */
   --color-ink: #2F3D35;                /* 主文字墨绿 — 对标 SV 实测, 跟 brand 独立 */
 

@@ -25,20 +25,36 @@ Linyu 在此基础上加入 **琥珀金强调色** 和 **不对称布局**（AGE
 
 ## 配色 (Colors)
 
-### 主品牌色 (Brand) — 清新蓝系（Blue 绿同族更深）
+### 主品牌色 (Brand) — 草绿系（对标 SV 实测 + Phase 23c + 25）
 
-| Token | Hex | 用途 | Blue 参考 |
+| Token | Hex | 用途 | SV 对标实测 |
 |-------|-----|------|---------------|
-| `--color-brand` | `#2563EB` | 主品牌色，CTA 按钮、链接 | SV 主文字 #2F3D35（同族更深） |
-| `--color-brand-hover` | `#0A3A2D` | hover 态 | — |
-| `--color-brand-light` | `#93C5FD` | 文字背景 | — |
-| `--color-brand-subtle` | `#E8F0EB` | 高亮背景 / 选中态 | SV 浅绿 #E8F3EA（几乎一样） |
-| `--color-brand-bright` | `#3B82F6` | 品牌亮蓝（CTA 渐变用） | SV 品牌绿 #3B82F6（完全一致） |
-| `--color-brand-bright-hover` | `#60A5FA` | 亮绿 hover | SV 渐变亮端 #60A5FA |
+| `--color-brand` | `#4DA06C` | 主品牌色 = CTA 草绿（对标 SV CTA 实测 rgb 77,160,108） | 对标 CTA 渐变亮端 |
+| `--color-brand-hover` | `#3F8A5B` | hover 态（CTA 渐变深端，对标 rgb 63,138,91） | 对标 CTA 渐变深端 |
+| `--color-brand-light` | `#E8F3EA` | 浅绿（卡片底，rgb 232,243,234） | SV 卡片底实测 |
+| `--color-brand-subtle` | `#F6FAF5` | 极浅绿（nav/footer 底） | SV nav/footer 底实测 |
+| `--color-brand-bright` | `#5DBA80` | 品牌亮绿（Phase 25 P1：比 brand 亮一档，让 `bright → brand` 渐变有区分） | Phase 25 设计值 |
+| `--color-brand-bright-hover` | `#3F8A5B` | 亮绿 hover / 渐变深端 | 对标 SV 实测 |
+| `--color-ink` | `#2F3D35` | **主文字** 墨绿（对标 SV 实测 rgb 47,61,53；与 brand 独立） | SV 主文字实测 |
 | `--color-bg-frosted` | `rgba(246,250,245,0.85)` | 导航毛玻璃底 | SV 导航（直接借用） |
 | `--color-bg-pale` | `#F6FAF5` | 极浅绿背景 | SV section 背景 |
 | `--color-bg-mint` | `#E8F3EA` | 薄荷绿背景 | SV 卡片背景 |
 | `--color-footer` | `#F1F6EE` | footer 底色 | SV footer（直接借用） |
+
+### 文字色 — 文字层级分工（Phase 25 P1）
+
+> **关键**: `--color-brand`（草绿 CTA）与 `--color-ink`（墨绿主文字）**两条独立轨道**。
+> Phase 23c 错配时把 brand 设为墨绿，导致 shadcn Button `bg-primary` 跟随 brand 渲染成深墨绿闷色。
+> Phase 23c+1 修复后 brand = `#4DA06C` 草绿（CTA），`--color-ink` 新增 `#2F3D35` 墨绿（主文字）。
+
+| Token | Hex | 用途 | 何时用 |
+|-------|-----|------|--------|
+| `--color-ink` | `#2F3D35` | 主文字墨绿 | 营销 Hero / H5 头部 / 主标题强调（对标 SV 主文字色） |
+| `--color-text-primary` | `#1E293B` | 主文字 slate-800 | 默认正文（shadcn 默认，99% 页面文字） |
+| `--color-text-secondary` | `#64748B` | 次要文字 | 辅助说明 / meta |
+| `--color-text-muted` | `#94A3B8` | 弱化文字 | 注释 / 占位 |
+| `--color-text-quaternary` | `#CBD5E1` | 极致弱化 | 占位符 / disabled |
+| `--color-text-inverse` | `#FFFFFF` | 反色 | 暗背景上的文字 |
 
 ### 强调色 (Accent) — 琥珀金系（Linyu 独有，SV 没有这层）
 
@@ -243,8 +259,8 @@ box-shadow: var(--shadow-sm);
 ### Tag / Chip（药丸标签，借鉴 Blue）
 
 ```css
-background: #FFFFFF;               /* Blue 白底 */
-color: var(--color-text-primary);  /* #2F3D35 */
+background: #FFFFFF;               /* 白底 */
+color: var(--color-text-primary);  /* #1E293B slate-800 (Phase 25 P1: 文档同步) */
 border-radius: 999px;              /* 完全圆角 */
 padding: 8px 18px;
 font-size: 16px;
@@ -345,3 +361,7 @@ color: var(--color-text-primary);
 
 - **Phase 0 (2026-06-13)**：清新蓝 + 琥珀金 + Noto Sans SC，紫色彻底清除
 - **Phase 0+ (2026-06-14)**：Blue 借鉴升级 — 新增亮绿 token / 大字排版 / 药丸标签 / 渐变 CTA / 毛玻璃导航 / 步骤时间线 / FAQ 手风琴 / 统计数字组件
+- **Phase 23c (2026-07)**：品牌色实贴对标 SpeakVlog 实测（Playwright 扒的真实 CSS），错配 `--color-brand` = 主文字墨绿 `#2F3D35`
+- **Phase 23c+1**：修复 `--color-brand` 错位 = CTA 草绿 `#4DA06C`；新增 `--color-ink` = 主文字墨绿独立 var；"立即注册" CTA 从深墨绿 → 草绿
+- **Phase 24 (2026-07)**：品牌重塑 `Fluenty → Linyu` + AI 字眼清除 + H5 端 P0 改造（Header 双 CTA、TabBar 3-tab+FAB、Hero、分类 chips）+ 13 处墨绿半透底 → brand-subtle
+- **Phase 25 (2026-07) P1**：文档色板同步草绿 + 新增 `--color-ink` 章节 + `--color-brand-bright` `#4DA06C → #5DBA80` 让渐变有区分
