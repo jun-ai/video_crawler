@@ -2,6 +2,9 @@
 
 /* ========== shadcn-vue 变量 (映射到设计系统) ========== */
 :root {
+  /* Phase 23c+1: --primary 跟 --color-brand 走 (草绿 #4DA06C)
+     shadcn Button default 用 bg-primary, 之前 --color-brand=#2F3D35 让 CTA = 深墨绿闷.
+     现在 --color-brand=#4DA06C 草绿, --primary 自动跟 */
   --primary: var(--color-brand);
   --primary-foreground: #ffffff;
   --secondary: var(--color-bg-elevated);
@@ -51,16 +54,19 @@
 }
 
 @theme {
-  /* ========== 品牌色 (草绿系 — Phase 23c 全贴对标 SpeakVlog 实测值) ==========
+  /* ========== 品牌色 (草绿系 — Phase 23c+1 CTA 草绿, 文字独立 ink) ==========
      对标源: https://speakvlog.com/ (扒的实际 css)
-       主文字: rgb(47, 61, 53) = #2F3D35
-       主 CTA 渐变: rgb(77, 160, 108) → rgb(63, 138, 91) = #4DA06C → #3F8A5B
-       极浅底:    rgb(246, 250, 245) = #F6FAF5
+       主文字 (rgb 47,61,53)        = #2F3D35  --color-ink (新增, 独立于品牌)
+       主 CTA "会员购买" 渐变        rgb(77,160,108) → rgb(63,138,91) = #4DA06C → #3F8A5B
+       浅绿底 (rgb 232,243,234)     = #E8F3EA
+       极浅绿 (rgb 246,250,245)     = #F6FAF5
+     修 phase 23c 错位: --color-brand 之前错配 #2F3D35 主文字色,
+     导致 --primary / bg-primary (shadcn button default) = 深墨绿, "立即注册" 等按钮过闷.
   */
-  --color-brand: #2F3D35;            /* 主品牌色 — 墨绿(SV 主文字实测) */
-  --color-brand-hover: #4DA06C;      /* 悬停 — 对标 CTA 渐变亮端(SV 实测 rgb 77,160,108) */
-  --color-brand-light: #E8F3EA;      /* 浅绿(SV 卡片底实测 rgb 232,243,234)*/
-  --color-brand-subtle: #F6FAF5;     /* 极浅绿(SV nav/footer 底实测 rgba 246,250,245)*/
+  --color-brand: #4DA06C;            /* 主品牌色 = 对标 CTA 实测(草绿, 而非主文字) */
+  --color-brand-hover: #3F8A5B;      /* 悬停 — 对标 CTA 渐变深端 */
+  --color-brand-light: #E8F3EA;      /* 浅绿(SV 卡片底实测) */
+  --color-brand-subtle: #F6FAF5;     /* 极浅绿(SV nav/footer 底实测) */
 
   /* ========== 品牌色 (亮色辅助 — Phase 23c 贴对标) ========== */
   --color-brand-bright: #4DA06C;       /* CTA 渐变亮端 — 对标 SV 实测 */
