@@ -66,19 +66,7 @@
       </div>
     </div>
 
-    <!-- Phase 23b Task 4: 4-tab → 2-tab 后, 学习中心/卡片 入口搬到 Profile 菜单 -->
-    <div class="profile-menu">
-      <div class="menu-item" @click="$router.push('/learning-center')">
-        <BarChart3 :size="22" />
-        <span>学习中心</span>
-        <ArrowRight :size="16" class="menu-arrow" />
-      </div>
-      <div class="menu-item" @click="$router.push('/english-cards')">
-        <Layers :size="22" />
-        <span>卡片</span>
-        <ArrowRight :size="16" class="menu-arrow" />
-      </div>
-    </div>
+    <!-- Phase 26+6: 学习中心/卡片 菜单入口已删 (用户反馈 7-16: "我的里面的学习中心卡片都不要这2个") -->
 
     <!-- 退出登录 -->
     <div class="logout-section">
@@ -113,12 +101,9 @@ import { useRouter } from 'vue-router'
 import { toast } from '@/composables/useToast'
 import { showConfirm } from '@/composables/useConfirm'
 import {
-  ArrowRight,
-  BarChart3,
   BookOpen,
   CalendarDays,
   Flame,
-  Layers,
   Pencil
 } from 'lucide-vue-next'
 import SfDialog from '@/components/ui/SfDialog.vue'
