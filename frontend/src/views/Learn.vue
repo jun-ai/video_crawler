@@ -283,7 +283,7 @@
     <!-- 解读面板按钮 -->
     <button class="sf-interpretation-trigger" @click="interpretationSheetOpen = true" v-if="!loading">
       <BookOpen :size="18" />
-      <span>词汇解读</span>
+      <span>打开解读</span>
       <span class="sf-badge" v-if="interpretation.words?.length">{{ interpretation.words.length }}</span>
     </button>
 

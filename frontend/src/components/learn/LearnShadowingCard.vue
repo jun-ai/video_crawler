@@ -1,5 +1,16 @@
 <template>
-  <div class="sf-shadowing-card" v-if="currentSubtitle">
+  <!-- Phase 27: 始终渲染 — 没 currentSubtitle 时显示引导占位 (让用户一眼看到跟读功能入口) -->
+  <div class="sf-shadowing-card">
+    <!-- 空状态: 没选字幕时, 引导用户播放 -->
+    <div v-if="!currentSubtitle" class="sf-shadowing-card__empty">
+      <Mic :size="32" class="sf-shadowing-card__empty-icon" />
+      <div class="sf-shadowing-card__empty-title">跟读模式</div>
+      <div class="sf-shadowing-card__empty-desc">
+        点击播放视频开始跟读 · 每句对照原文录音模仿<br/>
+        支持 TTS 发音 / 发音评测 (按 R 键快速录音)
+      </div>
+    </div>
+    <template v-else>
     <div class="sf-shadowing-card__display">
       <!-- 头部信息 -->
       <div class="sf-shadowing-card__header">
@@ -158,6 +169,7 @@
         </div>
       </transition>
     </div>
+    </template>
   </div>
 </template>
 
@@ -680,6 +692,33 @@ const getScoreClass = (score) => {
     font-size: 12px;
     padding: 8px 12px;
   }
+}
+
+/* Phase 27: 空状态 (未选字幕时引导用户播放) */
+.sf-shadowing-card__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  text-align: center;
+  min-height: 160px;
+}
+.sf-shadowing-card__empty-icon {
+  color: var(--color-brand);
+  margin-bottom: 12px;
+  opacity: 0.7;
+}
+.sf-shadowing-card__empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 6px;
+}
+.sf-shadowing-card__empty-desc {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  line-height: 1.6;
 }
 
 /* (Phase 22: .kw-* 走 global.css, v-html 注入的 DOM 没有 data-v-hash 所以 scoped 不生效)

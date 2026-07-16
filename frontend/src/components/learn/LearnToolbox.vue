@@ -34,7 +34,7 @@
         </div>
         <div class="sf-stat-item__info">
           <span class="sf-stat-item__num">{{ vocabCount }}</span>
-          <span class="sf-stat-item__label">生词解读</span>
+          <span class="sf-stat-item__label">解读</span>
         </div>
       </button>
 
