@@ -2602,7 +2602,8 @@ onUnmounted(() => {
 /* ==================== 主内容区 ==================== */
 .sf-main-content {
   display: grid;
-  grid-template-columns: minmax(0, 2.6fr) minmax(0, 1fr) 200px;
+  /* Phase 28: 1.8fr 1.4fr 220px — 字幕中英对照需要宽度 (~470px), 工具箱略宽到 220 */
+  grid-template-columns: minmax(0, 1.8fr) minmax(0, 1.4fr) 220px;
   gap: 16px;
   align-items: start;
   animation: fadeSlideIn 0.3s var(--sf-easing-standard);
