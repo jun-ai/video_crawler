@@ -1,25 +1,14 @@
 <template>
   <div class="sf-toolbox">
-    <!-- 学习进度 -->
+    <!-- 学习进度 (Phase 28+2: 横条 — 原 148px 圆环 → ~60px 横条, 腾出空间给 stats/tips) -->
     <div class="sf-toolbox__progress">
-      <div class="sf-progress-ring">
-        <svg viewBox="0 0 80 80" class="sf-progress-ring__svg">
-          <circle class="sf-progress-ring__track" cx="40" cy="40" r="34" fill="none" stroke-width="6" />
-          <circle
-            class="sf-progress-ring__fill"
-            cx="40" cy="40" r="34" fill="none" stroke-width="6"
-            :stroke-dasharray="circumference"
-            :stroke-dashoffset="dashOffset"
-            stroke-linecap="round"
-            :transform="'rotate(-90 40 40)'"
-          />
-        </svg>
-        <div class="sf-progress-ring__text">
-          <span class="sf-progress-ring__num">{{ Math.round(learningProgress) }}</span>
-          <span class="sf-progress-ring__pct">%</span>
-        </div>
+      <div class="sf-toolbox__progress-head">
+        <span class="sf-toolbox__label">学习进度</span>
+        <span class="sf-toolbox__progress-num">{{ Math.round(learningProgress) }}%</span>
       </div>
-      <span class="sf-toolbox__label">学习进度</span>
+      <div class="sf-progress-bar">
+        <div class="sf-progress-bar__fill" :style="{ width: learningProgress + '%' }"></div>
+      </div>
     </div>
 
     <!-- 统计卡片 -->
@@ -94,7 +83,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { BookOpen, Star, Edit3, Sparkles, ChevronRight } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -109,11 +98,6 @@ const props = defineProps({
 defineEmits(['open-interpretation', 'scroll-to-bookmarks'])
 
 const activeStat = ref('vocab')
-
-const circumference = 2 * Math.PI * 34
-const dashOffset = computed(() => {
-  return circumference - (props.learningProgress / 100) * circumference
-})
 </script>
 
 <style scoped>
@@ -125,15 +109,14 @@ const dashOffset = computed(() => {
   top: 16px;
 }
 
-/* 进度环 */
+/* 进度条 (Phase 28+2: 圆环 → 横条, 卡从 148px 降到 ~70px) */
 .sf-toolbox__progress {
   background: var(--color-brand, #2563EB);
-  border-radius: 16px;
-  padding: 20px;
+  border-radius: 12px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 10px;
+  gap: 8px;
   position: relative;
   overflow: hidden;
 }
@@ -142,48 +125,43 @@ const dashOffset = computed(() => {
   position: absolute;
   top: -20px;
   right: -20px;
-  width: 80px;
-  height: 80px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   background: rgba(255,255,255,0.06);
 }
 
-.sf-progress-ring {
-  position: relative;
-  width: 80px;
-  height: 80px;
-}
-.sf-progress-ring__svg {
-  width: 100%;
-  height: 100%;
-}
-.sf-progress-ring__track {
-  stroke: rgba(255,255,255,0.25);
-}
-.sf-progress-ring__fill {
-  /* Phase 28+1: 改纯白 + 1.2px shadow, 0% 时描边也跟深绿背景有强对比
-     (原 var(--color-brand-bright) 在 phase 23 墨绿后跟背景色接近, 0% 完全看不见) */
-  stroke: #fff;
-  filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.6));
-  transition: stroke-dashoffset var(--sf-duration-slower) ease;
-}
-.sf-progress-ring__text {
-  position: absolute;
-  inset: 0;
+.sf-toolbox__progress-head {
   display: flex;
   align-items: baseline;
-  justify-content: center;
-  color: #fff;
+  justify-content: space-between;
+  gap: 8px;
 }
-.sf-progress-ring__num {
-  font-size: 24px;
+
+.sf-toolbox__progress-num {
+  font-size: 18px;
   font-weight: 800;
+  color: #fff;
   font-family: 'Inter', sans-serif;
+  line-height: 1;
 }
-.sf-progress-ring__pct {
-  font-size: 12px;
-  opacity: 0.6;
-  margin-left: 1px;
+
+.sf-progress-bar {
+  position: relative;
+  height: 6px;
+  background: rgba(255,255,255,0.18);
+  border-radius: var(--radius-full, 999px);
+  overflow: hidden;
+}
+.sf-progress-bar__fill {
+  /* Phase 28+2: content-box + 父容器 border-box, width % 严格按父 content 算
+     (原本 border-box 跟 bar 的 9999px radius + box-sizing 互相影响, 渲染 100% 实为 ~88%) */
+  box-sizing: content-box;
+  height: 100%;
+  background: #fff;
+  border-radius: var(--radius-full, 999px);
+  transition: width var(--sf-duration-slower, 0.4s) ease;
+  box-shadow: 0 0 6px rgba(255,255,255,0.5);
 }
 
 .sf-toolbox__label {
