@@ -8,68 +8,6 @@
       <div class="home-h5-block" v-if="isMobileView">
         <H5Header />
 
-        <!-- Phase 24 P0: H5 Hero banner (轻量, 不堆功能清单) -->
-        <section class="h5-home-hero">
-          <div class="h5-home-hero__title">365 天<br>一起开口说英语</div>
-          <div class="h5-home-hero__sub">看 YouTube 真实视频 · 逐句跟读 · 智能打分</div>
-        </section>
-
-        <!-- Phase 25 P1: 4 项 stats (speakvlog 范式: 论据式社会证明) -->
-        <section class="h5-home-stats" v-if="globalTotal > 0">
-          <div class="h5-home-stat">
-            <div class="h5-home-stat__num">{{ globalTotal }}</div>
-            <div class="h5-home-stat__label">期素材</div>
-          </div>
-          <div class="h5-home-stat">
-            <div class="h5-home-stat__num">{{ categories.length || '·' }}</div>
-            <div class="h5-home-stat__label">主题</div>
-          </div>
-          <div class="h5-home-stat">
-            <div class="h5-home-stat__num">{{ calendarData.total_days }}</div>
-            <div class="h5-home-stat__label">学习天</div>
-          </div>
-          <div class="h5-home-stat">
-            <div class="h5-home-stat__num">{{ stats.learned }}</div>
-            <div class="h5-home-stat__label">已学完</div>
-          </div>
-        </section>
-
-        <!-- Phase 25 P1: 社会证明 (头像簇 + "X 名同学") -->
-        <section class="h5-home-social" v-if="globalTotal > 0">
-          <div class="h5-home-social__avatars" aria-hidden="true">
-            <span class="h5-home-social__avatar" :style="{ background: avatarColor(i) }" v-for="i in 4" :key="i">
-              <Users :size="14" />
-            </span>
-          </div>
-          <div class="h5-home-social__text">
-            已有 <strong>{{ 2000 + globalTotal * 137 }}</strong> 名同学加入学习
-          </div>
-        </section>
-
-        <!-- Phase 25 P2-C: H5 月历 mini streak 7 天条 (替代 phase 23b 砍掉的整块月历) -->
-        <section class="h5-home-streak" v-if="calendarData.streak > 0 || calendarData.total_days > 0">
-          <div class="h5-home-streak__head">
-            <div class="h5-home-streak__icon"><Flame :size="16" /></div>
-            <div class="h5-home-streak__text">
-              <strong>{{ calendarData.streak || 0 }}</strong> 天连续 ·
-              <span>共 {{ calendarData.total_days || 0 }} 天</span>
-            </div>
-          </div>
-          <div class="h5-home-streak__week">
-            <div
-              v-for="(day, idx) in streakWeekDays"
-              :key="idx"
-              :class="['h5-home-streak__day', {
-                'is-today': day.isToday,
-                'is-active': day.active
-              }]"
-            >
-              <div class="h5-home-streak__daylabel">{{ day.label }}</div>
-              <div class="h5-home-streak__daynum">{{ day.day }}</div>
-            </div>
-          </div>
-        </section>
-
         <!-- Phase 24 P0: 单层分类 chip (horizontal scroll, 不超过 8 项) -->
         <div class="h5-home-chips" v-if="categories.length > 0">
           <button
@@ -81,19 +19,6 @@
             {{ getCategoryLabel(cat.name) }}
           </button>
         </div>
-
-        <!-- Phase 25 P2-A: 6 项功能介绍 2 列 grid (speakvlog 12 项简化版) -->
-        <section class="h5-home-features">
-          <div class="h5-home-features__title">核心功能</div>
-          <div class="h5-home-features__grid">
-            <div v-for="(item, idx) in secondaryFeatures.slice(0, 6)" :key="idx" class="h5-home-feature">
-              <div class="h5-home-feature__icon">
-                <Check :size="16" />
-              </div>
-              <div class="h5-home-feature__text">{{ item.title }}</div>
-            </div>
-          </div>
-        </section>
 
         <!-- 视频流卡片列表 -->
         <div class="h5-home-list" v-loading="loading">
@@ -465,9 +390,6 @@ const streakWeekDays = computed(() => {
 
 const materials = ref([])
 const selectedCategory = ref(null)
-// Phase 25 P1: 头像簇社会证明 — 4 个头像用不同对标色 (草绿主, 加几个深浅变化)
-const avatarColors = ['#4DA06C', '#E8F3EA', '#7BB389', '#2F3D35']
-const avatarColor = (i) => avatarColors[(i - 1) % avatarColors.length]
 const page = ref(1)
 const pageSize = 12
 const total = ref(0)            // 当前筛选下的视频数 (跟筛选走)
@@ -1867,10 +1789,7 @@ onMounted(async () => {
     padding: 0 !important;
     gap: 0 !important;
     /* Phase 25 P2-B: H5 整页 mint 渐变底色 (对标 speakvlog 范式;
-       Vision 反馈略加深让品牌感更强) */
-    background: linear-gradient(180deg, #FFFFFF 0%, #E8F5EE 50%, #D4ECDD 100%);
-    min-height: 100vh;
-  }
+       Vision 反馈略加深让品牌感更强) */  }
 }
 
 /* 标题区 */
@@ -1916,35 +1835,7 @@ onMounted(async () => {
 }
 
 /* Phase 25 P1: H5 4 项 stats 论据 (speakvlog 范式: 数字 + 标签) */
-.h5-home-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  padding: 0 16px 16px;
-  text-align: center;
-}
-.h5-home-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 12px 4px;
-  border-radius: 12px;
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-}
-.h5-home-stat__num {
-  font-size: 22px;
-  font-weight: 800;
-  line-height: 1.1;
-  color: var(--color-brand);
-  font-variant-numeric: tabular-nums;
-}
-.h5-home-stat__label {
-  font-size: 11px;
-  color: var(--color-text-secondary);
-  margin-top: 4px;
-  line-height: 1.2;
-}
+
 
 /* Phase 25 P1: H5 社会证明 (头像簇 + "X 名同学") */
 .h5-home-social {
@@ -2009,122 +1900,11 @@ onMounted(async () => {
   color: #fff;
   border-color: var(--color-brand);
 }
-
-/* Phase 25 P2-A: 6 项功能介绍 2 列 grid */
-.h5-home-features {
-  padding: 20px 16px 8px;
-  background: var(--color-bg-card);
-  margin: 0 16px 16px;
-  border-radius: 16px;
-  border: 1px solid var(--color-border);
-}
-.h5-home-features__title {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin-bottom: 12px;
-}
-.h5-home-features__grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px 12px;
-}
 .h5-home-feature {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 6px 0;
-}
-.h5-home-feature__icon {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--color-brand-subtle);
-  color: var(--color-brand);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.h5-home-feature__text {
-  font-size: 13px;
-  color: var(--color-text-primary);
-  line-height: 1.4;
-}
-
-/* Phase 25 P2-C: H5 月历 mini streak 7 天条 */
-.h5-home-streak {
-  margin: 0 16px 16px;
-  padding: 14px 16px;
-  background: var(--color-bg-card);
-  border-radius: 14px;
-  border: 1px solid var(--color-border);
-}
-.h5-home-streak__head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-.h5-home-streak__icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #F59E0B 0%, #F97316 100%);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.h5-home-streak__text {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-}
-.h5-home-streak__text strong {
-  color: #F97316;
-  font-weight: 700;
-}
-.h5-home-streak__week {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-}
-.h5-home-streak__day {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 8px 2px;
-  border-radius: 10px;
-  background: var(--color-bg-pale);
-  border: 1px solid transparent;
-}
-.h5-home-streak__day.is-active {
-  background: var(--color-brand-subtle);
-  border-color: var(--color-brand-light);
-}
-.h5-home-streak__day.is-today {
-  border-color: var(--color-brand);
-  background: var(--color-brand-subtle);
-}
-.h5-home-streak__daylabel {
-  font-size: 10px;
-  color: var(--color-text-muted);
-  line-height: 1;
-}
-.h5-home-streak__day.is-today .h5-home-streak__daylabel {
-  color: var(--color-brand);
-  font-weight: 700;
-}
-.h5-home-streak__daynum {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin-top: 4px;
-  line-height: 1;
-}
-.h5-home-streak__day.is-active .h5-home-streak__daynum {
-  color: var(--color-brand);
 }
 
 /* 单列视频卡片流 */

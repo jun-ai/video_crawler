@@ -504,12 +504,15 @@
           </button>
           <!-- Phase 9: 智能解读 移到视频下 sticky bar (1-tap), 此处只显示说明, 已生成时变 "查看解读" -->
           <button
-            :class="['sf-more-opt']"
+            :class="['sf-more-opt', 'sf-more-opt--primary', { 'is-generating': isGenerating }]"
             @click="handleAiAction"
-            v-if="hasInterpretation"
+            :disabled="isGenerating"
           >
-            <span class="sf-more-label">查看 智能解读</span>
-            <span class="sf-more-check">✓</span>
+            <BookOpen :size="16" />
+            <span class="sf-more-label">
+              {{ isGenerating ? '正在分析视频...' : (hasInterpretation ? '查看 智能解读' : '智能解读 视频') }}
+            </span>
+            <span v-if="hasInterpretation && !isGenerating" class="sf-more-check">✓</span>
           </button>
         </div>
       </SheetContent>
@@ -660,7 +663,7 @@ const toggleAutoScroll = () => {
   toast.success(autoScroll.value ? '自动滚动已开启' : '自动滚动已关闭')
 }
 
-// Phase 9 (H5): AI 操作条按钮: 有解读 → 打开解读 sheet, 无 → 调 LLM 生成
+// Phase 9 (H5): 智能解读操作按钮: 有解读 → 打开解读 sheet, 无 → 调 LLM 生成
 const handleAiAction = () => {
   if (isGenerating.value) return
   if (hasInterpretation.value) {
@@ -3083,6 +3086,22 @@ onUnmounted(() => {
   text-align: left;
 }
 .sf-more-opt:active { transform: scale(0.98); }
+/* Phase 26: primary 样式 — 智能解读按钮突出, 草绿底白字 */
+.sf-more-opt--primary {
+  background: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-hover) 100%);
+  border-color: var(--color-brand);
+  box-shadow: 0 4px 14px rgba(77, 160, 108, 0.3);
+}
+.sf-more-opt--primary:hover { box-shadow: 0 6px 18px rgba(77, 160, 108, 0.4); }
+.sf-more-opt--primary .sf-more-label {
+  color: #fff !important;
+  font-weight: 600;
+}
+.sf-more-opt--primary .sf-more-check { color: rgba(255, 255, 255, 0.9); }
+.sf-more-opt--primary.is-generating {
+  opacity: 0.75;
+  cursor: wait;
+}
 .sf-more-opt.active {
   background: var(--color-brand);
   border-color: var(--color-brand);

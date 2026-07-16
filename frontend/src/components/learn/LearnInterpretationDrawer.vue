@@ -31,17 +31,15 @@
 
     <!-- Tab 导航: H5 横向滚动 + 桌面平铺 -->
     <div class="sf-tabs sf-tabs--scrollable">
+      <!-- Phase 26: 4 tabs → 3 tabs (合并 grammar + idioms → "表达") -->
       <button class="sf-tabs__item" :class="{ active: tab === 'words' }" @click="$emit('update:tab', 'words')">
         单词 <span class="sf-tabs__count">{{ data.words.length }}</span>
       </button>
       <button class="sf-tabs__item" :class="{ active: tab === 'phrases' }" @click="$emit('update:tab', 'phrases')">
         短语 <span class="sf-tabs__count">{{ data.phrases.length }}</span>
       </button>
-      <button class="sf-tabs__item" :class="{ active: tab === 'grammar' }" @click="$emit('update:tab', 'grammar')">
-        地道表达 <span class="sf-tabs__count">{{ data.grammar.length }}</span>
-      </button>
-      <button class="sf-tabs__item" :class="{ active: tab === 'idioms' }" @click="$emit('update:tab', 'idioms')">
-        习语 <span class="sf-tabs__count">{{ data.idioms.length }}</span>
+      <button class="sf-tabs__item" :class="{ active: tab === 'expressions' }" @click="$emit('update:tab', 'expressions')">
+        表达 <span class="sf-tabs__count">{{ (data.grammar?.length || 0) + (data.idioms?.length || 0) }}</span>
       </button>
     </div>
 
@@ -246,80 +244,8 @@
             </div>
           </template>
 
-          <!-- 地道表达卡片 -->
-          <template v-if="tab === 'grammar'">
-            <div v-for="item in filteredItems" :key="item.id" :class="['sf-interp-card', getStatusClass(item.id)]">
-              <div class="sf-interp-card__main" @click="toggleExpand(item.id)">
-                <div :class="['sf-interp-card__status-bar', getStatusBarClass(item.id)]"></div>
-                <div class="sf-interp-card__body">
-                  <div class="sf-interp-card__row sf-interp-card__row--primary">
-                    <div class="sf-interp-card__word" @click.stop="$emit('interpretation-click', item)">
-                      <span class="sf-interp-card__word-text">{{ item.content_en }}</span>
-                      <Headphones class="sf-interp-card__speak" :size="13" />
-                    </div>
-                    <span :class="['sf-badge', 'sf-badge--' + getStatusType(item.id)]">
-                      {{ getStatusText(item.id) }}
-                    </span>
-                  </div>
-                  <div class="sf-interp-card__row sf-interp-card__row--meta">
-                    <span v-if="item.phonetic" class="sf-interp-card__phonetic">{{ item.phonetic }}</span>
-                    <span :class="['sf-difficulty-tag', 'sf-difficulty-tag--' + (item.difficulty || 1)]">
-                      {{ getDifficultyLabel(item.difficulty) }}
-                    </span>
-                  </div>
-                  <div v-if="!hideCn && item.content_cn" class="sf-interp-card__row sf-interp-card__row--cn">
-                    <span class="sf-interp-card__cn">{{ item.content_cn }}</span>
-                  </div>
-                </div>
-                <div class="sf-interp-card__chevron">
-                  <ChevronDown :size="16" :class="{ rotated: isExpanded(item.id) }" />
-                </div>
-              </div>
-
-              <div v-if="isExpanded(item.id)" class="sf-interp-card__details">
-                <div v-if="item.context_sentence" class="sf-detail-item sf-detail-item--clickable" @click="$emit('interpretation-click', item)">
-                  <div class="sf-detail-item__label">字幕原文</div>
-                  <div class="sf-detail-item__text sf-detail-item__text--clickable">{{ item.context_sentence }}</div>
-                </div>
-                <div v-if="!hideCn && item.context_translation" class="sf-detail-item">
-                  <div class="sf-detail-item__label">中文翻译</div>
-                  <div class="sf-detail-item__text">{{ item.context_translation }}</div>
-                </div>
-                <div v-if="item.explanation || item.structure_analysis || item.similar_expressions || item.usage_scenario || item.alternative_phrasings" class="sf-detail-item">
-                  <div class="sf-detail-item__label">表达分析</div>
-                  <div v-if="item.explanation" class="sf-detail-item__text">{{ item.explanation }}</div>
-                  <div v-if="item.structure_analysis" class="sf-detail-item__text">
-                    <span class="sf-detail-item__tag">结构：</span>{{ item.structure_analysis }}
-                  </div>
-                  <div v-if="item.similar_expressions" class="sf-detail-item__text">
-                    <span class="sf-detail-item__tag">举一反三：</span>{{ item.similar_expressions }}
-                  </div>
-                  <div v-if="item.usage_scenario" class="sf-detail-item__text">
-                    <span class="sf-detail-item__tag">场景：</span>{{ item.usage_scenario }}
-                  </div>
-                  <div v-if="item.alternative_phrasings" class="sf-detail-item__text">
-                    <span class="sf-detail-item__tag">相似表达：</span>{{ item.alternative_phrasings }}
-                  </div>
-                </div>
-                <div v-if="item.example_sentence" class="sf-detail-item sf-detail-item--clickable" @click="$emit('interpretation-click', item)">
-                  <div class="sf-detail-item__label">例句</div>
-                  <div class="sf-detail-item__text sf-detail-item__text--clickable">{{ item.example_sentence }}</div>
-                </div>
-                <div class="sf-detail-item sf-detail-item--actions">
-                  <button class="sf-btn sf-btn--primary sf-btn--sm" @click.stop="$emit('add-vocabulary', item)">
-                    <Plus :size="14" /> 加入生词本
-                  </button>
-                  <div class="sf-status-toggle">
-                    <button :class="['sf-status-btn', { active: getStatus(item.id) === 'known' }]" @click.stop="$emit('set-status', item.id, 'known')">认识</button>
-                    <button :class="['sf-status-btn', 'sf-status-btn--danger', { active: getStatus(item.id) === 'unknown' }]" @click.stop="$emit('set-status', item.id, 'unknown')">不认识</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </template>
-
-          <!-- 习语卡片 -->
-          <template v-if="tab === 'idioms'">
+          <!-- 地道表达卡片 (Phase 26: 合并 grammar + idioms, 1 个 tab 自适应两种字段) -->
+          <template v-if="tab === 'expressions'">
             <div v-for="item in filteredItems" :key="item.id" :class="['sf-interp-card', getStatusClass(item.id)]">
               <div class="sf-interp-card__main" @click="toggleExpand(item.id)">
                 <div :class="['sf-interp-card__status-bar', getStatusBarClass(item.id)]"></div>
@@ -350,12 +276,35 @@
 
               <div v-if="isExpanded(item.id)" class="sf-interp-card__details">
                 <div v-if="item.explanation" class="sf-detail-item">
-                  <div class="sf-detail-item__label">含义</div>
+                  <div class="sf-detail-item__label">{{ item.cultural_background ? '含义' : '表达分析' }}</div>
                   <div class="sf-detail-item__text">{{ item.explanation }}</div>
                 </div>
+                <!-- idioms 专属: 文化背景 -->
                 <div v-if="!hideCn && item.cultural_background" class="sf-detail-item">
                   <div class="sf-detail-item__label">文化背景</div>
                   <div class="sf-detail-item__text">{{ item.cultural_background }}</div>
+                </div>
+                <!-- grammar 专属: 结构/举一反三/场景/相似 -->
+                <div v-if="item.structure_analysis" class="sf-detail-item">
+                  <div class="sf-detail-item__label">表达分析</div>
+                  <div class="sf-detail-item__text">
+                    <span class="sf-detail-item__tag">结构：</span>{{ item.structure_analysis }}
+                  </div>
+                </div>
+                <div v-if="item.similar_expressions" class="sf-detail-item">
+                  <div class="sf-detail-item__text">
+                    <span class="sf-detail-item__tag">举一反三：</span>{{ item.similar_expressions }}
+                  </div>
+                </div>
+                <div v-if="item.usage_scenario" class="sf-detail-item">
+                  <div class="sf-detail-item__text">
+                    <span class="sf-detail-item__tag">场景：</span>{{ item.usage_scenario }}
+                  </div>
+                </div>
+                <div v-if="item.alternative_phrasings" class="sf-detail-item">
+                  <div class="sf-detail-item__text">
+                    <span class="sf-detail-item__tag">相似表达：</span>{{ item.alternative_phrasings }}
+                  </div>
                 </div>
                 <div v-if="item.context_sentence" class="sf-detail-item sf-detail-item--clickable" @click="$emit('interpretation-click', item)">
                   <div class="sf-detail-item__label">字幕原文</div>
@@ -364,21 +313,6 @@
                 <div v-if="!hideCn && item.context_translation" class="sf-detail-item">
                   <div class="sf-detail-item__label">中文翻译</div>
                   <div class="sf-detail-item__text">{{ item.context_translation }}</div>
-                </div>
-                <div v-if="item.structure_analysis || item.similar_expressions || item.usage_scenario || item.alternative_phrasings" class="sf-detail-item">
-                  <div class="sf-detail-item__label">表达分析</div>
-                  <div v-if="item.structure_analysis" class="sf-detail-item__text">
-                    <span class="sf-detail-item__tag">结构：</span>{{ item.structure_analysis }}
-                  </div>
-                  <div v-if="item.similar_expressions" class="sf-detail-item__text">
-                    <span class="sf-detail-item__tag">举一反三：</span>{{ item.similar_expressions }}
-                  </div>
-                  <div v-if="item.usage_scenario" class="sf-detail-item__text">
-                    <span class="sf-detail-item__tag">场景：</span>{{ item.usage_scenario }}
-                  </div>
-                  <div v-if="item.alternative_phrasings" class="sf-detail-item__text">
-                    <span class="sf-detail-item__tag">相似表达：</span>{{ item.alternative_phrasings }}
-                  </div>
                 </div>
                 <div v-if="item.example_sentence" class="sf-detail-item sf-detail-item--clickable" @click="$emit('interpretation-click', item)">
                   <div class="sf-detail-item__label">例句</div>
@@ -449,8 +383,19 @@ const hasData = computed(() =>
   props.data.grammar.length > 0 || props.data.idioms.length > 0
 )
 
+// Phase 26: 3 tabs 模式 (单词 / 短语 / 表达) - 表达合并原 grammar + idioms
+const tabItems = computed(() => {
+  if (props.tab === 'expressions') {
+    return [
+      ...(props.data.grammar || []),
+      ...(props.data.idioms || [])
+    ]
+  }
+  return props.data[props.tab] || []
+})
+
 const filterCounts = computed(() => {
-  const items = props.data[props.tab] || []
+  const items = tabItems.value
   const counts = { all: items.length, unmarked: 0, known: 0, unknown: 0 }
   items.forEach(item => {
     const status = props.learningStatus[item.id]
@@ -469,7 +414,7 @@ const filterOptions = [
 ]
 
 const filteredItems = computed(() => {
-  const items = props.data[props.tab] || []
+  const items = tabItems.value
   if (props.filter === 'all') return items
   return items.filter(item => {
     if (props.filter === 'unmarked') return !props.learningStatus[item.id]
@@ -922,7 +867,7 @@ const getStatusBarClass = (id) => {
 }
 .sf-interp-card__word:hover { background: var(--sf-brand-subtle); }
 .sf-interp-card__word-text {
-  font-size: 18px;
+  font-size: 20px;        /* Phase 26: 单词更大突出 (从 18px) */
   font-weight: 700;
   color: var(--color-text-primary);
   letter-spacing: -0.3px;
@@ -963,9 +908,9 @@ const getStatusBarClass = (id) => {
 }
 .sf-badge:hover { filter: brightness(0.92); }
 
-/* 元数据 */
+/* 元数据 — Phase 26: 缩小不重要的, 单词视觉权重最大 */
 .sf-interp-card__phonetic {
-  font-size: 12px;
+  font-size: 11px;        /* 从 12px → 11px */
   color: var(--color-text-muted);
   font-style: italic;
   font-family: var(--sf-font-mono);
