@@ -1,11 +1,7 @@
 <!--
-  H5TabBar — Phase 24 P0: 恢复 3-tab (首页 / 学习 / 我的) + 中间 FAB 跳 Learn
-  对标 SpeakVlog 极简底栏: 内容驱动 + 个人入口
-  设计原则:
-  - 3 个 tab 等分宽度, 中间 FAB 一键跳 /learn (上次看过的视频继续)
-  - 激活态: 文字加粗 + 草绿 + 顶部小绿条
-  - 默认隐藏 (桌面), 通过 @media 控制
-  - 高度: 56px + iOS safe-area bottom padding
+  H5TabBar — Phase 24 P0: 恢复 3-tab (首页 / 学习 / 我的) + 中间 FAB 跳视频库
+  设计: FAB 默认跳 /materials (视频库 — 不会空白, H5 用户最自然的下一步入口),
+        进入任意视频后由 /materials 跳转 /learn/:id
 -->
 <template>
   <nav class="h5-tab-bar" aria-label="主导航">
@@ -29,15 +25,16 @@
 <script setup>
 import { useRoute, useRouter } from 'vue-router'
 import { computed } from 'vue'
-import { Home, BookOpen, UserCheck } from 'lucide-vue-next'
+import { Home, PlayCircle, UserCheck } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
 
-// Phase 24 P0: 恢复 3-tab (首页 / 学习 / 我的), 中间 FAB 跳上次看过的
+// Phase 26+1: 中间 FAB 跳 /materials (视频库, 不会空白; 用户选视频后进 Learn)
+//         而非 /learn/:id 需 ID 参数, 没参数时空白
 const items = computed(() => [
   { path: '/', label: '首页', icon: Home },
-  { path: '/learn', label: '', icon: BookOpen, fab: true },  // 中间 FAB (跳转最后看过)
+  { path: '/materials', label: '', icon: PlayCircle, fab: true },  // FAB → 视频库 (无空白, 一视频可进 Learn)
   { path: '/profile', label: '我的', icon: UserCheck },
 ])
 
