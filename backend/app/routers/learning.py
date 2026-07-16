@@ -214,6 +214,20 @@ async def add_vocabulary(
             detail="单词不能为空"
         )
 
+    # 5-P2-11: word 字段 DB 限制 String(100), 超过截断 (前端有时把整句当 word 传)
+    # 优先保留前 100 字符作为一个完整词 (按空格分词, 取首段)
+    if len(word_lower) > 100:
+        # 按空白切, 取首段; 如果首段还超长, 硬截
+        first_token = word_lower.split(maxsplit=1)[0]
+        if len(first_token) > 100:
+            word_lower = word_lower[:100]
+        else:
+            word_lower = first_token
+        # 同样截断原 word 用于去重 (strip 后跟 word_lower 走)
+        data_word_trimmed = word_lower
+    else:
+        data_word_trimmed = data.word.strip()
+
     # 查重 (同一用户, word 大小写不敏感)
     existing_query = select(Vocabulary).where(
         Vocabulary.user_id == current_user.id,
@@ -237,7 +251,7 @@ async def add_vocabulary(
     # 不存在: 创建新词
     vocabulary = Vocabulary(
         user_id=current_user.id,
-        word=data.word.strip(),
+        word=data_word_trimmed,
         context=data.context,
         material_id=data.material_id,
         subtitle_id=data.subtitle_id
