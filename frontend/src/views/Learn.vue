@@ -297,20 +297,8 @@
     <div class="sf-toolbox-overlay" v-if="showToolboxDrawer" @click="showToolboxDrawer = false"></div>
 
     <!-- Phase 1B Task 2 + Phase 2 (H5): 移动端 5-icon 工具栏 (SpeakVlog 规范: 字幕/倍速/闪卡/收藏/练习) -->
-    <!-- Phase 8: 拆 2 行 — 次行 2-icon (循环+更多) + 主行 5-icon, 单次显示当前 play mode -->
+    <!-- Phase 26: 删 secondary 行 (单次/更多 单独行), 5 个按钮合并 1 行 — 消除"不上不下" -->
     <div class="sf-mobile-tabs-wrap" v-if="!loading">
-      <nav class="sf-mobile-tabs sf-mobile-tabs--secondary">
-        <button
-          v-for="tab in mobileTabsSecondary"
-          :key="tab.key"
-          :class="['sf-mobile-tab', 'sf-mobile-tab--compact', { active: isMobileTabActive(tab.key) }]"
-          @click="setMobileTab(tab.key)"
-          :aria-label="tab.label"
-        >
-          <component :is="tab.icon" :size="16" />
-          <span class="sf-mobile-tab-label">{{ tab.label }}</span>
-        </button>
-      </nav>
       <nav class="sf-mobile-tabs sf-mobile-tabs--primary">
         <button
           v-for="tab in mobileTabs"
@@ -684,33 +672,32 @@ const dictationIndex = ref(0)  // 听写模式当前索引
 // Phase 8: 顶部 play mode + 更多 整合成次行 2-icon (循环/更多), 主行不变
 const mobileActiveTab = ref(null)  // null = 默认视图
 
-// Phase 8: 次行 (循环 + 更多) — 紧凑样式, 显示当前 play mode 在 label
-const mobileTabsSecondary = computed(() => [
-  { key: 'playMode', label: playModeShortLabel.value, icon: Repeat, action: 'openPlayMode' },
-  { key: 'more',     label: '更多',                   icon: MoreHorizontal, action: 'openMore' }
-])
+// Phase 26: playMode 短 label (跟随播放模式)
 const playModeShortLabel = computed(() => ({
   single: '单次', 'single-loop': '循环', continuous: '连续', 'sentence-loop': '单句'
 }[playMode.value] || '单次'))
 
-// Phase 15: 砍掉闪卡 (H5 砍掉生词本, 闪卡目标页 /vocabulary-review 屏蔽, 按钮失效)
-const mobileTabs = [
-  { key: 'subtitle',     label: '字幕', icon: Type,      action: 'openSubtitleSettings' },
-  { key: 'playbackRate', label: '倍速', icon: Gauge,     action: 'openPlaybackRate' },
-  { key: 'practice',     label: '练习', icon: PencilLine, action: 'openPracticePage' }
-]
+// Phase 26: 删 secondary 行, 5 个按钮合并 1 行 (单次 / 更多 / 字幕 / 倍速 / 练习)
+//   - playMode (单次) 放在最左, 用 computed 跟 playMode.value 联动
+//   - 更多 排第 2 位, 走 setMobileTab('more') → 弹 showMoreSheet
+//   - 主行原 3 个 (subtitle/playbackRate/practice) 保留
+const mobileTabs = computed(() => [
+  { key: 'playMode',    label: playModeShortLabel.value, icon: Repeat,    action: 'openPlayMode' },
+  { key: 'more',        label: '更多',                   icon: MoreHorizontal, action: 'openMore' },
+  { key: 'subtitle',    label: '字幕',                   icon: Type,      action: 'openSubtitleSettings' },
+  { key: 'playbackRate',label: '倍速',                   icon: Gauge,     action: 'openPlaybackRate' },
+  { key: 'practice',    label: '练习',                   icon: PencilLine, action: 'openPracticePage' },
+])
 
 const setMobileTab = (key) => {
-  // 先查次行
-  const sec = mobileTabsSecondary.value.find(t => t.key === key)
-  if (sec) { handleSecAction(sec.action); return }
-  // 再查主行
-  const tab = mobileTabs.find(t => t.key === key)
+  const tab = mobileTabs.value.find(t => t.key === key)
   if (!tab) return
   switch (tab.action) {
+    case 'openPlayMode':         showPlayModeSheet.value = true; break
+    case 'openMore':            showMoreSheet.value = true; break
     case 'openSubtitleSettings': showSubtitleSettings.value = true; break
-    case 'openPlaybackRate':     showPlaybackRateSheet.value = true; break
-    case 'openPracticePage':     openPracticePage(); break
+    case 'openPlaybackRate':    showPlaybackRateSheet.value = true; break
+    case 'openPracticePage':    openPracticePage(); break
   }
 }
 
@@ -3571,14 +3558,9 @@ onUnmounted(() => {
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
-  /* Phase 8: 次行 2-icon (循环+更多) — 紧凑, 浅色背景区分 */
-  .sf-mobile-tabs--secondary {
-    height: 40px;
-    background: var(--color-bg-elevated, #f8f8fa);
-    border-bottom: 1px solid var(--color-border);
-  }
+  /* Phase 26: sf-mobile-tabs-wrap 现在只有 1 行 (5 按钮合并) — 高度 56px 紧凑 */
   .sf-mobile-tabs--primary {
-    height: 64px;
+    height: 56px;
   }
   .sf-mobile-tab {
     flex: 1;
