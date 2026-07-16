@@ -3705,11 +3705,18 @@ onUnmounted(() => {
 <!-- Phase 10: Sheet 用 Teleport 渲染到 body, 不在 Learn.vue DOM 树内, scoped [data-v-hash] 不命中
      放非 scoped <style> 块: 直接匹配 .sf-interpretation-sheet -->
 <style>
-.sf-interpretation-sheet {
+.sf-interpretation-sheet,
+.sf-subtitle-settings-sheet,
+.sf-playmode-sheet,
+.sf-practice-sheet,
+.sf-playbackrate-sheet,
+.sf-more-sheet,
+.sf-toolbox-sheet {
   z-index: 250; /* 提到 toolbar (200) 之上, 避免被遮 */
 }
-.sf-interpretation-sheet [data-dismissable-layer] > button[class*="absolute"][class*="right-4"][class*="top-4"] {
-  /* Phase 11: 隐藏 shadcn 默认的 16px X (opacity 0.7 看不见), Drawer 自带大 X */
+/* Phase 26+5: 隐藏 shadcn SheetContent 默认 X (16px opacity 0.7, 几乎看不见)
+   通用: 任何 sf-*-sheet 都不需要默认 X, 我们用显式大 X 或 drag handle */
+[class*="-sheet"] button[class*="absolute"][class*="right-4"][class*="top-4"] {
   display: none !important;
 }
 
