@@ -46,6 +46,30 @@
           </div>
         </section>
 
+        <!-- Phase 25 P2-C: H5 月历 mini streak 7 天条 (替代 phase 23b 砍掉的整块月历) -->
+        <section class="h5-home-streak" v-if="calendarData.streak > 0 || calendarData.total_days > 0">
+          <div class="h5-home-streak__head">
+            <div class="h5-home-streak__icon"><Flame :size="16" /></div>
+            <div class="h5-home-streak__text">
+              <strong>{{ calendarData.streak || 0 }}</strong> 天连续 ·
+              <span>共 {{ calendarData.total_days || 0 }} 天</span>
+            </div>
+          </div>
+          <div class="h5-home-streak__week">
+            <div
+              v-for="(day, idx) in streakWeekDays"
+              :key="idx"
+              :class="['h5-home-streak__day', {
+                'is-today': day.isToday,
+                'is-active': day.active
+              }]"
+            >
+              <div class="h5-home-streak__daylabel">{{ day.label }}</div>
+              <div class="h5-home-streak__daynum">{{ day.day }}</div>
+            </div>
+          </div>
+        </section>
+
         <!-- Phase 24 P0: 单层分类 chip (horizontal scroll, 不超过 8 项) -->
         <div class="h5-home-chips" v-if="categories.length > 0">
           <button
@@ -57,6 +81,19 @@
             {{ getCategoryLabel(cat.name) }}
           </button>
         </div>
+
+        <!-- Phase 25 P2-A: 6 项功能介绍 2 列 grid (speakvlog 12 项简化版) -->
+        <section class="h5-home-features">
+          <div class="h5-home-features__title">核心功能</div>
+          <div class="h5-home-features__grid">
+            <div v-for="(item, idx) in secondaryFeatures.slice(0, 6)" :key="idx" class="h5-home-feature">
+              <div class="h5-home-feature__icon">
+                <Check :size="16" />
+              </div>
+              <div class="h5-home-feature__text">{{ item.title }}</div>
+            </div>
+          </div>
+        </section>
 
         <!-- 视频流卡片列表 -->
         <div class="h5-home-list" v-loading="loading">
@@ -407,6 +444,25 @@ const showAllFeatures = ref(false)
 const displayFeatures = computed(() =>
   showAllFeatures.value ? secondaryFeatures : secondaryFeatures.slice(0, 4)
 )
+// Phase 25 P2-C: 7 天 streak 条数据 (基于学习日期 + today)
+const streakWeekDays = computed(() => {
+  const days = []
+  const today = new Date()
+  const labels = ['日', '一', '二', '三', '四', '五', '六']
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today)
+    d.setDate(today.getDate() - i)
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    days.push({
+      label: labels[d.getDay()],
+      day: d.getDate(),
+      isToday: i === 0,
+      active: learningDates.value.has(dateStr)
+    })
+  }
+  return days
+})
+
 const materials = ref([])
 const selectedCategory = ref(null)
 // Phase 25 P1: 头像簇社会证明 — 4 个头像用不同对标色 (草绿主, 加几个深浅变化)
@@ -1810,6 +1866,10 @@ onMounted(async () => {
     max-width: 100% !important;
     padding: 0 !important;
     gap: 0 !important;
+    /* Phase 25 P2-B: H5 整页 mint 渐变底色 (对标 speakvlog 范式;
+       Vision 反馈略加深让品牌感更强) */
+    background: linear-gradient(180deg, #FFFFFF 0%, #E8F5EE 50%, #D4ECDD 100%);
+    min-height: 100vh;
   }
 }
 
@@ -1950,6 +2010,123 @@ onMounted(async () => {
   border-color: var(--color-brand);
 }
 
+/* Phase 25 P2-A: 6 项功能介绍 2 列 grid */
+.h5-home-features {
+  padding: 20px 16px 8px;
+  background: var(--color-bg-card);
+  margin: 0 16px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--color-border);
+}
+.h5-home-features__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 12px;
+}
+.h5-home-features__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+}
+.h5-home-feature {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+.h5-home-feature__icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-brand-subtle);
+  color: var(--color-brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.h5-home-feature__text {
+  font-size: 13px;
+  color: var(--color-text-primary);
+  line-height: 1.4;
+}
+
+/* Phase 25 P2-C: H5 月历 mini streak 7 天条 */
+.h5-home-streak {
+  margin: 0 16px 16px;
+  padding: 14px 16px;
+  background: var(--color-bg-card);
+  border-radius: 14px;
+  border: 1px solid var(--color-border);
+}
+.h5-home-streak__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.h5-home-streak__icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #F59E0B 0%, #F97316 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.h5-home-streak__text {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.h5-home-streak__text strong {
+  color: #F97316;
+  font-weight: 700;
+}
+.h5-home-streak__week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.h5-home-streak__day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 2px;
+  border-radius: 10px;
+  background: var(--color-bg-pale);
+  border: 1px solid transparent;
+}
+.h5-home-streak__day.is-active {
+  background: var(--color-brand-subtle);
+  border-color: var(--color-brand-light);
+}
+.h5-home-streak__day.is-today {
+  border-color: var(--color-brand);
+  background: var(--color-brand-subtle);
+}
+.h5-home-streak__daylabel {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  line-height: 1;
+}
+.h5-home-streak__day.is-today .h5-home-streak__daylabel {
+  color: var(--color-brand);
+  font-weight: 700;
+}
+.h5-home-streak__daynum {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-top: 4px;
+  line-height: 1;
+}
+.h5-home-streak__day.is-active .h5-home-streak__daynum {
+  color: var(--color-brand);
+}
+
 /* 单列视频卡片流 */
 .h5-home-list {
   display: flex;
@@ -2020,11 +2197,12 @@ onMounted(async () => {
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
 }
-.h5-home-card__diff[data-diff="1"] { background: rgba(16, 185, 129, 0.15); color: #047857; }
-.h5-home-card__diff[data-diff="2"] { background: rgba(59, 130, 246, 0.15); color: #1D4ED8; }
-.h5-home-card__diff[data-diff="3"] { background: rgba(245, 158, 11, 0.15); color: #B45309; }
-.h5-home-card__diff[data-diff="4"] { background: rgba(239, 68, 68, 0.15); color: #B91C1C; }
-.h5-home-card__diff[data-diff="5"] { background: rgba(14, 165, 233, 0.15); color: #0369A1; }
+/* Phase 25 P2-D: 难度 chip 5 色 → 3 组 (初级/中级/高级), 视觉一致 */
+.h5-home-card__diff[data-diff="1"] { background: rgba(77, 160, 108, 0.15); color: #2F3D35; }     /* 初级 - 草绿底 + 墨绿字 */
+.h5-home-card__diff[data-diff="2"] { background: rgba(245, 158, 11, 0.15); color: #B45309; }   /* 中级 - 琥珀 */
+.h5-home-card__diff[data-diff="3"] { background: rgba(245, 158, 11, 0.15); color: #B45309; }   /* 中级 - 琥珀 */
+.h5-home-card__diff[data-diff="4"] { background: rgba(220, 38, 38, 0.12); color: #B91C1C; }    /* 高级 - 红 */
+.h5-home-card__diff[data-diff="5"] { background: rgba(220, 38, 38, 0.12); color: #B91C1C; }    /* 高级 - 红 */
 
 .h5-home-card__body {
   padding: 12px 14px 14px;
