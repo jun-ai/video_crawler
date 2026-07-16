@@ -8,7 +8,25 @@
       <div class="home-h5-block" v-if="isMobileView">
         <H5Header />
 
-        <!-- 视频流卡片列表 (无月历, 无双层 chip, 纯内容) -->
+        <!-- Phase 24 P0: H5 Hero banner (轻量, 不堆功能清单) -->
+        <section class="h5-home-hero">
+          <div class="h5-home-hero__title">365 天<br>一起开口说英语</div>
+          <div class="h5-home-hero__sub">看 YouTube 真实视频 · 逐句跟读 · 智能打分</div>
+        </section>
+
+        <!-- Phase 24 P0: 单层分类 chip (horizontal scroll, 不超过 8 项) -->
+        <div class="h5-home-chips" v-if="categories.length > 0">
+          <button
+            v-for="cat in categories.slice(0, 8)"
+            :key="cat.name"
+            :class="['h5-home-chip', { 'is-active': selectedCategory === cat.name }]"
+            @click="selectCategory(cat.name)"
+          >
+            {{ getCategoryLabel(cat.name) }}
+          </button>
+        </div>
+
+        <!-- 视频流卡片列表 -->
         <div class="h5-home-list" v-loading="loading">
           <article
             v-for="item in h5ListVideos"
@@ -337,7 +355,7 @@ const categories = ref([])
 // 4 核心功能 — 大卡片(差异化:图标+标题+描述)
 const coreFeatures = [
   { title: '真实视频语料', desc: '海外 YouTube / TED 精选，不是课本录音', icon: Play },
-  { title: 'AI 智能解读', desc: '逐句翻译 + 重点词组 + 语法标注', icon: Sparkles },
+  { title: '智能解读', desc: '逐句翻译 + 重点词组 + 语法标注', icon: Sparkles },
   { title: '字幕跟读练习', desc: '影子跟读 + 语速调节 + 发音反馈', icon: Headphones },
   { title: '间隔重复复习', desc: '艾宾浩斯曲线，学过就不会忘', icon: Target }
 ]
@@ -348,7 +366,7 @@ const secondaryFeatures = [
   { title: '学习数据统计' },
   { title: '移动端友好' },
   { title: '收藏夹整理' },
-  { title: '跟读 AI 打分' },
+  { title: '跟读 智能打分' },
   { title: '永久云端保存' },
   { title: '免费体验' }
 ]
@@ -1075,7 +1093,7 @@ onMounted(async () => {
   font-size: 11px;
   font-weight: 600;
   padding: 3px 9px;
-  background: rgba(47, 61, 53, 0.08);
+  background: var(--color-brand-subtle)  /* Phase 24 was rgba(47,61,53,0.08) */;
   color: var(--color-brand);
   border-radius: 999px;
   letter-spacing: 0.3px;
@@ -1186,7 +1204,7 @@ onMounted(async () => {
   border-radius: 8px;
   margin-bottom: 2px;
 }
-.qs-icon-total { background: rgba(47, 61, 53, 0.10); color: var(--color-brand); }
+.qs-icon-total { background: var(--color-brand-subtle)  /* Phase 24 was rgba(47,61,53,0.10) */; color: var(--color-brand); }
 .qs-icon-unlearned { background: rgba(217, 119, 6, 0.10); color: #D97706; }
 .qs-icon-streak { background: rgba(239, 68, 68, 0.10); color: #EF4444; }
 .qs-value {
@@ -1336,7 +1354,7 @@ onMounted(async () => {
   font-size: 11px;
   font-weight: 600;
   padding: 2px 8px;
-  background: rgba(47, 61, 53, 0.08);
+  background: var(--color-brand-subtle)  /* Phase 24 was rgba(47,61,53,0.08) */;
   color: var(--color-brand);
   border-radius: 999px;
 }
@@ -1352,7 +1370,7 @@ onMounted(async () => {
   background: transparent;
 }
 .pc-item:hover {
-  background: rgba(47, 61, 53, 0.04);
+  background: var(--color-brand-subtle)  /* Phase 24 was rgba(47,61,53,0.04) */;
   transform: translateX(2px);
 }
 .pc-cover {
@@ -1393,7 +1411,7 @@ onMounted(async () => {
 .pc-progress-track {
   flex: 1;
   height: 4px;
-  background: rgba(47, 61, 53, 0.08);
+  background: var(--color-brand-subtle)  /* Phase 24 was rgba(47,61,53,0.08) */;
   border-radius: 2px;
   overflow: hidden;
 }
@@ -1778,6 +1796,58 @@ onMounted(async () => {
   font-size: 12px;
   color: var(--color-text-muted, #94A3B8);
   font-weight: 500;
+}
+
+/* Phase 24 P0: H5 Hero banner — 简洁文字引导 + 草绿底纹 */
+.h5-home-hero {
+  padding: 24px 20px 20px;
+  margin: 0 16px 16px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--color-brand-subtle) 0%, #E8F3EA 100%);
+  border: 1px solid var(--color-brand-light);
+}
+.h5-home-hero__title {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--color-brand);
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
+}
+.h5-home-hero__sub {
+  font-size: 13px;
+  color: var(--color-text-secondary, #5A6B62);
+  line-height: 1.5;
+}
+
+/* Phase 24 P0: H5 单层分类 chip horizontal scroll */
+.h5-home-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 0 16px 16px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.h5-home-chips::-webkit-scrollbar { display: none; }
+.h5-home-chip {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 9999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 150ms ease;
+  white-space: nowrap;
+}
+.h5-home-chip:active { transform: scale(0.96); }
+.h5-home-chip.is-active {
+  background: var(--color-brand);
+  color: #fff;
+  border-color: var(--color-brand);
 }
 
 /* 单列视频卡片流 */

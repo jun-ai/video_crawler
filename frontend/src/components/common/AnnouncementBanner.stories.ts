@@ -117,7 +117,7 @@ export const Update: Story = {
         id: 4,
         type: 'update',
         title: '新功能上线',
-        content: 'v2.3.0 发布：新增 AI 字幕生成、跨设备同步、暗色模式。'
+        content: 'v2.3.0 发布：新增 智能字幕生成、跨设备同步、暗色模式。'
       })
       return {}
     },

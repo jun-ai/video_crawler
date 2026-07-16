@@ -2,7 +2,7 @@
   <div class="showcase">
     <PageHeader
       title="Sf* 组件展示"
-      description="Fluenty 前端设计系统 · 所有 UI 组件的可视化参考(P3 阶段)"
+      description="Linyu 前端设计系统 · 所有 UI 组件的可视化参考(P3 阶段)"
     />
 
     <!-- 主题切换 -->

@@ -63,7 +63,7 @@
       </div>
     </div>
 
-    <!-- AI 解读 CTA -->
+    <!-- 智能解读 CTA -->
     <button
       class="sf-toolbox__ai-btn"
       :class="{ generating: isGenerating }"
@@ -71,7 +71,7 @@
       :disabled="isGenerating"
     >
       <Sparkles :size="16" />
-      <span>{{ isGenerating ? 'AI 分析中...' : (hasInterpretation ? '查看词汇解读' : 'AI 智能解读') }}</span>
+      <span>{{ isGenerating ? '智能分析中...' : (hasInterpretation ? '查看词汇解读' : '智能解读') }}</span>
       <ChevronRight v-if="!isGenerating" :size="14" />
     </button>
 

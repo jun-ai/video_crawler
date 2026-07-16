@@ -38,7 +38,7 @@
         </div>
         <div class="mode-info">
           <h3>跟读</h3>
-          <p>看字幕跟读模仿，AI 评分发音</p>
+          <p>看字幕跟读模仿，智能评分发音</p>
         </div>
         <ChevronRight :size="20" class="mode-arrow" />
       </div>
@@ -152,7 +152,7 @@ const startPractice = (mode) => {
   line-height: 1.5;
 }
 .empty-emoji-icon {
-  color: var(--color-brand, #10B981);
+  color: var(--color-brand);
 }
 
 .practice-modes {
@@ -180,8 +180,8 @@ const startPractice = (mode) => {
   -webkit-tap-highlight-color: transparent;
 }
 .mode-card:hover {
-  border-color: var(--color-brand, #10B981);
-  background: var(--color-brand-subtle, #E8F0EB);
+  border-color: var(--color-brand);
+  background: var(--color-brand);
   transform: translateY(-1px);
 }
 .mode-card:active {
@@ -191,8 +191,8 @@ const startPractice = (mode) => {
   flex-shrink: 0;
   width: 48px;
   height: 48px;
-  background: var(--color-brand-subtle, #E8F0EB);
-  color: var(--color-brand, #10B981);
+  background: var(--color-brand);
+  color: var(--color-brand);
   border-radius: 12px;
   display: flex;
   align-items: center;

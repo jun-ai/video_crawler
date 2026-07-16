@@ -1,4 +1,4 @@
-# Fluenty 前端设计规范 (P3 设计令牌文档)
+# Linyu 前端设计规范 (P3 设计令牌文档)
 
 > 阶段: P0-P3 全部完成 (2026-06-19)
 > 维护者: 前端团队
@@ -201,7 +201,7 @@ import { BookOpen, Target, Lightbulb } from 'lucide-vue-next'
 **常用图标速查**:
 - 学习:`BookOpen`, `GraduationCap`, `Library`
 - 视频:`Play`, `Pause`, `Video`, `Headphones`
-- AI 解读:`Sparkles`, `Lightbulb`, `Wand2`
+- 智能解读:`Sparkles`, `Lightbulb`, `Wand2`
 - 跟读:`Mic`, `Crosshair`(发音问题)
 - 收藏:`Bookmark`, `Star`, `Heart`
 - 状态:`Check`, `X`, `AlertCircle`, `Info`

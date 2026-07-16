@@ -1,6 +1,6 @@
-# Fluenty Design System
+# Linyu Design System
 
-> Fluenty/video_crawler 项目的设计系统索引。所有 UI 组件、Design Token、视觉规范的可视化文档。
+> Linyu/video_crawler 项目的设计系统索引。所有 UI 组件、Design Token、视觉规范的可视化文档。
 
 ## 在线访问
 

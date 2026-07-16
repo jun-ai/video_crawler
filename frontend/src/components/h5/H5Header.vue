@@ -26,7 +26,7 @@
         <div class="h5-header-logo">
           <GraduationCap :size="18" :stroke-width="2.4" />
         </div>
-        <span class="h5-header-brand-text">fluenty</span>
+        <span class="h5-header-brand-text">Linyu</span>
       </div>
 
       <!-- 中: 标题 (有 title 或 default slot 时优先) -->
@@ -37,6 +37,11 @@
       <!-- 右: 右侧操作插槽 + 历史/筛选 icon -->
       <div class="h5-header-actions">
         <slot name="actions" />
+        <!-- Phase 24 P0: 登录 + 会员 CTA (speakvlog 范式), 已登录态隐藏 -->
+        <template v-if="!isLoggedIn">
+          <button class="h5-header-cta h5-header-cta--ghost" aria-label="登录" @click="$router.push('/login')">登录</button>
+          <button class="h5-header-cta h5-header-cta--primary" aria-label="会员" @click="$router.push('/pricing')">会员</button>
+        </template>
         <button v-if="showFilter" class="h5-header-btn" aria-label="历史" @click="$emit('filter')">
           <Clock :size="20" />
         </button>
@@ -48,6 +53,7 @@
 <script setup>
 import { ArrowLeft, GraduationCap, Menu, Clock } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
 
 const router = useRouter()
 
@@ -59,6 +65,12 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['back', 'menu', 'filter'])
+
+// Phase 24 P0: 登录态判断 (简单从 localStorage 读 token, 不依赖 user store 避免循环)
+const isLoggedIn = ref(false)
+onMounted(() => {
+  try { isLoggedIn.value = !!localStorage.getItem('token') } catch {}
+})
 
 function onBack() {
   emit('back')
@@ -154,7 +166,33 @@ function goHome() {
 .h5-header-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   flex-shrink: 0;
 }
+
+/* Phase 24 P0: 登录 + 会员 CTA pill */
+.h5-header-cta {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 120ms ease;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+.h5-header-cta:active { transform: scale(0.97); }
+.h5-header-cta--ghost {
+  background: transparent;
+  color: var(--color-text-primary);
+  border-color: rgba(15, 23, 42, 0.12);
+}
+.h5-header-cta--ghost:hover { border-color: var(--color-brand); color: var(--color-brand); }
+.h5-header-cta--primary {
+  background: var(--color-brand);
+  color: #fff;
+  border-color: var(--color-brand);
+}
+.h5-header-cta--primary:hover { background: var(--color-brand-hover); border-color: var(--color-brand-hover); }
 </style>

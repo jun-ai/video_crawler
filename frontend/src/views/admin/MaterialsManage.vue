@@ -176,7 +176,7 @@
                   <FileText :size="14" /><span>重新转字幕</span>
                 </div>
                 <div class="menu-item" @click="doReinterpret(row)">
-                  <Sparkles :size="14" /><span>重新 AI 解读</span>
+                  <Sparkles :size="14" /><span>重新 智能解读</span>
                 </div>
                 <div class="menu-divider"></div>
                 <div class="menu-item" @click="triggerReplaceSubtitle(row)">
@@ -290,7 +290,7 @@
           <span>{{ ossModal.row.view_count }}</span>
         </div>
         <div class="oss-row">
-          <span class="oss-label">AI 解读</span>
+          <span class="oss-label">智能解读</span>
           <SfTag :type="interpretationStatusType(ossModal.row.interpretation_status)" size="sm">
             {{ ossModal.row.interpretation_status || 'pending' }}
           </SfTag>
@@ -698,10 +698,10 @@ const doRetranscribe = async (row) => {
 }
 
 const doReinterpret = async (row) => {
-  if (!confirm(`确定要重新生成「${row.title}」的 AI 解读?\n会清空现有解读并重新生成,过程约 1-2 分钟。`)) return
+  if (!confirm(`确定要重新生成「${row.title}」的 智能解读?\n会清空现有解读并重新生成,过程约 1-2 分钟。`)) return
   try {
     await adminAPI.reinterpret(row.id)
-    toast.success('已重新触发 AI 解读')
+    toast.success('已重新触发 智能解读')
   } catch (e) {
     toast.error('启动失败')
   }
@@ -724,7 +724,7 @@ const handleReplaceSubtitle = async (event) => {
     toast.error('请上传 .srt 或 .vtt 文件')
     return
   }
-  if (!confirm(`确定替换「${row.title}」的字幕?\n\n旧字幕的标注/书签会清空, 生词记录会保留 (不再关联旧字幕)。\n后台会自动重新翻译 + 生成 AI 解读,过程约 1-2 分钟。`)) return
+  if (!confirm(`确定替换「${row.title}」的字幕?\n\n旧字幕的标注/书签会清空, 生词记录会保留 (不再关联旧字幕)。\n后台会自动重新翻译 + 生成 智能解读,过程约 1-2 分钟。`)) return
   try {
     const res = await adminAPI.replaceSubtitle(row.id, file)
     toast.success(res.message || '字幕已替换')

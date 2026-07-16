@@ -13,7 +13,7 @@
                 <path d="M12 3L1 9l11 6 9-4.91V17h2V9M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/>
               </svg>
             </div>
-            <span class="text-lg font-bold tracking-tight hidden md:block" style="color: var(--color-text-primary)">Fluenty</span>
+            <span class="text-lg font-bold tracking-tight hidden md:block" style="color: var(--color-text-primary)">Linyu</span>
           </div>
 
           <!-- 水平导航 -->
@@ -116,7 +116,7 @@
               <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
                 <path d="M12 3L1 9l11 6 9-4.91V17h2V9M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/>
               </svg>
-              <span>Fluenty</span>
+              <span>Linyu</span>
             </div>
             <p class="app-footer-tagline">看视频学英语，每天 10 分钟。</p>
           </div>
@@ -142,7 +142,7 @@
           </div>
         </div>
         <div class="app-footer-bottom">
-          <span>© 2026 Fluenty · 看视频学英语</span>
+          <span>© 2026 Linyu · 看视频学英语</span>
           <span class="app-footer-icp">浙ICP备 2025xxxxxx 号</span>
         </div>
       </footer>

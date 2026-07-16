@@ -77,19 +77,19 @@ const routes = [
     path: '/terms',
     name: 'Terms',
     component: () => import('@/views/Terms.vue'),
-    meta: { title: '用户协议 - Fluenty' }
+    meta: { title: '用户协议 - Linyu' }
   },
   {
     path: '/privacy',
     name: 'Privacy',
     component: () => import('@/views/Privacy.vue'),
-    meta: { title: '隐私政策 - Fluenty' }
+    meta: { title: '隐私政策 - Linyu' }
   },
   {
     path: '/refund',
     name: 'Refund',
     component: () => import('@/views/Refund.vue'),
-    meta: { title: '退换政策 - Fluenty' }
+    meta: { title: '退换政策 - Linyu' }
   },
   // P3 组件展示页(开发环境,生产可保留)
   {
@@ -194,7 +194,7 @@ router.afterEach((to) => {
   if (to.meta.title) {
     document.title = to.meta.title
   } else {
-    document.title = 'Fluenty — 英语口语学习'
+    document.title = 'Linyu — 英语口语学习'
   }
 })
 

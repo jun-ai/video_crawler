@@ -71,6 +71,8 @@
   /* ========== 品牌色 (亮色辅助 — Phase 23c 贴对标) ========== */
   --color-brand-bright: #4DA06C;       /* CTA 渐变亮端 — 对标 SV 实测 */
   --color-brand-bright-hover: #3F8A5B; /* CTA 渐变深端 — 对标 SV 实测 */
+  --color-ink: #2F3D35;                /* 主文字墨绿 — 对标 SV 实测, 跟 brand 独立 */
+
   --color-bg-frosted: rgba(246, 250, 245, 0.85); /* nav 毛玻璃 — 对标 SV 实测 */
   --color-bg-pale: #F6FAF5;           /* 极浅绿背景 — 对标 SV section 底 */
   --color-bg-mint: #E8F3EA;           /* 薄荷绿背景 — 对标 SV 卡片底 */

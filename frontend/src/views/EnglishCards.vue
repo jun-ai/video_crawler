@@ -1057,7 +1057,7 @@ onMounted(() => {
   display: inline-block;
   margin-left: 4px;
   padding: 2px 8px;
-  background: rgba(47, 61, 53, 0.08);
+  background: var(--color-brand-subtle)  /* Phase 24 was rgba(47,61,53,0.08) */;
   color: var(--color-brand);
   font-family: var(--sf-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
   font-size: 12px;

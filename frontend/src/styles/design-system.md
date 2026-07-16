@@ -1,4 +1,4 @@
-# Fluenty Design System
+# Linyu Design System
 
 > Phase 0+ 设计规范（2026-06-13 起草，2026-06-14 Blue 借鉴升级）。
 > 后续所有组件 / 页面改动必须遵守。
@@ -19,7 +19,7 @@
 8. **统计数字展示**：大数字 + 小标签（200+ / 10+ / 12+）
 9. **FAQ 手风琴**：简洁折叠
 
-Fluenty 在此基础上加入 **琥珀金强调色** 和 **不对称布局**（AGENTS.md 要求）。
+Linyu 在此基础上加入 **琥珀金强调色** 和 **不对称布局**（AGENTS.md 要求）。
 
 ---
 
@@ -40,7 +40,7 @@ Fluenty 在此基础上加入 **琥珀金强调色** 和 **不对称布局**（A
 | `--color-bg-mint` | `#E8F3EA` | 薄荷绿背景 | SV 卡片背景 |
 | `--color-footer` | `#F1F6EE` | footer 底色 | SV footer（直接借用） |
 
-### 强调色 (Accent) — 琥珀金系（Fluenty 独有，SV 没有这层）
+### 强调色 (Accent) — 琥珀金系（Linyu 独有，SV 没有这层）
 
 | Token | Hex | 用途 |
 |-------|-----|------|
@@ -227,7 +227,7 @@ hover: border-color #3B82F6
 | secondary | `bg-bg-elevated` text-text-primary hover:bg-bg-hover |
 | ghost | `bg-transparent` text-text-secondary hover:bg-bg-elevated |
 | danger | `bg-danger` text-white hover:opacity-90 |
-| accent | `bg-accent` text-white hover:bg-accent-hover（琥珀金，Fluenty 独有） |
+| accent | `bg-accent` text-white hover:bg-accent-hover（琥珀金，Linyu 独有） |
 
 ### 卡片
 

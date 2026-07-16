@@ -1359,9 +1359,9 @@ onUnmounted(() => {
 }
 .filter-chip--more:hover { color: var(--color-text-primary); }
 .filter-chip--more.active {
-  background: var(--color-brand-subtle, #E8F0EB);
-  border-color: var(--color-brand, #10B981);
-  color: var(--color-brand, #10B981);
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  color: var(--color-brand);
   font-weight: 600;
 }
 
@@ -1579,7 +1579,7 @@ onUnmounted(() => {
 }
 
 .status-review {
-  background: var(--color-brand, #2563EB);
+  background: var(--color-brand);
 }
 
 .status-mastered {
@@ -1766,7 +1766,7 @@ onUnmounted(() => {
 }
 
 .strength-mid {
-  background: var(--color-brand, #2563EB);
+  background: var(--color-brand);
 }
 
 .strength-high {
@@ -2338,7 +2338,7 @@ onUnmounted(() => {
   font-style: italic;
 }
 .lookup-failed:hover {
-  color: var(--color-brand, #2563EB);
+  color: var(--color-brand);
   text-decoration: underline;
 }
 
@@ -2376,7 +2376,7 @@ onUnmounted(() => {
 
 /* ==================== 5-P2-6: 键盘焦点高亮 ==================== */
 .vocab-card.vocab-focused {
-  outline: 2px dashed var(--color-brand, #2563EB);
+  outline: 2px dashed var(--color-brand);
   outline-offset: 2px;
   background: rgba(37, 99, 235, 0.02);
 }

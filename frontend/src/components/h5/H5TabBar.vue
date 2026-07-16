@@ -1,10 +1,9 @@
 <!--
-  H5TabBar — Phase 23b Task 4: 砍到 2-tab (首页 / 我的)
+  H5TabBar — Phase 24 P0: 恢复 3-tab (首页 / 学习 / 我的) + 中间 FAB 跳 Learn
   对标 SpeakVlog 极简底栏: 内容驱动 + 个人入口
-  学习中心/卡片 从 tab 移除, 搬进 Profile 菜单
   设计原则:
-  - 2 个入口, 等分宽度, 居中图标 + 文字
-  - 激活态: 文字加粗 + 墨绿 + 顶部小绿点 (Phase 22 视觉签名)
+  - 3 个 tab 等分宽度, 中间 FAB 一键跳 /learn (上次看过的视频继续)
+  - 激活态: 文字加粗 + 草绿 + 顶部小绿条
   - 默认隐藏 (桌面), 通过 @media 控制
   - 高度: 56px + iOS safe-area bottom padding
 -->
@@ -13,16 +12,16 @@
     <div
       v-for="item in items"
       :key="item.path"
-      :class="['h5-tab-item', { 'is-active': isActive(item.path) }]"
+      :class="['h5-tab-item', { 'is-active': isActive(item.path), 'is-fab': item.fab }]"
       @click="onClick(item)"
     >
-      <span class="h5-tab-indicator" v-if="isActive(item.path)" />
+      <span class="h5-tab-indicator" v-if="isActive(item.path) && !item.fab" />
       <component
         :is="item.icon"
-        :size="22"
+        :size="item.fab ? 26 : 22"
         :stroke-width="isActive(item.path) ? 2.4 : 1.8"
       />
-      <span class="h5-tab-label">{{ item.label }}</span>
+      <span v-if="!item.fab" class="h5-tab-label">{{ item.label }}</span>
     </div>
   </nav>
 </template>
@@ -30,17 +29,15 @@
 <script setup>
 import { useRoute, useRouter } from 'vue-router'
 import { computed } from 'vue'
-import { Home, UserCheck } from 'lucide-vue-next'
-import { useUserStore } from '@/stores/user'
+import { Home, BookOpen, UserCheck } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
-const userStore = useUserStore()
 
-// Phase 23b Task 4: 砍到 2-tab (首页 / 我的)
-// 学习中心/卡片 从 tab 移除, 搬进 Profile 菜单
+// Phase 24 P0: 恢复 3-tab (首页 / 学习 / 我的), 中间 FAB 跳上次看过的
 const items = computed(() => [
   { path: '/', label: '首页', icon: Home },
+  { path: '/learn', label: '', icon: BookOpen, fab: true },  // 中间 FAB (跳转最后看过)
   { path: '/profile', label: '我的', icon: UserCheck },
 ])
 
@@ -107,7 +104,7 @@ function onClick(item) {
 }
 
 .h5-tab-item.is-active {
-  color: var(--color-brand, #2F3D35);
+  color: var(--color-brand);  /* Phase 24: 删 #2F3D35 fallback (phase 23c 之前 brand=墨绿假设) */
 }
 
 .h5-tab-label {
@@ -118,5 +115,31 @@ function onClick(item) {
 
 .h5-tab-item.is-active .h5-tab-label {
   font-weight: 700;
+}
+
+/* Phase 24 P0: 中间 FAB 视觉样式 — 圆形草绿凸起按钮 */
+.h5-tab-item.is-fab {
+  position: relative;
+  flex: 0 0 64px;
+  margin-top: -22px;
+  align-items: center;
+  justify-content: center;
+}
+.h5-tab-item.is-fab::before {
+  content: '';
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-hover) 100%);
+  box-shadow: 0 6px 16px rgba(77, 160, 108, 0.35);
+  z-index: -1;
+}
+.h5-tab-item.is-fab :deep(svg) {
+  color: #fff;
+}
+.h5-tab-item.is-fab:active::before { transform: scale(0.96); }
+.h5-tab-item.is-fab:active {
+  opacity: 1;
 }
 </style>

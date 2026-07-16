@@ -23,7 +23,7 @@
           </svg>
         </div>
         <h1 class="register-title">创建账号</h1>
-        <p class="register-subtitle">加入 Fluenty，开始你的英语学习之旅</p>
+        <p class="register-subtitle">加入 Linyu，开始你的英语学习之旅</p>
       </div>
 
       <!-- Form -->

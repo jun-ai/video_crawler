@@ -267,7 +267,7 @@ function onPick(d) {
 }
 
 .h5-cal-day.is-today .h5-cal-daylabel {
-  color: var(--color-brand, #2F3D35);
+  color: var(--color-brand);  /* Phase 24: 删 #2F3D35 fallback */
   font-weight: 600;
 }
 

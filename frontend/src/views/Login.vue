@@ -22,7 +22,7 @@
             <path d="M12 3L1 9l11 6 9-4.91V17h2V9M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/>
           </svg>
         </div>
-        <h1 class="login-title">登录 Fluenty</h1>
+        <h1 class="login-title">登录 Linyu</h1>
         <p class="login-subtitle">看视频学英语</p>
       </div>
 

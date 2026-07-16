@@ -502,13 +502,13 @@
             <span class="sf-more-label">{{ autoScroll ? '关闭自动滚动' : '开启自动滚动' }}</span>
             <span v-if="autoScroll" class="sf-more-check">✓</span>
           </button>
-          <!-- Phase 9: AI 智能解读 移到视频下 sticky bar (1-tap), 此处只显示说明, 已生成时变 "查看解读" -->
+          <!-- Phase 9: 智能解读 移到视频下 sticky bar (1-tap), 此处只显示说明, 已生成时变 "查看解读" -->
           <button
             :class="['sf-more-opt']"
             @click="handleAiAction"
             v-if="hasInterpretation"
           >
-            <span class="sf-more-label">查看 AI 解读</span>
+            <span class="sf-more-label">查看 智能解读</span>
             <span class="sf-more-check">✓</span>
           </button>
         </div>
@@ -1621,9 +1621,9 @@ const generateInterpretation = async () => {
     }
     // pending / failed：后台任务可能还没跑或失败了，不再让用户侧触发 LLM
     if (statusRes.status === 'pending') {
-      toast.info('AI 解读正在准备中，请稍后刷新重试')
+      toast.info('智能解读正在准备中，请稍后刷新重试')
     } else if (statusRes.status === 'failed') {
-      toast.error('AI 解读生成失败，请联系管理员重新上传')
+      toast.error('智能解读生成失败，请联系管理员重新上传')
     }
     interpretationGeneratingStatus.value = statusRes.status
   } catch (e) {
@@ -2892,9 +2892,9 @@ onUnmounted(() => {
   -webkit-tap-highlight-color: transparent;
 }
 .sf-subtitle-opt.active {
-  background: var(--color-brand, #10B981);
+  background: var(--color-brand);
   color: #fff;
-  border-color: var(--color-brand, #10B981);
+  border-color: var(--color-brand);
 }
 .sf-subtitle-actions {
   display: flex;
@@ -2940,9 +2940,9 @@ onUnmounted(() => {
   -webkit-tap-highlight-color: transparent;
 }
 .sf-rate-opt.active {
-  background: var(--color-brand, #10B981);
+  background: var(--color-brand);
   color: #fff;
-  border-color: var(--color-brand, #10B981);
+  border-color: var(--color-brand);
 }
 .sf-rate-check {
   position: absolute;
@@ -2987,8 +2987,8 @@ onUnmounted(() => {
   transform: scale(0.98);
 }
 .sf-practice-opt.active {
-  background: var(--color-brand-subtle, #E8F0EB);
-  border-color: var(--color-brand, #10B981);
+  background: var(--color-brand);
+  border-color: var(--color-brand);
 }
 .sf-practice-label {
   font-size: 17px;
@@ -2996,7 +2996,7 @@ onUnmounted(() => {
   color: var(--color-text-primary);
 }
 .sf-practice-opt.active .sf-practice-label {
-  color: var(--color-brand, #10B981);
+  color: var(--color-brand);
 }
 .sf-practice-desc {
   font-size: 13px;
@@ -3007,7 +3007,7 @@ onUnmounted(() => {
   position: absolute;
   top: 16px;
   right: 16px;
-  color: var(--color-brand, #10B981);
+  color: var(--color-brand);
   font-size: 18px;
   font-weight: 700;
 }
@@ -3036,8 +3036,8 @@ onUnmounted(() => {
 }
 .sf-playmode-opt:active { transform: scale(0.98); }
 .sf-playmode-opt.active {
-  background: var(--color-brand-subtle, #E8F0EB);
-  border-color: var(--color-brand, #10B981);
+  background: var(--color-brand);
+  border-color: var(--color-brand);
 }
 .sf-playmode-label {
   font-size: 17px;
@@ -3045,7 +3045,7 @@ onUnmounted(() => {
   color: var(--color-text-primary);
 }
 .sf-playmode-opt.active .sf-playmode-label {
-  color: var(--color-brand, #10B981);
+  color: var(--color-brand);
 }
 .sf-playmode-desc {
   font-size: 13px;
@@ -3056,7 +3056,7 @@ onUnmounted(() => {
   position: absolute;
   top: 16px;
   right: 16px;
-  color: var(--color-brand, #10B981);
+  color: var(--color-brand);
   font-size: 18px;
   font-weight: 700;
 }
@@ -3084,8 +3084,8 @@ onUnmounted(() => {
 }
 .sf-more-opt:active { transform: scale(0.98); }
 .sf-more-opt.active {
-  background: var(--color-brand-subtle, #E8F0EB);
-  border-color: var(--color-brand, #10B981);
+  background: var(--color-brand);
+  border-color: var(--color-brand);
 }
 .sf-more-opt.disabled {
   opacity: 0.5;
@@ -3097,11 +3097,11 @@ onUnmounted(() => {
   color: var(--color-text-primary);
 }
 .sf-more-opt.active .sf-more-label {
-  color: var(--color-brand, #10B981);
+  color: var(--color-brand);
   font-weight: 600;
 }
 .sf-more-check {
-  color: var(--color-brand, #10B981);
+  color: var(--color-brand);
   font-size: 18px;
   font-weight: 700;
 }
@@ -3118,12 +3118,12 @@ onUnmounted(() => {
 
 /* ==================== 5-icon 工具栏 active 状态强化 (Phase 6 H5) ==================== */
 .sf-mobile-tab.active {
-  color: var(--color-brand, #10B981);
-  background: var(--color-brand-subtle, #E8F0EB);
+  color: var(--color-brand);
+  background: var(--color-brand);
   font-weight: 600;
 }
 .sf-mobile-tab.active svg {
-  stroke: var(--color-brand, #10B981);
+  stroke: var(--color-brand);
 }
 
 /* ==================== 快捷键面板 ==================== */
@@ -3511,7 +3511,7 @@ onUnmounted(() => {
   }
   .sf-video-progress-bar__filled {
     height: 100%;
-    background: var(--color-brand-bright, #6366F1);
+    background: var(--color-brand-bright);
     border-radius: 2px;
     transition: width 0.1s linear;
   }

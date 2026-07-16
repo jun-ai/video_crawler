@@ -17,7 +17,7 @@
     <ul>
       <li>学习记录：视频观看进度、收藏、复习数据</li>
       <li>生词本：您收藏的单词与复习进度</li>
-      <li>AI 互动数据：跟读录音、字幕翻译等</li>
+      <li>智能互动数据：跟读录音、字幕翻译等</li>
     </ul>
 
     <h3>2.3 设备与日志信息</h3>
@@ -65,7 +65,7 @@
     <ul>
       <li>阿里云 OSS：视频与字幕文件存储</li>
       <li>阿里云 ECS：服务器托管</li>
-      <li>AI 服务（DeepSeek / 智谱 / MiniMax / 讯飞）：字幕翻译、AI 解读</li>
+      <li>智能服务（DeepSeek / 智谱 / MiniMax / 讯飞）：字幕翻译、智能解读</li>
     </ul>
 
     <h2>九、政策更新</h2>
@@ -74,7 +74,7 @@
     <h2>十、联系我们</h2>
     <p>如对您的个人信息有任何疑问：</p>
     <ul>
-      <li>小红书：私信 @Fluenty</li>
+      <li>小红书：私信 @Linyu</li>
       <li>邮箱：privacy@fluenty.cn</li>
     </ul>
   </LegalPage>

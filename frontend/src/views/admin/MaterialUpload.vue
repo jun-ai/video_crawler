@@ -331,7 +331,7 @@ const submitForm = async () => {
 
     uploadProgress.value = 100
     uploadStatus.value = 'success'
-    uploadText.value = '上传成功！AI 解读正在后台生成...'
+    uploadText.value = '上传成功！智能解读正在后台生成...'
 
     toast.success('语料上传成功')
     setTimeout(() => {

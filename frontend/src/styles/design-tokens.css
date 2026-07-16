@@ -11,12 +11,6 @@
   --sf-brand-light: var(--color-brand-light);
   --sf-brand-subtle: var(--color-brand-subtle);
 
-  /* Phase 23c+1: 主文字独立 var (对标 SV 主文字 #2F3D35)
-     之前主文字借 --color-brand=#2F3D35 (phase 23c), 修复后 --color-brand=#4DA06C 草绿,
-     主文字现在挂在独立 --color-ink 上. 这里写 :root 而非 @theme,
-     因为 Tailwind v4 不会把未引用 @utility 的 var 生成到 CSS */
-  --color-ink: #2F3D35;
-
   --sf-accent: var(--color-accent);
   --sf-accent-hover: var(--color-accent-hover);
 

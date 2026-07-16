@@ -342,8 +342,8 @@ onMounted(() => {
   height: 32px;
   margin: 0 auto 6px;
   border-radius: 8px;
-  background: rgba(47, 61, 53, 0.08);    /* 墨绿淡底 */
-  color: var(--color-brand);                          /* 显式墨绿,不依赖 --color-brand (仍是亮蓝) */
+  background: var(--color-brand-subtle);              /* Phase 24: 草绿半透底(跟 brand 同色相, 不是墨绿) */
+  color: var(--color-brand);                          /* 草绿 icon */
 }
 .stat-icon--accent {
   background: rgba(245, 158, 11, 0.12);   /* 橙色淡底(连续学习用) */
