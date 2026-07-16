@@ -222,7 +222,7 @@
 
     <!-- 移动端筛选 Sheet -->
     <Sheet v-model:open="mobileFilterOpen">
-      <SheetContent side="left" class="mobile-filter-sheet">
+      <SheetContent side="bottom" class="mobile-filter-sheet">
         <SheetHeader>
           <SheetTitle class="sheet-filter-title">
             <SlidersHorizontal :size="18" />
@@ -918,12 +918,14 @@ onMounted(() => {
 
 /* ====== 移动端筛选 Sheet (侧边抽屉 75% 宽, 对标规范) ====== */
 @media (max-width: 1024px) {
-  .mobile-filter-sheet {
-    width: 75vw !important;
-    max-width: 75vw !important;
-    height: 100vh !important;
-    max-height: 100vh !important;
-    border-radius: 0 !important;
+  /* Phase 26+3: left drawer → bottom sheet (更宽, 选项不挤) */
+  /* :deep() 穿透 scoped CSS → reka-ui DialogContent (没 data-v-xxx 属性) */
+  :deep(.mobile-filter-sheet) {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    max-height: 75vh !important;
+    border-top-left-radius: 16px !important;
+    border-top-right-radius: 16px !important;
     padding: 0 !important;
   }
 }
@@ -951,7 +953,7 @@ onMounted(() => {
 
 .mobile-filter-body {
   padding: 0 20px;
-  max-height: 55vh;
+  max-height: 50vh;
   overflow-y: auto;
 }
 
@@ -1101,6 +1103,17 @@ onMounted(() => {
 
   .view-toggle {
     order: 2;
+  }
+}
+</style>
+
+<!-- Phase 26+3: 全局样式 (无 scoped) — reka-ui DialogContent 通过 Teleport 渲染到 body,
+     scoped / :deep() 均无法穿透, 必须用全局 style -->
+<style>
+@media (max-width: 1024px) {
+  .mobile-filter-sheet {
+    border-top-left-radius: 16px !important;
+    border-top-right-radius: 16px !important;
   }
 }
 </style>

@@ -677,16 +677,16 @@ const playModeShortLabel = computed(() => ({
   single: '单次', 'single-loop': '循环', continuous: '连续', 'sentence-loop': '单句'
 }[playMode.value] || '单次'))
 
-// Phase 26: 删 secondary 行, 5 个按钮合并 1 行 (单次 / 更多 / 字幕 / 倍速 / 练习)
-//   - playMode (单次) 放在最左, 用 computed 跟 playMode.value 联动
-//   - 更多 排第 2 位, 走 setMobileTab('more') → 弹 showMoreSheet
-//   - 主行原 3 个 (subtitle/playbackRate/practice) 保留
+// Phase 26+3: 删 secondary 行, 4 按钮合并 1 行 (单次 / 字幕 / 倍速 / 更多)
+//   - playMode (单次) 放在最左
+//   - 更多排最右 (符合 iOS 设计)
+//   - 中间是 2 个主功能 (字幕/倍速)
+//   - 删"练习"按钮: selectPracticeMode 只切 learningMode 不跳页, 功能冗余 (用户反馈 7-16)
 const mobileTabs = computed(() => [
   { key: 'playMode',    label: playModeShortLabel.value, icon: Repeat,    action: 'openPlayMode' },
-  { key: 'more',        label: '更多',                   icon: MoreHorizontal, action: 'openMore' },
   { key: 'subtitle',    label: '字幕',                   icon: Type,      action: 'openSubtitleSettings' },
   { key: 'playbackRate',label: '倍速',                   icon: Gauge,     action: 'openPlaybackRate' },
-  { key: 'practice',    label: '练习',                   icon: PencilLine, action: 'openPracticePage' },
+  { key: 'more',        label: '更多',                   icon: MoreHorizontal, action: 'openMore' },
 ])
 
 const setMobileTab = (key) => {
@@ -697,7 +697,6 @@ const setMobileTab = (key) => {
     case 'openMore':            showMoreSheet.value = true; break
     case 'openSubtitleSettings': showSubtitleSettings.value = true; break
     case 'openPlaybackRate':    showPlaybackRateSheet.value = true; break
-    case 'openPracticePage':    openPracticePage(); break
   }
 }
 
