@@ -82,6 +82,7 @@ async def test_interpretation_unknown_creates_vocabulary(db_session, test_user):
     service = LearningSignalService(db_session, test_user)
     await service.process_interpretation_status(
         interpretation_id=99003,
+        material_id=99003,
         status="unknown",
         content="ubiquitous",
     )
@@ -93,6 +94,36 @@ async def test_interpretation_unknown_creates_vocabulary(db_session, test_user):
     vocabs = result.scalars().all()
     assert any(v.word == "ubiquitous" for v in vocabs), \
         f"ubiquitous 应在生词列表，实际: {[v.word for v in vocabs]}"
+
+
+@pytest.mark.asyncio
+async def test_interpretation_signal_is_single_case_insensitive_write(db_session, test_user):
+    """同一内容不同大小写只写一条，且不暴露 From source 内部占位文案。"""
+    from sqlalchemy import select
+
+    service = LearningSignalService(db_session, test_user)
+    await service.process_interpretation_status(
+        interpretation_id=99101,
+        material_id=88,
+        status="unknown",
+        content="Useful Phrase",
+        context="A useful phrase in context.",
+    )
+    await service.process_interpretation_status(
+        interpretation_id=99101,
+        material_id=88,
+        status="unknown",
+        content="useful phrase",
+        context="Updated context.",
+    )
+
+    vocabs = (await db_session.execute(
+        select(Vocabulary).where(Vocabulary.user_id == test_user.id)
+    )).scalars().all()
+    assert len(vocabs) == 1
+    assert vocabs[0].material_id == 88
+    assert vocabs[0].context == "Updated context."
+    assert "From source" not in (vocabs[0].context or "")
 
 
 @pytest.mark.asyncio
@@ -113,6 +144,7 @@ async def test_interpretation_known_no_vocabulary(db_session, test_user):
     service = LearningSignalService(db_session, test_user)
     result = await service.process_interpretation_status(
         interpretation_id=99004,
+        material_id=99004,
         status="known",
         content="hello",
     )

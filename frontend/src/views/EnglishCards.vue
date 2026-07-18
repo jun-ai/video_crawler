@@ -225,7 +225,7 @@ import SfTooltip from '@/components/ui/SfTooltip.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import FilterChip from '@/components/common/FilterChip.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
-import { materialAPI, interpretationAPI, vocabularyAPI } from '@/api'
+import { materialAPI, interpretationAPI } from '@/api'
 import { useUserStore } from '@/stores/user'
 import EnglishCardItem from '@/components/learn/EnglishCardItem.vue'
 
@@ -384,7 +384,9 @@ async function loadStatus(materialId) {
     const statusMap = {}
     if (Array.isArray(result)) {
       result.forEach(s => {
-        statusMap[s.interpretation_id] = s.status
+        if (s.status && s.status !== 'unmarked') {
+          statusMap[s.interpretation_id] = s.status
+        }
       })
     } else if (result && typeof result === 'object') {
       // Handle object format
@@ -411,24 +413,7 @@ async function setStatus(interpretationId, status) {
       material_id: selectedMaterialId.value,
       status
     })
-    // 标 unknown 时同步入生词本（后端 LearningSignalService 也会做，前端做一次确保 UI 同步）
-    if (status === 'unknown') {
-      const allItems = [
-        ...(interpretationData.value.words || []),
-        ...(interpretationData.value.phrases || []),
-        ...(interpretationData.value.grammar || []),
-        ...(interpretationData.value.idioms || []),
-      ]// 全 4 类的所有卡片都参与 vocab 同步, 避免 idiom 标 unknown 时找不到
-      const item = allItems.find(i => i.id === interpretationId)
-      if (item) {
-        vocabularyAPI.add({
-          word: item.content_en || item.word || '',
-          translation: item.content_cn || item.translation || '',
-          context: item.context_sentence || item.context || '',
-          material_id: selectedMaterialId.value,
-        }).catch(err => console.warn('[EnglishCards] 同步生词本失败', err))
-      }
-    }
+    // Vocabulary 写入由后端 LearningSignalService 单独负责，避免前后端重复请求。
     toast.success(status === 'known' ? '已标记为认识' : '已标记为不认识')
   } catch (e) {
     // Revert on failure

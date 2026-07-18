@@ -132,6 +132,11 @@
         <audio :src="audioUrl" controls class="sf-playback__audio"></audio>
       </div>
 
+      <div v-if="recognizedText" class="sf-recognized-text">
+        <span>识别内容</span>
+        <p>{{ recognizedText }}</p>
+      </div>
+
       <!-- 评测结果 -->
       <transition name="sf-slide">
         <div v-if="pronunciationResult" class="sf-eval-result">
@@ -194,6 +199,7 @@ const props = defineProps({
   audioUrl: { type: String, default: null },
   recordedBlob: { type: Object, default: null },
   pronunciationResult: { type: Object, default: null },
+  recognizedText: { type: String, default: '' },
   evaluationLoading: { type: Boolean, default: false },
   isLoggedIn: { type: Boolean, default: false },
   // Phase 2 H5 字幕字号 (px): 14 / 16 / 18 / 20
@@ -543,6 +549,23 @@ const getScoreClass = (score) => {
   width: 100%;
   height: 36px;
   border-radius: var(--sf-radius-sm);
+}
+
+.sf-recognized-text {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: var(--sf-radius-sm);
+  background: var(--color-bg-elevated);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+.sf-recognized-text span {
+  color: var(--color-text-muted);
+}
+.sf-recognized-text p {
+  margin: 4px 0 0;
+  color: var(--color-text-primary);
+  font-size: 13px;
 }
 
 /* 评测结果 */

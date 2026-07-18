@@ -26,7 +26,7 @@
       <PartyPopper :size="48" class="empty-emoji-icon" />
       <h2>选择视频开始练习</h2>
       <p>从学习列表选一个视频，跟读模仿训练口语</p>
-      <SfButton type="primary" @click="$router.push('/learn')">去学习列表</SfButton>
+      <SfButton type="primary" @click="$router.push('/materials')">去视频库</SfButton>
     </div>
 
     <!-- 3 种练习模式选择 -->
@@ -192,7 +192,7 @@ const startPractice = (mode) => {
   width: 48px;
   height: 48px;
   background: var(--color-brand);
-  color: var(--color-brand);
+  color: #fff;
   border-radius: 12px;
   display: flex;
   align-items: center;

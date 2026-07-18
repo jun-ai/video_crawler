@@ -1,7 +1,7 @@
 <template>
   <div class="yt-learning-center">
     <SfEmpty v-if="!userStore.isLoggedIn" description="请先登录查看学习记录">
-      <SfButton type="primary" @click="$router.push('/login')">去登录</SfButton>
+      <SfButton type="primary" @click="goLogin(router, '/learning-center')">去登录</SfButton>
     </SfEmpty>
 
     <template v-else>
@@ -264,6 +264,7 @@ import PageHeader from '@/components/common/PageHeader.vue'
 import FilterChip from '@/components/common/FilterChip.vue'
 import VideoCard from '@/components/common/VideoCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
+import { goLogin } from '@/lib/authRedirect'
 
 const router = useRouter()
 const userStore = useUserStore()

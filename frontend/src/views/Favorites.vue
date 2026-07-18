@@ -17,7 +17,7 @@
     <!-- Phase 6: 桌面端原 fav-page-header (保留, H5 整块不显示, 用上面的 favorites-mobile-blocked 占位) -->
 
     <SfEmpty v-if="!userStore.isLoggedIn" description="请先登录查看收藏">
-      <SfButton type="primary" @click="$router.push('/login')">去登录</SfButton>
+      <SfButton type="primary" @click="goLogin(router, '/favorites')">去登录</SfButton>
     </SfEmpty>
 
     <template v-else>
@@ -802,6 +802,7 @@ import SfCombobox from '@/components/ui/SfCombobox.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import { favoriteAPI, vocabularyAPI, subtitleBookmarkAPI, materialAPI, bookmarkTagAPI, bookmarkFolderAPI, bookmarkExportAPI } from '@/api'
 import { useUserStore } from '@/stores/user'
+import { goLogin } from '@/lib/authRedirect'
 
 const router = useRouter()
 const userStore = useUserStore()

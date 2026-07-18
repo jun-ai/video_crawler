@@ -112,6 +112,7 @@
               :audio-url="audioUrl"
               :recorded-blob="recordedBlob"
               :pronunciation-result="pronunciationResult"
+              :recognized-text="recognizedText"
               :evaluation-loading="evaluationLoading"
               :is-logged-in="userStore.isLoggedIn"
               :font-size="subtitleFontSize"
@@ -568,9 +569,10 @@ import SfDialog from '@/components/ui/SfDialog.vue'
 import SfInput from '@/components/ui/SfInput.vue'
 import SfTooltip from '@/components/ui/SfTooltip.vue'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import { materialAPI, learningAPI, favoriteAPI, vocabularyAPI, pronunciationAPI, interpretationAPI, speechAPI, annotationAPI, subtitleBookmarkAPI } from '@/api'
+import { materialAPI, learningAPI, favoriteAPI, vocabularyAPI, interpretationAPI, speechAPI, annotationAPI, subtitleBookmarkAPI } from '@/api'
 import { highlightKeyWords as hlKeyWords } from '@/lib/highlightText'
 import { useUserStore } from '@/stores/user'
+import { goLogin } from '@/lib/authRedirect'
 import DictationMode from './DictationMode.vue'
 import FilterChip from '@/components/common/FilterChip.vue'
 import InterpretationDrawer from '@/components/learn/LearnInterpretationDrawer.vue'
@@ -586,6 +588,7 @@ const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 const { speakText, speakWord, preloadVoices } = useTTS()
+const requireLogin = () => goLogin(router, route.fullPath)
 
 const loading = ref(true)
 const material = ref(null)
@@ -711,7 +714,7 @@ const handleSecAction = (action) => {
 const openPracticePage = () => {
   if (!userStore.isLoggedIn) {
     toast.warning('请先登录')
-    router.push('/login')
+    requireLogin()
     return
   }
   const mid = material.value?.id
@@ -756,6 +759,10 @@ const updateIsMobile = () => {
 }
 onMounted(() => {
   updateIsMobile()
+  const requestedMode = route.query.mode
+  if (!isMobileView.value && (requestedMode === 'shadowing' || requestedMode === 'dictation')) {
+    learningMode.value = requestedMode
+  }
   const mql = window.matchMedia('(max-width: 768px)')
   if (mql.addEventListener) {
     mql.addEventListener('change', updateIsMobile)
@@ -1296,6 +1303,7 @@ const clearRecording = () => {
   recordedBlob.value = null
   audioChunks.value = []
   pronunciationResult.value = null
+  recognizedText.value = ''
   toast.success('已清除录音')
 }
 
@@ -1442,7 +1450,7 @@ const checkFavoriteStatus = async () => {
 const toggleFavorite = async () => {
   if (!userStore.isLoggedIn) {
     toast.warning('请先登录')
-    router.push('/login')
+    requireLogin()
     return
   }
 
@@ -1625,7 +1633,7 @@ const generateInterpretation = async () => {
 const addToVocabulary = async (item) => {
   if (!userStore.isLoggedIn) {
     toast.warning('请先登录')
-    router.push('/login')
+    requireLogin()
     return
   }
 
@@ -1652,7 +1660,9 @@ const loadLearningStatus = async () => {
     const result = await interpretationAPI.getStatus(material.value.id)
     const statusMap = {}
     result.forEach(item => {
-      statusMap[item.interpretation_id] = item.status
+      if (item.status && item.status !== 'unmarked') {
+        statusMap[item.interpretation_id] = item.status
+      }
     })
     learningStatus.value = statusMap
   } catch (e) {
@@ -1663,7 +1673,7 @@ const loadLearningStatus = async () => {
 const setLearningStatus = async (interpretationId, status) => {
   if (!userStore.isLoggedIn) {
     toast.warning('请先登录')
-    router.push('/login')
+    requireLogin()
     return
   }
   if (!material.value) return
@@ -1683,7 +1693,7 @@ const setLearningStatus = async (interpretationId, status) => {
 }
 
 const getStatusLabel = (interpretationId) => {
-  return learningStatus.value[interpretationId] || 'unknown'
+  return learningStatus.value[interpretationId] || 'unmarked'
 }
 
 const getStatusClass = (interpretationId) => {
@@ -1694,11 +1704,12 @@ const getStatusClass = (interpretationId) => {
 }
 
 const getStatusType = (interpretationId) => {
-  const status = learningStatus.value[interpretationId] || 'unknown'
+  const status = learningStatus.value[interpretationId] || 'unmarked'
   const typeMap = {
     'known': 'success',
     'unknown': 'danger',
-    'vague': 'warning'
+    'vague': 'warning',
+    'unmarked': 'info'
   }
   return typeMap[status] || 'info'
 }
@@ -1772,7 +1783,7 @@ onMounted(() => {
 const addWordToVocabulary = async () => {
   if (!userStore.isLoggedIn) {
     toast.warning('请先登录')
-    router.push('/login')
+    requireLogin()
     return
   }
 
@@ -1830,7 +1841,7 @@ const addSubtitleToVocabulary = async () => {
 
   if (!userStore.isLoggedIn) {
     toast.warning('请先登录')
-    router.push('/login')
+    requireLogin()
     return
   }
 
@@ -1895,7 +1906,7 @@ const loadBookmarks = async () => {
 const toggleBookmark = async (subtitle) => {
   if (!userStore.isLoggedIn) {
     toast.warning('请先登录')
-    router.push('/login')
+    requireLogin()
     return
   }
 
@@ -1934,7 +1945,7 @@ const toggleBookmark = async (subtitle) => {
 const bookmarkCurrentSubtitle = () => {
   if (!userStore.isLoggedIn) {
     toast.warning('请先登录')
-    router.push('/login')
+    requireLogin()
     return
   }
   const sub = subtitles.value[currentIndex.value]
@@ -2089,7 +2100,7 @@ const handleTextSelection = (subtitle, event) => {
 const saveAnnotation = async () => {
   if (!userStore.isLoggedIn) {
     toast.warning('请先登录')
-    router.push('/login')
+    requireLogin()
     return
   }
 
@@ -2394,18 +2405,16 @@ const evaluatePronunciation = async () => {
     )
 
     if (!result.success) {
-      toast.error(result.error || '语音识别失败')
-      // 如果语音识别失败，降级使用旧的评测方式
-      const fallbackResult = await pronunciationAPI.evaluate(
-        currentSubtitle.value.text_en,
-        currentSubtitle.value.text_en
-      )
-      pronunciationResult.value = fallbackResult
-      evaluationLoading.value = false
+      recognizedText.value = result.recognized_text || ''
+      toast.error(result.error || '本次未识别到语音，请重新录音')
       return
     }
 
     recognizedText.value = result.recognized_text
+    if (!result.pronunciation_result) {
+      toast.warning(result.error || '语音已识别，但智能打分暂时不可用')
+      return
+    }
     pronunciationResult.value = result.pronunciation_result
 
     if (pronunciationResult.value.score >= 80) {

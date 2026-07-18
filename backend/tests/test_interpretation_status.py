@@ -81,6 +81,32 @@ async def test_set_interpretation_status_known_no_vocabulary(
 
 
 @pytest.mark.asyncio
+async def test_get_interpretation_status_unmarked_when_no_record(
+    client, auth_headers, db_session
+):
+    """从未操作过的卡片必须是 unmarked，不能伪装成用户主动点过 unknown。"""
+    from app.models.models import Material, VideoInterpretation
+
+    material = Material(
+        id=99604, title="T", duration=10,
+        video_path="/x.mp4", subtitle_path="/x.srt", cover_path="/x.jpg",
+    )
+    db_session.add(material)
+    db_session.add(VideoInterpretation(
+        id=99604, material_id=99604, category="word",
+        content_en="fresh", content_cn="新的",
+    ))
+    await db_session.commit()
+
+    response = await client.get(
+        "/api/learning/interpretation/status/99604",
+        headers=auth_headers,
+    )
+    assert response.status_code == 200
+    assert response.json()[0]["status"] == "unmarked"
+
+
+@pytest.mark.asyncio
 async def test_set_interpretation_status_update_existing(
     client, auth_headers, db_session, test_user
 ):

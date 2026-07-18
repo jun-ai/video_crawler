@@ -493,13 +493,7 @@ async def evaluate_pronunciation(spoken_text: str, expected_text: str) -> Dict[s
     """评测用户发音"""
     available = _available_providers()
     if not available:
-        return {
-            "score": 70,
-            "accuracy": "评估服务暂时不可用",
-            "fluency": "请稍后重试",
-            "problems": ["所有 AI provider 都不可用"],
-            "suggestions": ["请检查 API key 配置或稍后重试"],
-        }
+        raise RuntimeError("发音评测 provider 不可用")
 
     prompt = f"""请作为一个专业的英语口语老师,评估学生的发音练习。
 
@@ -535,13 +529,7 @@ async def evaluate_pronunciation(spoken_text: str, expected_text: str) -> Dict[s
         return _parse_json_response(content)
     except (json.JSONDecodeError, Exception) as e:
         logger.error(f"[AI] evaluate_pronunciation failed: {e}")
-        return {
-            "score": 70,
-            "accuracy": "无法精确评估",
-            "fluency": "请重试",
-            "problems": ["评估服务暂时不可用"],
-            "suggestions": ["请稍后重试"],
-        }
+        raise RuntimeError("发音评测服务暂时不可用") from e
 
 
 # ==================== 字幕翻译 ====================

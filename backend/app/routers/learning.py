@@ -945,16 +945,17 @@ async def evaluate_pronunciation_endpoint(
     try:
         result = await ai_evaluate_pronunciation(data.spoken_text, data.expected_text)
         return PronunciationEvaluateResponse(
-            score=result.get("score", 70),
+            score=result["score"],
             accuracy=result.get("accuracy", "评估完成"),
             fluency=result.get("fluency", "继续练习"),
             problems=result.get("problems", []),
             suggestions=result.get("suggestions", [])
         )
     except Exception as e:
+        logger.warning("发音评测服务不可用: %s", e)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"发音评测失败: {str(e)}"
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="发音评测服务暂时不可用，请稍后重试"
         )
 
 
@@ -1004,8 +1005,10 @@ async def set_interpretation_status(
             signal = LearningSignalService(db, current_user)
             await signal.process_interpretation_status(
                 interpretation_id=data.interpretation_id,
+                material_id=interp.material_id,
                 status=data.status,
                 content=interp.content_en,
+                context=interp.context_sentence or interp.example_sentence,
             )
         except Exception as sig_err:
             logger.warning(f"LearningSignalService 失败: {sig_err}")
@@ -1068,7 +1071,7 @@ async def get_material_interpretation_status(
             content_en=interp.content_en,
             content_cn=interp.content_cn,
             category=interp.category,
-            status=lr.status if lr else "unknown",
+            status=lr.status if lr else "unmarked",
             created_at=lr.created_at if lr else None,
             updated_at=lr.updated_at if lr else None
         ))
@@ -1740,29 +1743,27 @@ async def recognize_and_evaluate_speech(
         recognized_text = recognition_result["text"]
 
         # 5. 调用发音评测
+        evaluation_error = None
         try:
             pronunciation_result = await ai_evaluate_pronunciation(recognized_text, expected_text)
             pronunciation_response = PronunciationEvaluateResponse(
-                score=pronunciation_result.get("score", 70),
+                score=pronunciation_result["score"],
                 accuracy=pronunciation_result.get("accuracy", ""),
                 fluency=pronunciation_result.get("fluency", ""),
                 problems=pronunciation_result.get("problems", []),
                 suggestions=pronunciation_result.get("suggestions", [])
             )
         except Exception as e:
-            pronunciation_response = PronunciationEvaluateResponse(
-                score=70,
-                accuracy="评测服务暂时不可用",
-                fluency="",
-                problems=[],
-                suggestions=[]
-            )
+            logger.warning("语音已识别，但发音评测服务不可用: %s", e)
+            pronunciation_response = None
+            evaluation_error = "语音已识别，但发音评测服务暂时不可用，请稍后重试"
 
         return SpeechRecognizeResponse(
             success=True,
             recognized_text=recognized_text,
             confidence=recognition_result.get("confidence", 0.8),
-            pronunciation_result=pronunciation_response
+            pronunciation_result=pronunciation_response,
+            error=evaluation_error,
         )
 
     except Exception as e:

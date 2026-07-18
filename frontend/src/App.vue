@@ -143,7 +143,12 @@
         </div>
         <div class="app-footer-bottom">
           <span>© 2026 Linyu · 看视频学英语</span>
-          <span class="app-footer-icp">浙ICP备 2025xxxxxx 号</span>
+          <a
+            class="app-footer-icp"
+            href="https://beian.miit.gov.cn/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >浙ICP备2026013523号-1</a>
         </div>
       </footer>
 
@@ -335,6 +340,11 @@ const logout = () => {
 
 .app-footer-icp {
   font-family: 'JetBrains Mono', monospace;
+  color: inherit;
+  text-decoration: none;
+}
+.app-footer-icp:hover {
+  color: var(--color-brand);
 }
 
 @media (max-width: 1024px) {

@@ -98,7 +98,7 @@
     </Sheet>
 
     <SfEmpty v-if="!userStore.isLoggedIn" description="请先登录查看生词本">
-      <SfButton type="primary" @click="$router.push('/login')">去登录</SfButton>
+      <SfButton type="primary" @click="goLogin(router, '/vocabulary')">去登录</SfButton>
     </SfEmpty>
 
     <!-- Phase 13: H5 "更多" 底部 sheet (替代 dropdown, 大尺寸点击区域, 移动端原生体验) -->
@@ -549,6 +549,7 @@ import FilterChip from '@/components/common/FilterChip.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import { vocabularyAPI, materialAPI } from '@/api'
 import { useUserStore } from '@/stores/user'
+import { goLogin } from '@/lib/authRedirect'
 
 const router = useRouter()
 const userStore = useUserStore()

@@ -9,7 +9,7 @@ LearningSignalService - 三表联动核心
 统一调度 spaced_repetition（SM-2）
 """
 from typing import Optional, List
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.models import User, Vocabulary
 
@@ -46,7 +46,12 @@ class LearningSignalService:
         # 2. 去重入 Vocabulary
         created: List[Vocabulary] = []
         for word in wrong_words:
-            vocab = await self._get_or_create_vocabulary(word, subtitle_id)
+            vocab = await self._get_or_create_vocabulary(
+                word,
+                material_id=material_id,
+                subtitle_id=subtitle_id,
+                context=correct_text,
+            )
             created.append(vocab)
         await self.db.commit()
         return created
@@ -54,8 +59,10 @@ class LearningSignalService:
     async def process_interpretation_status(
         self,
         interpretation_id: int,
+        material_id: int,
         status: str,
         content: str,
+        context: Optional[str] = None,
     ) -> Optional[Vocabulary]:
         """
         处理解读卡状态。status=unknown 时入生词本。
@@ -65,7 +72,11 @@ class LearningSignalService:
         """
         if status != "unknown":
             return None
-        vocab = await self._get_or_create_vocabulary(content, interpretation_id)
+        vocab = await self._get_or_create_vocabulary(
+            content,
+            material_id=material_id,
+            context=context,
+        )
         await self.db.commit()
         return vocab
 
@@ -94,25 +105,47 @@ class LearningSignalService:
                 wrong.append(word)
         return wrong
 
-    async def _get_or_create_vocabulary(self, word: str, source_id: int) -> Vocabulary:
-        """查重入 Vocabulary。已存在则重置复习进度。"""
+    async def _get_or_create_vocabulary(
+        self,
+        word: str,
+        material_id: Optional[int] = None,
+        subtitle_id: Optional[int] = None,
+        context: Optional[str] = None,
+    ) -> Vocabulary:
+        """统一清洗、大小写不敏感查重；已存在则更新来源并重置复习进度。"""
+        normalized_word = (word or "").strip()
+        if not normalized_word:
+            raise ValueError("生词不能为空")
+        # 与 Vocabulary.word String(100) 对齐，防整句/长短语触发 DataError。
+        normalized_word = normalized_word[:100]
         result = await self.db.execute(
             select(Vocabulary)
-            .where(Vocabulary.user_id == self.user.id, Vocabulary.word == word)
+            .where(
+                Vocabulary.user_id == self.user.id,
+                func.lower(Vocabulary.word) == normalized_word.lower(),
+            )
         )
         existing = result.scalar_one_or_none()
         if existing:
-            # 重置复习进度（用户又忘了）
+            # 重置复习进度（用户又忘了），并更新为最新来源。
             existing.review_count = 0
             existing.next_review_at = None
             existing.interval_days = 0
             existing.mastered = False
+            if material_id is not None:
+                existing.material_id = material_id
+            if subtitle_id is not None:
+                existing.subtitle_id = subtitle_id
+            if context:
+                existing.context = context
             return existing
 
         vocab = Vocabulary(
             user_id=self.user.id,
-            word=word,
-            context=f"From source {source_id}",
+            word=normalized_word,
+            material_id=material_id,
+            subtitle_id=subtitle_id,
+            context=context,
             ease_factor=2.5,
             interval_days=0,
             review_count=0,

@@ -171,6 +171,7 @@ import SfProgress from '@/components/ui/SfProgress.vue'
 import { vocabularyAPI } from '@/api'
 import { useUserStore } from '@/stores/user'
 import { useRouter } from 'vue-router'
+import { goLogin } from '@/lib/authRedirect'
 
 // Phase 6 (H5): 移动端检测
 const isMobileView = ref(typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches)
@@ -221,7 +222,7 @@ const intervalFor = (quality) => {
 
 const loadQueue = async () => {
   if (!userStore.isLoggedIn) {
-    router.push('/login')
+    goLogin(router, '/vocabulary-review')
     return
   }
 

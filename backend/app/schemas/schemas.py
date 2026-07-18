@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Literal
 
 
 # ==================== User Schemas ====================
@@ -304,12 +304,12 @@ class InterpretationListResponse(BaseModel):
 
 
 class PronunciationEvaluateRequest(BaseModel):
-    spoken_text: str  # 用户说的话（语音识别结果）
-    expected_text: str  # 期望的文本（原字幕）
+    spoken_text: str = Field(..., min_length=1)  # 用户说的话（语音识别结果）
+    expected_text: str = Field(..., min_length=1)  # 期望的文本（原字幕）
 
 
 class PronunciationEvaluateResponse(BaseModel):
-    score: int  # 评分 0-100
+    score: int = Field(..., ge=0, le=100)  # 评分 0-100
     accuracy: str  # 准确度评价
     fluency: str  # 流利度评价
     problems: List[str] = []  # 发音问题
@@ -322,7 +322,7 @@ class PronunciationEvaluateResponse(BaseModel):
 # ==================== 解读项学习状态 ====================
 
 class InterpretationLearningBase(BaseModel):
-    status: str = "unknown"  # known, unknown, vague
+    status: Literal["known", "unknown", "vague"] = "unknown"
 
 
 class InterpretationLearningCreate(InterpretationLearningBase):
@@ -330,7 +330,9 @@ class InterpretationLearningCreate(InterpretationLearningBase):
     material_id: int
 
 
-class InterpretationLearningResponse(InterpretationLearningBase):
+class InterpretationLearningResponse(BaseModel):
+    # unmarked 只用于读取“尚无用户记录”的状态，写接口不接受它。
+    status: Literal["known", "unknown", "vague", "unmarked"]
     id: int
     user_id: int
     interpretation_id: int
