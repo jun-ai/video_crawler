@@ -41,6 +41,17 @@ class ForgotPasswordRequest(BaseModel):
     new_password: str = Field(..., min_length=6, max_length=72)
 
 
+class ActivationCodeInfo(BaseModel):
+    """嵌套在 UserResponse 里的激活码信息 (P0-8: 用户看会员到期)"""
+    code: str
+    expires_at: Optional[datetime] = None
+    activated_at: Optional[datetime] = None
+    is_used: bool
+
+    class Config:
+        from_attributes = True
+
+
 class UserResponse(BaseModel):
     id: int
     username: str
@@ -52,6 +63,8 @@ class UserResponse(BaseModel):
     status: Optional[str] = 'approved'         # pending/approved/rejected
     activated_at: Optional[datetime] = None   # 激活时间
     created_at: datetime
+    # P0-8 (7-19): 嵌套激活码详情, 让前端能显示会员到期
+    activation_code: Optional[ActivationCodeInfo] = None
 
     class Config:
         from_attributes = True

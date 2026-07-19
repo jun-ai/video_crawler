@@ -21,6 +21,28 @@
     </div>
 
     <!-- Phase 23b: 砍"激活信息"整块 — 开发者视角残留,搬到学习中心"账号与安全"里 -->
+    <!-- P0-8 (7-19 二次添加): 会员信息必须用户能看见 (Phase 23b 砍了但没补回来) -->
+    <div class="profile-section" v-if="userStore.user?.activation_code || userStore.user?.activated_at">
+      <PageHeader title="会员信息" />
+      <div class="membership-card">
+        <div class="membership-row" v-if="userStore.user?.activation_code">
+          <span class="membership-label">激活码</span>
+          <span class="membership-value membership-code">{{ userStore.user.activation_code.code }}</span>
+        </div>
+        <div class="membership-row" v-if="userStore.user?.activated_at">
+          <span class="membership-label">激活时间</span>
+          <span class="membership-value">{{ formatDate(userStore.user.activated_at) }}</span>
+        </div>
+        <div class="membership-row" v-if="userStore.user?.activation_code?.expires_at">
+          <span class="membership-label">到期时间</span>
+          <span class="membership-value" :class="membershipExpiryClass">
+            {{ formatDate(userStore.user.activation_code.expires_at) }}
+            <span v-if="membershipStatusLabel" class="membership-badge">{{ membershipStatusLabel }}</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
     <!-- 学习统计 (Phase 23b: 保留,加图标增强视觉权重) -->
     <div class="profile-section">
       <PageHeader title="学习统计" />
@@ -96,7 +118,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from '@/composables/useToast'
 import { showConfirm } from '@/composables/useConfirm'
@@ -143,6 +165,29 @@ const formatDate = (dateStr) => {
     day: 'numeric'
   })
 }
+
+// P0-8: 会员到期状态计算 (用于 Profile 会员信息区块)
+const membershipStatusLabel = computed(() => {
+  const ac = userStore.user?.activation_code
+  if (!ac?.expires_at) return ''
+  const expiresAt = new Date(ac.expires_at)
+  const now = new Date()
+  if (expiresAt < now) return '已过期'
+  const daysLeft = Math.ceil((expiresAt - now) / (1000 * 60 * 60 * 24))
+  if (daysLeft <= 7) return `${daysLeft} 天到期`
+  return ''
+})
+
+const membershipExpiryClass = computed(() => {
+  const ac = userStore.user?.activation_code
+  if (!ac?.expires_at) return ''
+  const expiresAt = new Date(ac.expires_at)
+  const now = new Date()
+  if (expiresAt < now) return 'membership-value--expired'
+  const daysLeft = Math.ceil((expiresAt - now) / (1000 * 60 * 60 * 24))
+  if (daysLeft <= 7) return 'membership-value--warning'
+  return ''
+})
 
 // Phase 23b: 砍 statusLabel/formatDateTime (激活信息整块已删,这两个 helper 只它用)
 
@@ -295,6 +340,56 @@ onMounted(() => {
   padding: 24px;
   margin-bottom: 20px;
   box-shadow: var(--shadow-sm);
+}
+
+/* P0-8: 会员信息卡片 */
+.membership-card {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.membership-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  padding: 8px 12px;
+  background: var(--color-bg-secondary, rgba(0, 0, 0, 0.02));
+  border-radius: var(--radius-md);
+}
+.membership-label {
+  color: var(--color-text-secondary, #666);
+  font-weight: 500;
+}
+.membership-value {
+  color: var(--color-text-primary, #222);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.membership-code {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  letter-spacing: 0.5px;
+}
+.membership-value--warning {
+  color: #d97706;
+}
+.membership-value--expired {
+  color: #dc2626;
+}
+.membership-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  font-weight: 600;
+}
+.membership-value--expired + .membership-badge,
+.membership-value:has(.membership-badge) .membership-badge {
+  /* keep badge style */
 }
 
 .stats-grid {

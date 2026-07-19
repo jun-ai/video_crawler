@@ -317,7 +317,46 @@ async def forgot_password(
 
 @router.get("/profile", response_model=UserResponse)
 async def get_profile(
-    current_user: Annotated[User, Depends(get_current_user)]
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: AsyncSession = Depends(get_db),
 ):
-    """获取当前用户信息"""
-    return current_user
+    """获取当前用户信息 (P0-8: 含激活码详情, 让前端能显示会员到期)"""
+    from app.schemas.schemas import ActivationCodeInfo
+
+    result = await db.execute(
+        select(User).where(User.id == current_user.id)
+    )
+    user = result.scalar_one_or_none()
+    if not user:
+        return current_user
+
+    # 嵌套激活码 (用 dict 而非 ORM 属性赋值, 避开 SQLAlchemy Column 推断)
+    activation_code_info = None
+    if user.activation_code_id is not None:
+        ac_result = await db.execute(
+            select(ActivationCode).where(ActivationCode.id == user.activation_code_id)
+        )
+        ac = ac_result.scalar_one_or_none()
+        if ac:
+            activation_code_info = ActivationCodeInfo(
+                code=str(ac.code),
+                expires_at=ac.expires_at,
+                activated_at=user.activated_at,  # 用 user 表的 activated_at
+                is_used=bool(ac.is_used) if ac.is_used is not None else False,
+            )
+
+    # 用 Pydantic .model_validate (Pydantic v2) 或 UserResponse(...) 构造响应
+    # 这样 activation_code 嵌套字段能被序列化
+    return UserResponse(
+        id=user.id,
+        username=user.username,
+        phone=user.phone,
+        avatar=user.avatar,
+        level=user.level or 1,
+        role=user.role or 0,
+        activation_code_id=user.activation_code_id,
+        status=user.status or 'approved',
+        activated_at=user.activated_at,
+        created_at=user.created_at,
+        activation_code=activation_code_info,
+    )
