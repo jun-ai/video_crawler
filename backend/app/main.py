@@ -2,7 +2,8 @@
 英语口语学习网站 - 后端 API
 """
 import asyncio
-from fastapi import FastAPI, Request, Response
+from typing import Annotated
+from fastapi import FastAPI, Request, Response, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import StreamingResponse
@@ -20,7 +21,9 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from app.config import settings
 from app.database import init_db
+from app.models.models import User
 from app.routers import auth, materials, learning, favorites, admin, tags, announcements
+from app.routers.auth import get_current_user
 from app.utils.logger import setup_logging, get_logger
 from app.utils.rate_limit import limiter
 from slowapi.middleware import SlowAPIMiddleware
@@ -45,6 +48,15 @@ async def lifespan(app: FastAPI):
     logger.info("正在初始化数据库...")
     await init_db()
     logger.info("数据库初始化完成")
+
+    # Phase 30 P0-5: secret_key 必须从环境变量注入, 不允许默认值
+    if settings.secret_key in ("", "dev-secret-key-change-in-production"):
+        raise RuntimeError(
+            "SECRET_KEY 未设置或仍为默认值. "
+            "生产环境必须从环境变量注入高熵密钥, 否则 JWT 可被伪造."
+        )
+    logger.info(f"secret_key 校验通过 (长度={len(settings.secret_key)})")
+
     logger.info(f"服务启动成功，监听 {settings.host}:{settings.port}")
     yield
     # 关闭时清理资源
@@ -102,17 +114,41 @@ async def log_requests(request: Request, call_next):
         logger.error(f"Request failed: {request.method} {request.url.path} - Error: {str(e)}")
         raise
 
-# 静态文件服务 - 挂载项目根目录
+# 静态文件服务 - 限定到 materials 目录 (避免把整个项目根暴露给公网)
+# Phase 30 P0-1 (7-19 二次修复): 之前用 settings.upload_dir 拼路径, 容器内 resolve 错位
+# 容器内 bind mount 路径固定 /app/data/materials (compose yml: ./data/materials:/app/data/materials)
+# 本地开发也走 /app/data/materials (跟容器一致, 行为统一)
 PROJECT_ROOT = Path(__file__).parent.parent.parent
+MATERIALS_ROOT = Path("/app/data/materials").resolve()
+
+if not MATERIALS_ROOT.is_dir():
+    # 本地开发时 /app 不存在, fallback 到 PROJECT_ROOT/data/materials
+    _local_fallback = (PROJECT_ROOT / "data" / "materials").resolve()
+    if _local_fallback.is_dir():
+        MATERIALS_ROOT = _local_fallback
+    else:
+        logger.warning(f"[P0-1] /app/data/materials 不存在且本地 fallback 也不存在, 当前={MATERIALS_ROOT}")
+
+
+def _safe_resolve_under_materials(filename: str) -> Path | None:
+    """P0-3: 路径穿越防御。返回 resolved abs path, 若超出 MATERIALS_ROOT 则 None"""
+    try:
+        candidate = (PROJECT_ROOT / filename).resolve()
+        candidate.relative_to(MATERIALS_ROOT)  # 越界即抛 ValueError
+        return candidate
+    except (ValueError, OSError):
+        return None
 
 
 # 专门的视频流端点，支持 Range 请求
 @app.get("/video/{filename:path}")
 async def stream_video(filename: str, request: Request):
-    """视频流端点，支持 Range 请求"""
-    video_path = PROJECT_ROOT / filename
+    """视频流端点，支持 Range 请求
 
-    if not video_path.exists():
+    Phase 30 P0-3: 加 resolve() 校验, 拒绝 ../etc/passwd 这类路径穿越
+    """
+    video_path = _safe_resolve_under_materials(filename)
+    if video_path is None or not video_path.is_file():
         return Response(status_code=404)
 
     file_size = video_path.stat().st_size
@@ -222,7 +258,7 @@ def _parse_range_header(range_header: str):
 
 
 @app.api_route("/oss-proxy/{path:path}", methods=["GET", "HEAD"])
-async def proxy_oss(path: str, request: Request):
+async def proxy_oss(path: str, request: Request, current_user: Annotated[User, Depends(get_current_user)]):
     """
     代理 OSS 资源请求 (私有 bucket)
     - 使用 oss2 SDK 签名访问 (避免 CDN/匿名访问 403)
@@ -257,11 +293,45 @@ async def proxy_oss(path: str, request: Request):
     filtered_headers["Access-Control-Allow-Methods"] = "GET, HEAD, OPTIONS"
     filtered_headers["Access-Control-Allow-Headers"] = "Range, Content-Type"
 
+    # Phase 30 P0-7: oss2 result.stream 是同步生成器, 直接 for 迭代会阻塞 event loop
+    # 视频拖动时 Range 请求并发, oss2 socket 没释放 → 后续请求阻塞 (实测 1h+ 挂死)
+    # 修法: 同步迭代器放进 run_in_executor, 加 wait_for 超时, try/finally 强制关 socket
+    loop = asyncio.get_event_loop()
+    _sentinel = object()
+
+    def _next_chunk():
+        """同步生成器 next, 阻塞调用, 放线程池执行. 无 chunk 返回 _sentinel."""
+        try:
+            return next(_stream_iter)
+        except StopIteration:
+            return _sentinel
+
+    _stream_iter = result.stream(8192)
+    # oss2 2.19: GetObjectResult.stream 实际是 resp.iter_content, 关闭走 result.resp.close()
+    # oss2 0.14- 有 result.client (旧 API), 兜底 None 不报 AttributeError
+    _oss_resp = getattr(result, "resp", None) or getattr(result, "client", None)
+
     async def stream_response():
-        # result.stream 是同步生成器; 每次读一块后让出 event loop
-        for chunk in result.stream(8192):
-            yield chunk
-            await asyncio.sleep(0)
+        try:
+            while True:
+                chunk = await asyncio.wait_for(
+                    loop.run_in_executor(None, _next_chunk),
+                    timeout=60.0,  # 60s 内必须读出下一块, 否则断开防挂死
+                )
+                if chunk is _sentinel:
+                    break
+                yield chunk
+        except asyncio.TimeoutError:
+            logger.warning(f"[P0-7] oss-proxy stream 超时 (60s), 强制断开 path={path}")
+        except Exception as e:
+            logger.error(f"[P0-7] oss-proxy stream 异常: {e}")
+        finally:
+            # 显式关 oss2 socket, 防连接泄漏
+            if _oss_resp is not None:
+                try:
+                    loop.run_in_executor(None, _oss_resp.close)
+                except Exception:
+                    pass
 
     return StreamingResponse(
         stream_response(),
@@ -271,7 +341,12 @@ async def proxy_oss(path: str, request: Request):
     )
 
 
-app.mount("/static", StaticFiles(directory=str(PROJECT_ROOT)), name="static")
+_materials_mount = MATERIALS_ROOT if MATERIALS_ROOT.is_dir() else PROJECT_ROOT
+if _materials_mount == PROJECT_ROOT:
+    logger.warning(f"[P0-1] materials 目录不存在, fallback 到 PROJECT_ROOT: {_materials_mount}")
+else:
+    logger.info(f"[P0-1] /static 挂载到 MATERIALS_ROOT: {_materials_mount}")
+app.mount("/static", StaticFiles(directory=str(_materials_mount)), name="static")
 
 # 注册路由
 app.include_router(auth.router)
