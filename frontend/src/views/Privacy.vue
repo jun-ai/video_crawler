@@ -77,6 +77,16 @@
       <li>小红书：私信 @Linyu</li>
       <li>邮箱：privacy@fluenty.cn</li>
     </ul>
+    <!-- P1 #11 (7-19): 加公司名 + 备案号 (合规要求) -->
+    <div class="company-info">
+      <p><strong>运营主体信息：</strong></p>
+      <ul>
+        <li>网站名称：Linyu（流利英语）</li>
+        <li>备案号：<a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">浙ICP备2026013523号-1</a></li>
+        <li>服务器位置：阿里云华东 1（杭州）</li>
+      </ul>
+      <p class="company-disclaimer">本应用为个人开发者运营的非营利学习工具，无公司实体。如需正式法律联络，请通过上述邮箱。</p>
+    </div>
   </LegalPage>
 </template>
 
