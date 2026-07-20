@@ -124,9 +124,9 @@
         <div class="banner-arrow">→</div>
       </div>
 
-      <!-- Phase 12: 筛选栏 极简重设计 (1 行 chip + 1 行搜索) -->
-      <div class="filter-bar">
-        <!-- 主状态 chip: 3 个核心 + "更多" dropdown (学习中/已掌握) -->
+      <!-- 7-20: 单行 chip+工具 flex-wrap 筛选栏 -->
+      <div class="filter-bar filter-bar--single">
+        <!-- 主状态 chip: 3 个核心 + "更多" sheet (待复习/新词) -->
         <div class="filter-chips-main">
           <FilterChip
             :model-value="filterStatus"
@@ -136,6 +136,19 @@
           />
           <FilterChip
             :model-value="filterStatus"
+            value="learning"
+            :label="`学习中 ${reviewStats.total_learning || ''}`.trim()"
+            @update:model-value="setFilter"
+          />
+          <FilterChip
+            :model-value="filterStatus"
+            value="mastered"
+            :label="`已掌握 ${reviewStats.total_mastered || ''}`.trim()"
+            @update:model-value="setFilter"
+          />
+          <FilterChip
+            v-if="reviewStats.total_due"
+            :model-value="filterStatus"
             value="due"
             :label="`待复习 ${reviewStats.total_due || ''}`.trim()"
             @update:model-value="setFilter"
@@ -143,35 +156,12 @@
           <FilterChip
             :model-value="filterStatus"
             value="new"
-            :label="`新词 ${reviewStats.total_due === undefined ? '' : ''}`.trim()"
+            label="新词"
             @update:model-value="setFilter"
           />
-          <!-- Phase 12: 学习中/已掌握 折叠到 dropdown, 不默认展示占位置 -->
-          <SfDropdown>
-            <template #trigger>
-              <button
-                class="filter-chip filter-chip--more"
-                :class="{ active: ['learning', 'mastered'].includes(filterStatus) }"
-                type="button"
-              >
-                {{ filterStatus === 'learning' ? '学习中' : filterStatus === 'mastered' ? '已掌握' : '更多筛选' }}
-                <ChevronDown :size="12" />
-              </button>
-            </template>
-            <div class="vocab-more-item" @click="setFilter('learning')">
-              <span class="vocab-more-dot" style="background: #f59e0b"></span>学习中
-            </div>
-            <div class="vocab-more-item" @click="setFilter('mastered')">
-              <span class="vocab-more-dot" style="background: #10b981"></span>已掌握
-            </div>
-            <div class="vocab-more-divider"></div>
-            <div class="vocab-more-item" @click="setFilter('all')">
-              <span class="vocab-more-dot" style="background: var(--color-text-muted)"></span>查看全部
-            </div>
-          </SfDropdown>
         </div>
 
-        <!-- 工具行: 搜索 + 来源/排序 (桌面) + 总数 -->
+        <!-- 工具: 搜索 + 语料 + 排序 (统一方角 chip 化) -->
         <div class="filter-toolbar">
           <div class="filter-search">
             <SfInput
@@ -201,7 +191,7 @@
             />
           </div>
 
-          <!-- 排序 dropdown (桌面显示, H5 隐藏) -->
+          <!-- 排序 dropdown -->
           <SfDropdown v-if="!isMobileView" class="filter-tool-dropdown">
             <template #trigger>
               <button class="filter-tool-btn" type="button">
@@ -632,8 +622,7 @@ const sortOptions = [
   { value: 'newest', label: '最近添加' },
   { value: 'oldest', label: '最早添加' },
   { value: 'word_asc', label: 'A → Z' },
-  { value: 'word_desc', label: 'Z → A' },
-  { value: 'next_review_desc', label: '最不急' }
+  { value: 'word_desc', label: 'Z → A' }
 ]
 const sortByLabel = computed(() => {
   return sortOptions.find(o => o.value === sortBy.value)?.label || '最近添加'
@@ -1309,7 +1298,7 @@ onUnmounted(() => {
   color: #FCD34D;
 }
 
-/* ---- 筛选条 (Phase 12 重设计: 1 行 chip + 1 行搜索 + info) ---- */
+/* ---- 筛选条 (7-20 重设计: chip + 工具同行 flex-wrap) ---- */
 .filter-bar {
   margin-bottom: 16px;
   display: flex;
@@ -1317,12 +1306,16 @@ onUnmounted(() => {
   gap: 10px;
 }
 
-/* 主 chip 行: 4 个 (3 核心 + 更多 dropdown) */
-.filter-chips-main {
+.filter-bar--single .filter-chips-main,
+.filter-bar--single .filter-toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
   flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filter-bar--single .filter-toolbar {
+  margin-top: 0;
 }
 
 /* "更多筛选" chip 样式 (跟 FilterChip 一致) */

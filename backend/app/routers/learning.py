@@ -385,20 +385,21 @@ async def get_vocabulary(
 
     # 排序 (5-P1-7 优化: review_count -> next_review_asc/desc, 复习场景更相关)
     # 5-P2-5: starred_first 把 starred=True 的词排前面
-    from sqlalchemy.sql.expression import nulls_last, nulls_first
+    # 注意: backend 用 MySQL 8.0, ORDER BY ... NULLS LAST 不支持,
+    # 用 coalesce 把 NULL 排到最末
+    from sqlalchemy import func as sa_func
+    from sqlalchemy import Date as _Date
     order_map = {
         'newest': Vocabulary.created_at.desc(),
         'oldest': Vocabulary.created_at.asc(),
         'word_asc': Vocabulary.word.asc(),
         'word_desc': Vocabulary.word.desc(),
         # "最该复习": next_review_at 最早的在前, NULL (未复习过) 排最后
-        'next_review_asc': nulls_last(Vocabulary.next_review_at.asc()),
-        # "最不急": next_review_at 最远的在前, NULL 排最后
-        'next_review_desc': nulls_last(Vocabulary.next_review_at.desc()),
-        # 5-P2-5: starred 优先 (starred=True 排最前, 然后按 created_at 倒序)
-        'starred_first': Vocabulary.starred.desc(),
-        # 保留兼容: 复习次数 (老 P1-7 选项)
+        'next_review_asc': sa_func.coalesce(Vocabulary.next_review_at, sa_func.cast('9999-12-31', _Date)).asc(),
+        # 复习次数 (老 P1-7 选项)
         'review_count': Vocabulary.review_count.desc(),
+        # starred 优先 (starred=True 排最前, 然后按 created_at 倒序)
+        'starred_first': Vocabulary.starred.desc()
     }
     query = query.order_by(order_map.get(sort_by, Vocabulary.created_at.desc()))
 
