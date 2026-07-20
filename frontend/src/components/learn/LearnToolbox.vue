@@ -270,6 +270,12 @@ const activeStat = ref('vocab')
   opacity: 0.7;
   cursor: not-allowed;
 }
+/* 7-20: H5 端太小只展示主要功能, 隐藏工具箱里的 AI 解读按钮 (PC 不动) */
+@media (max-width: 768px) {
+  .sf-toolbox__ai-btn {
+    display: none !important;
+  }
+}
 
 /* 快捷键提示 */
 .sf-toolbox__tips {
