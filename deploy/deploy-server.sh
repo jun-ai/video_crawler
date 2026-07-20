@@ -17,6 +17,10 @@ DEPLOY_DIR="/opt/english-learning"
 BACKEND_IMAGE="english-learning-backend"
 FRONTEND_IMAGE="english-learning-frontend"
 
+# SSL 域名 (letsencrypt live dir → nginx ssl 同步)
+# 7-20: 历史上 deploy/nginx/ssl 缺 fullchain.pem, 重起 nginx 时 502; 同步 letsencrypt 到 deploy dir 修复
+SSL_DOMAINS=("fluenty.cn" "api.babyname.asia")
+
 echo ""
 echo "========================================"
 echo "  英语学习平台 - 服务器部署脚本"
@@ -56,24 +60,46 @@ echo -e "${GREEN}完成: 后端镜像加载成功${NC}"
 echo ""
 
 # 加载前端镜像
-echo -e "${YELLOW}[4/7] 加载前端镜像...${NC}"
+echo -e "${YELLOW}[4/8] 加载前端镜像...${NC}"
 docker load -i ${FRONTEND_IMAGE}.tar
 echo -e "${GREEN}完成: 前端镜像加载成功${NC}"
 echo ""
 
+# 同步 SSL 证书 (letsencrypt → nginx ssl dir)
+echo -e "${YELLOW}[5/8] 同步 SSL 证书...${NC}"
+for d in "${SSL_DOMAINS[@]}"; do
+  src="/etc/letsencrypt/live/$d"
+  dst="$DEPLOY_DIR/deploy/nginx/ssl/$d"
+  if [ -f "$src/fullchain.pem" ] && [ -f "$src/privkey.pem" ]; then
+    mkdir -p "$dst"
+    cp "$src/fullchain.pem" "$dst/"
+    cp "$src/privkey.pem" "$dst/"
+    echo "  $d: synced"
+  else
+    echo -e "${RED}  $d: 跳过 (letsencrypt 缺证书: $src)${NC}"
+  fi
+done
+# fluenty.cn api 子域共用主域证书 (nginx.conf L57/150 引用 ssl/fullchain.pem)
+if [ -f "/etc/letsencrypt/live/fluenty.cn/fullchain.pem" ]; then
+  cp "/etc/letsencrypt/live/fluenty.cn/fullchain.pem" "$DEPLOY_DIR/deploy/nginx/ssl/"
+  cp "/etc/letsencrypt/live/fluenty.cn/privkey.pem" "$DEPLOY_DIR/deploy/nginx/ssl/"
+  echo "  fluenty.cn 主域证书: synced"
+fi
+echo ""
+
 # 停止旧服务
-echo -e "${YELLOW}[5/7] 停止旧服务...${NC}"
+echo -e "${YELLOW}[6/8] 停止旧服务...${NC}"
 docker-compose down
 echo ""
 
 # 启动新服务
-echo -e "${YELLOW}[6/7] 启动服务...${NC}"
+echo -e "${YELLOW}[7/8] 启动服务...${NC}"
 docker-compose up -d
 echo -e "${GREEN}完成: 服务启动成功${NC}"
 echo ""
 
 # 检查服务状态
-echo -e "${YELLOW}[7/7] 检查服务状态...${NC}"
+echo -e "${YELLOW}[8/8] 检查服务状态...${NC}"
 sleep 8
 docker-compose ps
 echo ""
