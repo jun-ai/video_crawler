@@ -2804,6 +2804,12 @@ onUnmounted(() => {
     bottom: 76px;
   }
 }
+/* 7-20: H5 端太小只展示主要功能, 隐藏工具箱扳手浮动按钮 (PC 不动) */
+@media (max-width: 768px) {
+  .sf-toolbox-trigger {
+    display: none !important;
+  }
+}
 
 /* 工具箱抽屉遮罩 */
 .sf-toolbox-overlay {
