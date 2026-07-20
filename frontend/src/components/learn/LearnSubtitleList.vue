@@ -35,7 +35,7 @@
             <div class="sf-dropdown-item" @click="handleMoreAction('toggle-auto-scroll')">
               {{ autoScroll ? '关闭自动滚动' : '开启自动滚动' }}
             </div>
-            <div class="sf-dropdown-item" v-if="!hasInterpretation" :class="{ disabled: isGenerating }" @click="!isGenerating && handleMoreAction('generate-interpretation')">
+            <div class="sf-dropdown-item sf-dropdown-item--generate" v-if="!hasInterpretation" :class="{ disabled: isGenerating }" @click="!isGenerating && handleMoreAction('generate-interpretation')">
               {{ isGenerating ? '分析中...' : '生成解读' }}
             </div>
           </SfDropdown>
@@ -601,6 +601,10 @@ defineExpose({ listRef })
   }
   .sf-pagination {
     padding: 12px 8px;
+  }
+  /* 7-20: H5 太小只展示主要, 隐藏 '更多' 下拉里的 '生成解读' (PC 不动) */
+  .sf-dropdown-item--generate {
+    display: none !important;
   }
 }
 @media (max-width: 480px) {
