@@ -260,6 +260,16 @@ const logout = () => {
   }
 }
 
+/* PC 也隐藏全局 footer (2026-07-20 取消 品牌句/产品/学习/关于/版权/ICP 整块展示) */
+@media (min-width: 1024px) {
+  .app-footer {
+    display: none;
+  }
+  .app-main {
+    padding-bottom: 0;
+  }
+}
+
 /* ====== 全局 Footer — SpeakVlog 浅绿底（Phase 0+） ====== */
 .app-footer {
   background: var(--color-footer, #F1F6EE);
