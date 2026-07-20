@@ -33,7 +33,7 @@
     <Transition name="sf-combobox-dropdown">
       <div v-if="isOpen" class="sf-combobox-dropdown">
         <div v-if="filteredOptions.length === 0" class="sf-combobox-empty">
-          {{ searchText ? `没找到 "${searchText}"` : '没有可选项' }}
+          {{ emptyMessage }}
         </div>
         <div
           v-for="(opt, idx) in filteredOptions"
@@ -62,6 +62,9 @@ const props = defineProps({
   options: { type: Array, required: true },  // [{ value, label, sublabel? }]
   placeholder: { type: String, default: '请选择...' },
   searchable: { type: Boolean, default: true },
+  minSearchChars: { type: Number, default: 0 },
+  searchPrompt: { type: String, default: '输入关键词查询' },
+  resetSearchOnOpen: { type: Boolean, default: false },
   displayValue: { type: String, default: '' }  // 当 modelValue 不为空时, 输入框显示什么 (空=自动从 options 找)
 })
 
@@ -84,23 +87,35 @@ watch(() => props.modelValue, () => {
   searchText.value = displayText.value
 }, { immediate: true })
 
+const normalizedSearchText = computed(() => searchText.value.trim())
+const shouldPromptForSearch = computed(() =>
+  props.minSearchChars > 0 && normalizedSearchText.value.length < props.minSearchChars
+)
+
 const filteredOptions = computed(() => {
-  if (!searchText.value) return props.options
-  const lower = searchText.value.toLowerCase()
+  if (shouldPromptForSearch.value) return []
+  if (!normalizedSearchText.value) return props.options
+  const lower = normalizedSearchText.value.toLowerCase()
   return props.options.filter(o =>
     (o.label || '').toLowerCase().includes(lower) ||
     (o.sublabel || '').toLowerCase().includes(lower)
   )
 })
 
+const emptyMessage = computed(() => {
+  if (shouldPromptForSearch.value) return props.searchPrompt
+  return normalizedSearchText.value ? `没找到 "${normalizedSearchText.value}"` : '没有可选项'
+})
+
 const openDropdown = async () => {
   isOpen.value = true
-  // 打开时, 如果有值, 把光标放到末尾方便追加搜索
-  await nextTick()
-  if (inputRef.value) {
-    const len = inputRef.value.value.length
-    inputRef.value.setSelectionRange(len, len)
+  if (props.searchable && props.resetSearchOnOpen) {
+    // 可选：打开时清空已选标题，让用户直接输入新的模糊查询；关闭会恢复已选标题。
+    searchText.value = ''
   }
+  highlightedIndex.value = 0
+  await nextTick()
+  inputRef.value?.focus()
 }
 
 const closeDropdown = () => {

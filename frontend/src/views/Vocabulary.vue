@@ -186,28 +186,20 @@
             </SfInput>
           </div>
 
-          <!-- 来源 dropdown (桌面显示, H5 隐藏) -->
-          <SfDropdown v-if="!isMobileView" class="filter-tool-dropdown">
-            <template #trigger>
-              <button class="filter-tool-btn" type="button">
-                <Film :size="13" />
-                <span>{{ filterMaterialTitle || '全部语料' }}</span>
-                <ChevronDown :size="12" />
-              </button>
-            </template>
-            <div class="vocab-more-item" @click="filterMaterialId = null">
-              <span :class="['vocab-more-check', { checked: !filterMaterialId }]">✓</span>全部语料
-            </div>
-            <div
-              v-for="m in materialsList"
-              :key="m.id"
-              class="vocab-more-item"
-              @click="filterMaterialId = m.id"
-            >
-              <span :class="['vocab-more-check', { checked: filterMaterialId === m.id }]">✓</span>
-              {{ m.title }}
-            </div>
-          </SfDropdown>
+          <!-- 语料名称模糊查询：未输入时不展开整份语料清单 -->
+          <div v-if="!isMobileView" class="filter-material-search">
+            <Film :size="14" class="filter-material-search__icon" />
+            <SfCombobox
+              v-model="filterMaterialId"
+              :options="materialOptions"
+              placeholder="按语料名称查询"
+              :display-value="filterMaterialTitle"
+              :min-search-chars="1"
+              search-prompt="输入语料名称开始查询"
+              reset-search-on-open
+              @change="onMaterialFilterChange"
+            />
+          </div>
 
           <!-- 排序 dropdown (桌面显示, H5 隐藏) -->
           <SfDropdown v-if="!isMobileView" class="filter-tool-dropdown">
@@ -296,13 +288,38 @@
           </label>
 
           <div class="vocab-card-inner">
-            <!-- 单词头部 -->
+            <!-- 单词 + 学习状态：主词保持第一视觉层级，状态固定在同一标题行 -->
             <div class="vocab-card-top">
               <div class="vocab-word-area">
-                <div class="vocab-word-row" @click="speakText(item.word)">
-                  <span class="vocab-word">{{ item.word }}</span>
+                <div class="vocab-word-heading">
+                  <div class="vocab-word-row" @click="speakText(item.word)">
+                    <span class="vocab-word">{{ item.word }}</span>
+                  </div>
+                  <div class="vocab-status-group">
+                    <SfTag :type="item.mastered ? 'success' : 'warning'" size="sm">
+                      {{ item.mastered ? '已掌握' : '学习中' }}
+                    </SfTag>
+                    <SfTag
+                      v-if="!item.mastered && getNextReviewInfo(item.next_review_at)"
+                      size="sm"
+                      :type="getNextReviewInfo(item.next_review_at).type"
+                      :aria-label="`下次复习: ${getNextReviewInfo(item.next_review_at).label}`"
+                    >
+                      {{ getNextReviewInfo(item.next_review_at).label }}
+                    </SfTag>
+                    <span
+                      v-if="item.review_count > 0 && item.ease_factor !== undefined"
+                      class="vocab-difficulty"
+                      :title="`难度 ${item.ease_factor.toFixed(2)} (越高越简单)`"
+                      :aria-label="`难度 ${item.ease_factor.toFixed(2)}`"
+                    >
+                      <span class="vocab-difficulty-stars">{{ getDifficultyStars(item.ease_factor) }}</span>
+                    </span>
+                    <SfTag v-if="item.review_count > 0" size="sm" type="default">
+                      复习 {{ item.review_count }} 次
+                    </SfTag>
+                  </div>
                 </div>
-                <!-- 查询到的音标 (5-P2-2: lookup 失败显示 '?' tooltip) -->
                 <div
                   :class="['vocab-phonetic', { 'lookup-failed': isLookupFailed(item.word) }]"
                   v-if="getWordInfo(item.word)?.phonetic || isLookupAttempted(item.word)"
@@ -312,59 +329,30 @@
                 </div>
               </div>
 
-              <!-- TTS 发音按钮 — 圆形 44px touch target -->
               <button class="tts-btn" @click="speakText(item.word)" title="朗读发音">
                 <Headphones :size="20" />
               </button>
-
-              <!-- 状态标签 + 复习进度 -->
-              <div class="vocab-status-group">
-                <SfTag :type="item.mastered ? 'success' : 'warning'" size="sm">
-                  {{ item.mastered ? '已掌握' : '学习中' }}
-                </SfTag>
-                <!-- 4-P1-2: 下次复习时间徽标 (SM-2 算法产出) -->
-                <SfTag
-                  v-if="!item.mastered && getNextReviewInfo(item.next_review_at)"
-                  size="sm"
-                  :type="getNextReviewInfo(item.next_review_at).type"
-                  :aria-label="`下次复习: ${getNextReviewInfo(item.next_review_at).label}`"
-                >
-                  {{ getNextReviewInfo(item.next_review_at).label }}
-                </SfTag>
-                <!-- 4-P1-2: 复习难度星标 (ease_factor 2.5 -> 3 星) -->
-                <span
-                  v-if="item.review_count > 0 && item.ease_factor !== undefined"
-                  class="vocab-difficulty"
-                  :title="`难度 ${item.ease_factor.toFixed(2)} (越高越简单)`"
-                  :aria-label="`难度 ${item.ease_factor.toFixed(2)}`"
-                >
-                  <span class="vocab-difficulty-stars">{{ getDifficultyStars(item.ease_factor) }}</span>
-                </span>
-                <SfTag
-                  v-if="item.review_count > 0"
-                  size="sm"
-                  type="default"
-                >
-                  复习 {{ item.review_count }} 次
-                </SfTag>
-              </div>
             </div>
 
-            <!-- 查询到的翻译 (5-P2-2: 失败显示 '?') -->
+            <!-- 查询结果：释义与例句组成一个连续的释义区，避免多个彩色盒子抢层级 -->
             <div
-              :class="['vocab-translation', { 'lookup-failed': isLookupFailed(item.word) }]"
-              v-if="showChinese && (getWordInfo(item.word)?.translation || isLookupFailed(item.word))"
-              :title="isLookupFailed(item.word) ? '单词查询失败, 点击重试' : ''"
-              @click.stop="isLookupFailed(item.word) && retryLookup(item.word)"
+              class="vocab-definition"
+              v-if="showChinese && (getWordInfo(item.word)?.translation || getWordInfo(item.word)?.example || isLookupFailed(item.word))"
             >
-              <span v-if="getWordInfo(item.word)?.translation">{{ getWordInfo(item.word).translation }}</span>
-              <span v-else-if="isLookupFailed(item.word)">? 翻译查询失败</span>
-            </div>
-
-            <!-- 5-P2-1: 例句 (lookup cache 的 example 字段, 之前从未渲染过) -->
-            <div class="vocab-example" v-if="showChinese && getWordInfo(item.word)?.example">
-              <span class="example-label">例句</span>
-              <span class="example-text">「{{ getWordInfo(item.word).example }}」</span>
+              <div
+                :class="['vocab-translation', { 'lookup-failed': isLookupFailed(item.word) }]"
+                v-if="getWordInfo(item.word)?.translation || isLookupFailed(item.word)"
+                :title="isLookupFailed(item.word) ? '单词查询失败, 点击重试' : ''"
+                @click.stop="isLookupFailed(item.word) && retryLookup(item.word)"
+              >
+                <span class="definition-label">释义</span>
+                <span v-if="getWordInfo(item.word)?.translation">{{ getWordInfo(item.word).translation }}</span>
+                <span v-else-if="isLookupFailed(item.word)">? 翻译查询失败</span>
+              </div>
+              <div class="vocab-example" v-if="getWordInfo(item.word)?.example">
+                <span class="example-label">例句</span>
+                <span class="example-text">{{ getWordInfo(item.word).example }}</span>
+              </div>
             </div>
 
             <!-- 复习进度可视化 -->
@@ -392,15 +380,17 @@
               </div>
             </div>
 
-            <!-- 5-P1-7: 原句 (引文) - 左 border 引用条样式 -->
+            <!-- 原句：沿用同一“标签 + 内容”栅格，与查询例句对齐 -->
             <div class="vocab-context-area" v-if="item.context">
               <div class="vocab-context" @click="speakText(item.context)">
                 <span class="context-label">原句</span>
-                <span class="context-text">「{{ item.context }}」</span>
+                <span class="context-content">
+                  <span class="context-text">{{ item.context }}</span>
+                  <span class="vocab-context-cn" v-if="showChinese && item.context_cn">
+                    {{ item.context_cn }}
+                  </span>
+                </span>
                 <Headphones :size="14" class="speak-icon-small" />
-              </div>
-              <div class="vocab-context-cn" v-if="showChinese && item.context_cn">
-                {{ item.context_cn }}
               </div>
             </div>
 
@@ -432,9 +422,9 @@
                 size="sm"
                 @click="lookupAndSpeak(item.word)"
                 :loading="lookupLoading[item.word]"
-                title="查释义: 未缓存时走 lookup API, 已缓存时直接朗读"
+                title="查询音标、释义和例句"
               >
-                <Headphones :size="14" /> 查释义
+                <Search :size="14" /> 查释义
               </SfButton>
               <SfButton
                 v-if="!item.mastered"
@@ -534,7 +524,6 @@ import { useTTS } from '@/composables/useTTS'
 import { showConfirm } from '@/composables/useConfirm'
 import { Headphones, Play, Flame, Search, X, CheckSquare, Square, CheckCheck, Check, RotateCcw, Trash2, Download, FileJson, FileText, LayoutGrid, Rows3, Star, Infinity as InfinityIcon, ListOrdered, MoreVertical, ChevronDown, Film, ArrowUpDown, Eye } from 'lucide-vue-next'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
-import SfSwitch from '@/components/ui/SfSwitch.vue'
 import SfSelect from '@/components/ui/SfSelect.vue'
 import SfCombobox from '@/components/ui/SfCombobox.vue'
 import SfInput from '@/components/ui/SfInput.vue'
@@ -550,6 +539,7 @@ import EmptyState from '@/components/common/EmptyState.vue'
 import { vocabularyAPI, materialAPI } from '@/api'
 import { useUserStore } from '@/stores/user'
 import { goLogin } from '@/lib/authRedirect'
+import { buildMaterialOptions, normalizeLookupInfo } from '@/lib/vocabularyPresentation'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -627,6 +617,7 @@ const filterMaterialTitle = computed(() => {
   if (!filterMaterialId.value) return ''
   return materialsList.value.find(m => m.id === filterMaterialId.value)?.title || ''
 })
+const materialOptions = computed(() => buildMaterialOptions(materialsList.value))
 
 // 5-P0-3: 单词模糊搜索 (前端 debounce 300ms, 推送给后端 ?keyword=)
 const searchKeyword = ref('')
@@ -763,11 +754,7 @@ const lookupWordSilent = async (word) => {
   if (wordInfoCache[key]) return
   try {
     const result = await vocabularyAPI.lookup(word)
-    wordInfoCache[key] = {
-      phonetic: result.phonetic || '',
-      translation: result.translation || result.meaning || '',
-      example: result.example || ''
-    }
+    wordInfoCache[key] = normalizeLookupInfo(result)
     lookupAttempted[key] = true
     // 成功后清除失败标记
     if (lookupFailed[key]) delete lookupFailed[key]
@@ -787,24 +774,20 @@ const lookupAndSpeak = async (word) => {
     if (!wordInfoCache[key]) {
       await lookupWordSilent(word)
     }
-    speakText(word)
   } finally {
     lookupLoading[word] = false
   }
 }
 
 const setFilter = (value) => {
-  filterMastered.value = value
+  filterStatus.value = value
   currentPage.value = 1
   loadVocabularies()
 }
 
-const onFilterChange = () => {
-  currentPage.value = 1
-  loadVocabularies()
-}
-
-const onPageSizeChange = () => {
+const onMaterialFilterChange = (option) => {
+  // SfCombobox 的 change 与 v-model 更新同一 tick 触发，显式同步后再请求，避免带到旧 material_id。
+  filterMaterialId.value = option?.value ?? null
   currentPage.value = 1
   loadVocabularies()
 }
@@ -1382,6 +1365,29 @@ onUnmounted(() => {
   width: 100%;
 }
 
+/* 语料名称模糊查询：固定宽度，空状态只给输入提示，不渲染全量名称 */
+.filter-material-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 240px;
+  min-width: 200px;
+}
+.filter-material-search__icon {
+  position: absolute;
+  left: 11px;
+  z-index: 2;
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+.filter-material-search :deep(.sf-combobox-input-wrap) {
+  min-height: 34px;
+  padding-left: 30px;
+}
+.filter-material-search :deep(.sf-combobox-dropdown) {
+  min-width: 320px;
+}
+
 /* 来源/排序 dropdown 按钮 */
 .filter-tool-btn {
   display: inline-flex;
@@ -1422,7 +1428,8 @@ onUnmounted(() => {
 
 /* H5 隐藏 桌面专属 dropdown */
 @media (max-width: 768px) {
-  .filter-tool-dropdown { display: none !important; }
+  .filter-tool-dropdown,
+  .filter-material-search { display: none !important; }
   .filter-toolbar { gap: 8px; }
   .filter-search { max-width: 100%; }
 }
@@ -1617,16 +1624,22 @@ onUnmounted(() => {
 /* ---- 单词头部 ---- */
 .vocab-card-top {
   display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 14px;
 }
 
 .vocab-word-area {
   flex: 1;
   min-width: 0;
+}
+
+.vocab-word-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 
 .vocab-word-row {
@@ -1644,17 +1657,17 @@ onUnmounted(() => {
 
 .vocab-word {
   font-size: 28px;
-  font-weight: 600;
+  font-weight: 650;
   color: var(--color-text-primary);
   letter-spacing: -0.3px;
   line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .vocab-phonetic {
   font-size: 14px;
   color: var(--color-text-secondary);
-  font-style: italic;
-  margin-top: 4px;
+  margin-top: 2px;
   letter-spacing: 0.3px;
 }
 
@@ -1711,16 +1724,46 @@ onUnmounted(() => {
   font-size: 12px;
 }
 
-/* ---- 翻译 ---- */
-.vocab-translation {
-  font-size: 15px;
-  color: var(--color-text-secondary);
-  line-height: 1.6;
+/* ---- 查释义结果 ---- */
+.vocab-definition {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   margin-bottom: 14px;
-  padding: 12px 16px;
+  padding: 14px 16px;
   background: var(--color-bg-elevated);
-  border-radius: var(--radius-sm, 8px);
   border-left: 3px solid var(--color-brand-bright);
+  border-radius: var(--radius-sm, 8px);
+}
+
+.vocab-translation,
+.vocab-example {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--color-text-primary);
+}
+
+.definition-label,
+.vocab-example .example-label {
+  font-size: 12px;
+  line-height: 1.65;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.vocab-example .example-text {
+  color: var(--color-text-secondary);
+  font-style: normal;
+  overflow-wrap: anywhere;
 }
 
 /* ---- 复习进度可视化 ---- */
@@ -1788,23 +1831,21 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
-/* ---- 5-P1-7: 原句 (引用条) ---- */
+/* ---- 原句（与例句使用同一标签栅格） ---- */
 .vocab-context-area {
   margin-bottom: 14px;
 }
 
 .vocab-context {
-  font-size: 14px;
-  color: var(--color-text-secondary);
-  line-height: 1.6;
-  cursor: pointer;
-  padding: 10px 14px;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 18px;
+  align-items: start;
+  gap: 10px;
+  padding: 14px 16px;
   background: var(--color-bg-elevated);
   border-radius: var(--radius-sm, 8px);
-  border-left: 3px solid var(--color-brand);  /* 5-P1-7: 引用条样式 */
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  border-left: 3px solid var(--color-brand);
+  cursor: pointer;
   transition: background var(--sf-duration-normal);
 }
 
@@ -1818,18 +1859,31 @@ onUnmounted(() => {
 }
 
 .context-label {
-  color: var(--color-brand-bright);
+  color: var(--color-text-muted);
   font-weight: 600;
   white-space: nowrap;
-  flex-shrink: 0;
   font-size: 12px;
-  padding: 2px 6px;
-  background: var(--color-brand-subtle);
-  border-radius: 4px;
+  line-height: 1.65;
+}
+
+.context-content {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
 }
 
 .context-text {
-  flex: 1;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.vocab-context-cn {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 .speak-icon-small {
@@ -1839,16 +1893,6 @@ onUnmounted(() => {
   transition: all var(--sf-duration-normal);
   cursor: pointer;
   flex-shrink: 0;
-}
-
-.vocab-context-cn {
-  font-size: 13px;
-  color: var(--color-text-muted);
-  line-height: 1.6;
-  padding: 8px 14px;
-  background: var(--color-bg-elevated);
-  border-radius: var(--radius-sm, 8px);
-  margin-top: 6px;
 }
 
 /* ---- 卡片底部 ---- */
@@ -2206,14 +2250,8 @@ onUnmounted(() => {
   font-size: 12px;
   color: var(--color-text-tertiary, #94a3b8);
 }
-.vocab-list-list-mode .vocab-phonetic::before {
-  content: '/';
-}
-.vocab-list-list-mode .vocab-phonetic::after {
-  content: '/';
-}
-/* 列表模式: 隐藏详情区 (翻译/进度/语境/来源) */
-.vocab-list-list-mode .vocab-translation,
+/* 列表模式: 隐藏详情区 (翻译/例句/进度/语境/来源) */
+.vocab-list-list-mode .vocab-definition,
 .vocab-list-list-mode .vocab-progress-row,
 .vocab-list-list-mode .vocab-context-area,
 .vocab-list-list-mode .vocab-card-footer,
@@ -2308,29 +2346,7 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
-/* ==================== 5-P2-1: 例句样式 ==================== */
-.vocab-example {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin-top: 6px;
-  padding: 8px 12px;
-  background: rgba(245, 158, 11, 0.04);
-  border-left: 3px solid var(--color-accent, #F59E0B);
-  border-radius: 4px;
-  font-size: 13px;
-  line-height: 1.5;
-}
-.vocab-example .example-label {
-  flex-shrink: 0;
-  font-weight: 600;
-  color: var(--color-accent, #F59E0B);
-  font-size: 12px;
-}
-.vocab-example .example-text {
-  color: var(--color-text-secondary, #475569);
-  font-style: italic;
-}
+/* 例句样式已合并进 .vocab-definition，与释义共享栅格和背景。 */
 
 /* ==================== 5-P2-2: lookup 失败提示 ==================== */
 .lookup-failed {
