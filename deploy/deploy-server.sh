@@ -19,7 +19,10 @@ FRONTEND_IMAGE="english-learning-frontend"
 
 # SSL 域名 (letsencrypt live dir → nginx ssl 同步)
 # 7-20: 历史上 deploy/nginx/ssl 缺 fullchain.pem, 重起 nginx 时 502; 同步 letsencrypt 到 deploy dir 修复
-SSL_DOMAINS=("fluenty.cn" "api.babyname.asia")
+# 格式: "letsencrypt_dir|nginx_ssl_subdir" — nginx.conf 引用路径决定 subdir 名
+#   - nginx.conf L57 /etc/nginx/ssl/fullchain.pem → subdir="" (主域, 落顶层)
+#   - nginx.conf L196 /etc/nginx/ssl/babyname/fullchain.pem → subdir="babyname"
+SSL_DOMAINS=("fluenty.cn|" "api.babyname.asia|babyname")
 
 echo ""
 echo "========================================"
@@ -67,24 +70,20 @@ echo ""
 
 # 同步 SSL 证书 (letsencrypt → nginx ssl dir)
 echo -e "${YELLOW}[5/8] 同步 SSL 证书...${NC}"
-for d in "${SSL_DOMAINS[@]}"; do
-  src="/etc/letsencrypt/live/$d"
-  dst="$DEPLOY_DIR/deploy/nginx/ssl/$d"
+for entry in "${SSL_DOMAINS[@]}"; do
+  src_domain="${entry%|*}"
+  dst_subdir="${entry#*|}"
+  src="/etc/letsencrypt/live/$src_domain"
+  dst="$DEPLOY_DIR/deploy/nginx/ssl/${dst_subdir}"
   if [ -f "$src/fullchain.pem" ] && [ -f "$src/privkey.pem" ]; then
     mkdir -p "$dst"
     cp "$src/fullchain.pem" "$dst/"
     cp "$src/privkey.pem" "$dst/"
-    echo "  $d: synced"
+    echo "  $src_domain → ssl/${dst_subdir}: synced"
   else
-    echo -e "${RED}  $d: 跳过 (letsencrypt 缺证书: $src)${NC}"
+    echo -e "${RED}  $src_domain: 跳过 (letsencrypt 缺证书: $src)${NC}"
   fi
 done
-# fluenty.cn api 子域共用主域证书 (nginx.conf L57/150 引用 ssl/fullchain.pem)
-if [ -f "/etc/letsencrypt/live/fluenty.cn/fullchain.pem" ]; then
-  cp "/etc/letsencrypt/live/fluenty.cn/fullchain.pem" "$DEPLOY_DIR/deploy/nginx/ssl/"
-  cp "/etc/letsencrypt/live/fluenty.cn/privkey.pem" "$DEPLOY_DIR/deploy/nginx/ssl/"
-  echo "  fluenty.cn 主域证书: synced"
-fi
 echo ""
 
 # 停止旧服务
