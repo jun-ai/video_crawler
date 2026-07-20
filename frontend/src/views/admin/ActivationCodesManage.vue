@@ -45,6 +45,53 @@
 
     <!-- 列表 -->
     <div class="card-container list-card">
+      <!-- 7-20: 筛选/搜索条 (放表格上方, 跟工具栏分开) -->
+      <div class="filter-bar">
+        <div class="status-group">
+          <SfButton
+            :type="filters.status === 'all' ? 'primary' : 'ghost'"
+            size="sm"
+            @click="filters.status = 'all'; onFilterChange('status')"
+          >全部</SfButton>
+          <SfButton
+            :type="filters.status === 'unused' ? 'primary' : 'ghost'"
+            size="sm"
+            @click="filters.status = 'unused'; onFilterChange('status')"
+          >未使用</SfButton>
+          <SfButton
+            :type="filters.status === 'used' ? 'primary' : 'ghost'"
+            size="sm"
+            @click="filters.status = 'used'; onFilterChange('status')"
+          >已使用</SfButton>
+        </div>
+
+        <div class="filter-search">
+          <SfInput
+            v-model="filters.code"
+            placeholder="激活码 (模糊搜索)"
+            clearable
+            :maxlength="32"
+            @input="onFilterChange('code')"
+          >
+            <template #prefix>
+              <Search :size="14" />
+            </template>
+          </SfInput>
+          <SfInput
+            v-model="filters.phone"
+            placeholder="绑定手机号 (模糊搜索)"
+            clearable
+            :maxlength="11"
+            @input="onFilterChange('phone')"
+          >
+            <template #prefix>
+              <Phone :size="14" />
+            </template>
+          </SfInput>
+          <SfButton type="ghost" size="sm" @click="resetFilters">重置</SfButton>
+        </div>
+      </div>
+
       <!-- 顶部操作栏: 批量删除 (v-if 有选) + 全部删除未使用 (一直显示) -->
       <div class="list-toolbar">
         <div class="list-toolbar__left">
@@ -106,6 +153,13 @@
         <template #code="{ row }">
           <code class="code-cell">{{ row.code }}</code>
         </template>
+        <template #used_by_phone="{ row }">
+          <span v-if="row.used_by_phone" class="user-binding">
+            <span class="user-phone">{{ row.used_by_phone }}</span>
+            <span class="user-name">({{ row.used_by_username }})</span>
+          </span>
+          <span v-else class="user-empty">—</span>
+        </template>
         <template #usage="{ row }">
           <div class="usage-info">
             <SfProgress
@@ -157,7 +211,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { toast } from '@/composables/useToast'
-import { Plus, Copy, Trash2 } from 'lucide-vue-next'
+import { Plus, Copy, Trash2, Search, Phone } from 'lucide-vue-next'
 import { adminAPI } from '@/api'
 import SfButton from '@/components/ui/SfButton.vue'
 import SfInput from '@/components/ui/SfInput.vue'
@@ -209,6 +263,7 @@ const columns = [
   { key: 'id', label: 'ID', width: '70px' },
   { key: 'code', label: '激活码', width: '140px' },
   { key: 'usage', label: '使用情况', width: '160px' },
+  { key: 'used_by_phone', label: '绑定用户', width: '160px' },
   { key: 'status', label: '状态', width: '100px' },
   { key: 'expires_at', label: '有效期', width: '180px' },
   { key: 'created_at', label: '创建时间', width: '180px' },
@@ -227,12 +282,45 @@ const pagination = reactive({
   total: 0
 })
 
+// 7-20: 筛选/搜索状态
+const filters = reactive({
+  status: 'all',    // all | unused | used
+  code: '',
+  phone: ''
+})
+
+let searchTimer = null
+const onFilterChange = (key) => {
+  // 输入框用 debounce 避免每按一键打一次
+  if (key === 'code' || key === 'phone') {
+    if (searchTimer) clearTimeout(searchTimer)
+    searchTimer = setTimeout(() => {
+      pagination.page = 1
+      loadCodes()
+    }, 300)
+  } else {
+    pagination.page = 1
+    loadCodes()
+  }
+}
+
+const resetFilters = () => {
+  filters.status = 'all'
+  filters.code = ''
+  filters.phone = ''
+  pagination.page = 1
+  loadCodes()
+}
+
 const loadCodes = async () => {
   loading.value = true
   try {
     const res = await adminAPI.getActivationCodes({
       page: pagination.page,
-      page_size: pagination.pageSize
+      page_size: pagination.pageSize,
+      status: filters.status === 'all' ? undefined : filters.status,
+      code: filters.code.trim() || undefined,
+      phone: filters.phone.trim() || undefined
     })
     codes.value = res.items || []
     pagination.total = res.total || 0
@@ -361,6 +449,35 @@ onMounted(() => {
   overflow: hidden;
 }
 
+/* 7-20: 筛选条 (放列表卡片顶部, 跟 toolbar 区分) */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+}
+.filter-bar .status-group {
+  display: inline-flex;
+  gap: 6px;
+}
+.filter-bar .status-group :deep(.sf-btn) {
+  border-radius: 999px;
+  padding: 0 14px;
+}
+.filter-bar .filter-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 280px;
+  justify-content: flex-end;
+}
+.filter-bar .filter-search :deep(.sf-input) {
+  width: 200px;
+}
+
 /* -- Form tip -- */
 .form-tip {
   font-size: 12px;
@@ -378,6 +495,25 @@ onMounted(() => {
   color: var(--sf-brand);
   letter-spacing: 0.5px;
   border: 1px solid rgba(96, 165, 250, 0.15);
+}
+
+/* 7-20: 绑定用户展示 (激活码管理) */
+.user-binding {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.user-phone {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  color: var(--color-text-primary);
+}
+.user-name {
+  font-size: 11px;
+  color: var(--color-text-muted, #999);
+}
+.user-empty {
+  color: var(--color-text-muted, #999);
 }
 
 /* -- Usage info -- */

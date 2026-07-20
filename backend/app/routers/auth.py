@@ -132,7 +132,6 @@ async def register(
             detail="手机号已被注册"
         )
 
-    # 验证激活码
     if not user_data.invite_code:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -150,56 +149,59 @@ async def register(
             detail="激活码无效"
         )
 
-    if activation_code_record.expires_at and activation_code_record.expires_at < datetime.now(timezone.utc):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="激活码已过期"
-        )
+    if activation_code_record.expires_at:
+        # MySQL DATETIME 返回 naive datetime, 比较前统一加 UTC tz
+        exp = activation_code_record.expires_at
+        if exp.tzinfo is None:
+            exp = exp.replace(tzinfo=timezone.utc)
+        if exp < datetime.now(timezone.utc):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="激活码已过期"
+            )
 
-    # P0 商业化安全: 修复 TOCTOU race condition
-    # 旧代码: 读 use_count → 检查 < max_uses → +1, 中间无锁, 并发可绕过
-    # 修法: 用单条原子 UPDATE 条件扣减, 看 rowcount
-    #   条件 use_count < max_uses + 未过期 同时由 DB 评估, 并发只能成功 1 个
-    now_utc = datetime.now(timezone.utc)
+    # 7-20: 原子扣 use_count (注册时必填激活码, 直接走 TOCTOU 防御)
+    # 注意: MySQL DATETIME 列读出来是 naive, SQLAlchemy WHERE 跟 aware 必崩.
+    # 这里用 naive 比较; 用户.activated_at 是 MySQL DATETIME 也会 strip tz, 兼容.
+    # 两段式: 先 atomic 扣 use_count, flush user 后再 update used_by (user.id 当时还不存在)
+    now_naive = datetime.now(timezone.utc).replace(tzinfo=None)
     atomic_update = await db.execute(
         update(ActivationCode)
         .where(
             ActivationCode.id == activation_code_record.id,
             ActivationCode.use_count < ActivationCode.max_uses,
-            # expires_at 为 NULL OR > now
-            or_(ActivationCode.expires_at.is_(None), ActivationCode.expires_at > now_utc)
+            or_(ActivationCode.expires_at.is_(None), ActivationCode.expires_at > now_naive)
         )
         .values(
             use_count=ActivationCode.use_count + 1,
-            used_at=now_utc
-            # used_by 留空, 等 user INSERT 后再回填
+            used_at=now_naive
         )
     )
     if atomic_update.rowcount == 0:
-        # 扣减失败, 说明刚才 SELECT 后被并发用完 (或刚刚过期)
         await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="激活码已被使用或已过期"
         )
 
-    # 创建用户
     user = User(
         username=user_data.username,
         phone=user_data.phone,
         password_hash=get_password_hash(user_data.password),
         activation_code_id=activation_code_record.id,
         status='approved',
-        activated_at=now_utc
+        activated_at=datetime.now(timezone.utc)
     )
 
     db.add(user)
-    await db.flush()  # 拿 user.id
+    await db.flush()
 
-    # 回填激活码的 used_by (最后使用者)
-    activation_code_record.used_by = user.id
-    # 重新 SELECT 一遍, 拿最新 use_count
-    await db.refresh(activation_code_record)
+    # 7-20: 绑死 used_by (回填最后使用者, admin 列表展示用)
+    await db.execute(
+        update(ActivationCode)
+        .where(ActivationCode.id == activation_code_record.id)
+        .values(used_by=user.id)
+    )
 
     await db.commit()
     await db.refresh(user)

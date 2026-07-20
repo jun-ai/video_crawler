@@ -10,48 +10,57 @@ const routes = [
   {
     path: '/materials',
     name: 'Materials',
-    component: () => import('@/views/Materials.vue')
+    component: () => import('@/views/Materials.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/learn/:id',
     name: 'Learn',
-    component: () => import('@/views/Learn.vue')
+    component: () => import('@/views/Learn.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/favorites',
     name: 'Favorites',
-    component: () => import('@/views/Favorites.vue')
+    component: () => import('@/views/Favorites.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/vocabulary',
     name: 'Vocabulary',
-    component: () => import('@/views/Vocabulary.vue')
+    component: () => import('@/views/Vocabulary.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/vocabulary-review',
     name: 'VocabularyReview',
-    component: () => import('@/views/VocabularyReview.vue')
+    component: () => import('@/views/VocabularyReview.vue'),
+    meta: { requiresAuth: true }
   },
   {
     // Phase 6 (H5): 5-icon 工具栏"练习"独立页 — H5 极简 header + 返回箭头
     path: '/practice',
     name: 'Practice',
-    component: () => import('@/views/PracticeView.vue')
+    component: () => import('@/views/PracticeView.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/english-cards',
     name: 'EnglishCards',
-    component: () => import('@/views/EnglishCards.vue')
+    component: () => import('@/views/EnglishCards.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/learning-center',
     name: 'LearningCenter',
-    component: () => import('@/views/LearningCenter.vue')
+    component: () => import('@/views/LearningCenter.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/profile',
     name: 'Profile',
-    component: () => import('@/views/Profile.vue')
+    component: () => import('@/views/Profile.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/login',
@@ -162,7 +171,7 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
 
-  // 需要管理员权限的路由
+  // 1. 需要管理员权限的路由
   if (to.meta.requiresAdmin) {
     if (!userStore.isLoggedIn) {
       next({ name: 'Login', query: { redirect: to.fullPath } })
@@ -172,6 +181,13 @@ router.beforeEach((to, from, next) => {
       next({ name: 'Home' })
       return
     }
+  }
+
+  // 2. 需要登录的路由: 未登录跳登录 (带 redirect)
+  //    注册已强制激活码, 已登录 = 已激活, 不需要单独 "未激活" 分支
+  if (to.meta.requiresAuth && !userStore.isLoggedIn) {
+    next({ name: 'Login', query: { redirect: to.fullPath } })
+    return
   }
 
   next()

@@ -47,7 +47,7 @@
         </div>
 
         <div class="register-field">
-          <SfInput v-model="form.invite_code" placeholder="激活码（必填）">
+          <SfInput v-model="form.invite_code" placeholder="激活码（必填）" :maxlength="64">
             <template #prefix>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
             </template>
@@ -126,7 +126,6 @@ const loading = ref(false)
 const form = reactive({
   username: '',
   phone: '',
-  invite_code: '',
   password: '',
   confirmPassword: ''
 })
@@ -134,7 +133,6 @@ const form = reactive({
 const errors = reactive({
   username: '',
   phone: '',
-  invite_code: '',
   password: '',
   confirmPassword: ''
 })
@@ -152,10 +150,6 @@ function validate() {
     errors.phone = '请输入手机号'
   } else if (!/^1[3-9]\d{9}$/.test(form.phone)) {
     errors.phone = '请输入正确的手机号'
-  }
-
-  if (!form.invite_code) {
-    errors.invite_code = '请输入激活码'
   }
 
   if (!form.password) {
@@ -181,7 +175,7 @@ const handleRegister = async () => {
       username: form.username,
       phone: form.phone,
       password: form.password,
-      invite_code: form.invite_code
+      invite_code: form.invite_code || undefined
     })
     toast.success('注册成功，请登录')
     router.push('/login')

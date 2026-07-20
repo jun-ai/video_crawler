@@ -20,9 +20,8 @@
       </div>
     </div>
 
-    <!-- Phase 23b: 砍"激活信息"整块 — 开发者视角残留,搬到学习中心"账号与安全"里 -->
-    <!-- P0-8 (7-19 二次添加): 会员信息必须用户能看见 (Phase 23b 砍了但没补回来) -->
-    <div class="profile-section" v-if="userStore.user?.activation_code || userStore.user?.activated_at">
+    <!-- 7-20: 会员信息永远显示. 注册已强制激活码, 正常用户都是已激活状态, 此处仅展示 -->
+    <div class="profile-section" v-if="userStore.user?.activation_code_id">
       <PageHeader title="会员信息" />
       <div class="membership-card">
         <div class="membership-row" v-if="userStore.user?.activation_code">
@@ -33,11 +32,16 @@
           <span class="membership-label">激活时间</span>
           <span class="membership-value">{{ formatDate(userStore.user.activated_at) }}</span>
         </div>
-        <div class="membership-row" v-if="userStore.user?.activation_code?.expires_at">
+        <div class="membership-row">
           <span class="membership-label">到期时间</span>
           <span class="membership-value" :class="membershipExpiryClass">
-            {{ formatDate(userStore.user.activation_code.expires_at) }}
-            <span v-if="membershipStatusLabel" class="membership-badge">{{ membershipStatusLabel }}</span>
+            <template v-if="userStore.user?.activation_code?.expires_at">
+              {{ formatDate(userStore.user.activation_code.expires_at) }}
+              <span v-if="membershipStatusLabel" class="membership-badge">{{ membershipStatusLabel }}</span>
+            </template>
+            <template v-else>
+              <span class="permanent-text">永久有效</span>
+            </template>
           </span>
         </div>
       </div>
@@ -169,13 +173,12 @@ const formatDate = (dateStr) => {
 // P0-8: 会员到期状态计算 (用于 Profile 会员信息区块)
 const membershipStatusLabel = computed(() => {
   const ac = userStore.user?.activation_code
-  if (!ac?.expires_at) return ''
+  if (!ac?.expires_at) return '永久有效'
   const expiresAt = new Date(ac.expires_at)
   const now = new Date()
   if (expiresAt < now) return '已过期'
   const daysLeft = Math.ceil((expiresAt - now) / (1000 * 60 * 60 * 24))
-  if (daysLeft <= 7) return `${daysLeft} 天到期`
-  return ''
+  return `剩余 ${daysLeft} 天`
 })
 
 const membershipExpiryClass = computed(() => {
@@ -185,7 +188,7 @@ const membershipExpiryClass = computed(() => {
   const now = new Date()
   if (expiresAt < now) return 'membership-value--expired'
   const daysLeft = Math.ceil((expiresAt - now) / (1000 * 60 * 60 * 24))
-  if (daysLeft <= 7) return 'membership-value--warning'
+  if (daysLeft <= 30) return 'membership-value--warning'
   return ''
 })
 
@@ -241,6 +244,8 @@ const saveProfile = async () => {
     saving.value = false
   }
 }
+
+// 7-20: 兑换激活码逻辑已删 (注册必填激活码, 登录后默认已激活, Profile 仅展示)
 
 onMounted(() => {
   // 初始化编辑表单

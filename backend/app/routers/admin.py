@@ -1374,19 +1374,57 @@ async def generate_activation_codes(
 async def get_activation_codes(
     page: int = 1,
     page_size: int = 20,
+    status: str = Query(None, description="筛选: all / unused / used"),
+    code: str = Query(None, description="激活码模糊查询"),
+    phone: str = Query(None, description="绑定用户手机号模糊查询"),
     current_admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db)
 ):
-    """获取激活码列表"""
-    query = select(ActivationCode).order_by(ActivationCode.created_at.desc())
-    count_query = select(func.count()).select_from(ActivationCode)
+    """获取激活码列表 (含绑定用户信息 + 筛选/搜索)"""
+    # 1) 过滤条件, 用 helper 拼 (主查询 + count 查询要分开构建)
+    # status
+    use_count_filter = []
+    if status == "unused":
+        use_count_filter.append(ActivationCode.use_count < ActivationCode.max_uses)
+    elif status == "used":
+        use_count_filter.append(ActivationCode.use_count >= ActivationCode.max_uses)
+    # code
+    code_filter = []
+    if code:
+        code_filter.append(ActivationCode.code.like(f"%{code.strip()}%"))
+    # phone (join 后用 User.phone.like)
+    phone_filter = []
+    if phone:
+        phone_filter.append(User.phone.like(f"%{phone.strip()}%"))
 
-    total = (await db.execute(count_query)).scalar()
+    # 2) 主查询 (含 join)
+    query = (
+        select(ActivationCode, User.phone, User.username)
+        .outerjoin(User, ActivationCode.used_by == User.id)
+        .order_by(ActivationCode.created_at.desc())
+    )
+    for f in use_count_filter + code_filter + phone_filter:
+        query = query.where(f)
+
+    # 3) count 查询 (注意: join 后 count 用 func.count(distinct ActivationCode.id) 避免重复)
+    count_query = select(func.count(ActivationCode.id))
+    if use_count_filter or code_filter:
+        # 需要 join (count query 也要带 use_count/code 条件, use_count 来自 ActivationCode, code 来自 ActivationCode)
+        count_query = count_query.select_from(ActivationCode)
+        for f in use_count_filter + code_filter:
+            count_query = count_query.where(f)
+    if phone_filter:
+        # phone 在 User 表, 需要 outerjoin
+        count_query = count_query.outerjoin(User, ActivationCode.used_by == User.id)
+        for f in phone_filter:
+            count_query = count_query.where(f)
+
+    total = (await db.execute(count_query)).scalar() or 0
     offset = (page - 1) * page_size
     query = query.offset(offset).limit(page_size)
 
     result = await db.execute(query)
-    codes = result.scalars().all()
+    rows = result.all()
 
     return {
         "items": [
@@ -1395,13 +1433,15 @@ async def get_activation_codes(
                 "code": c.code,
                 "is_used": c.use_count >= c.max_uses,
                 "used_by": c.used_by,
+                "used_by_phone": phone,
+                "used_by_username": username,
                 "used_at": c.used_at.isoformat() if c.used_at else None,
                 "max_uses": c.max_uses,
                 "use_count": c.use_count,
                 "expires_at": c.expires_at.isoformat() if c.expires_at else None,
                 "created_at": c.created_at.isoformat() if c.created_at else None
             }
-            for c in codes
+            for c, phone, username in rows
         ],
         "total": total,
         "page": page,
