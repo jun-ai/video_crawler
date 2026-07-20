@@ -67,6 +67,7 @@ from app.services.audio_converter import convert_webm_to_wav, check_ffmpeg_avail
 from app.services.dictation_checker import dictation_checker
 from app.models.models import InterpretationLearning, VideoInterpretation
 from pathlib import Path
+from app.routers.materials import get_file_url_async
 
 logger = logging.getLogger(__name__)
 
@@ -1298,8 +1299,16 @@ def _compute_max_streak(dates: list) -> int:
     return max(max_s, current)
 
 
-def _build_record_with_material(record: LearningRecord, material: Material) -> LearningRecordWithMaterialResponse:
-    """构建带材料信息的学习记录响应"""
+async def _build_record_with_material(record: LearningRecord, material: Material) -> LearningRecordWithMaterialResponse:
+    """构建带材料信息的学习记录响应
+
+    material_cover 走 materials.get_file_url_async(), 自动:
+      - 云存储 URL → 检测是否过期, 过期则从 OSS 重新签 (7d)
+      - OSS 对象键 → 生成新签名 URL
+      - 本地路径 → /static/...
+    比 learning.py 顶部 sync get_file_url() 强 (后者只走本地静态分支)
+    """
+    cover_url = await get_file_url_async(material.cover_path)
     return LearningRecordWithMaterialResponse(
         id=record.id,
         user_id=record.user_id,
@@ -1311,7 +1320,7 @@ def _build_record_with_material(record: LearningRecord, material: Material) -> L
         created_at=record.created_at,
         updated_at=record.updated_at,
         material_title=material.title,
-        material_cover=get_file_url(material.cover_path),
+        material_cover=cover_url,
         material_category=material.category,
         material_difficulty=material.difficulty,
         material_duration=material.duration
@@ -1417,8 +1426,10 @@ async def get_recent_learning(
         .limit(limit)
     )
     records = result.all()
-
-    return [_build_record_with_material(record, material) for record, material in records]
+    out = []
+    for record, material in records:
+        out.append(await _build_record_with_material(record, material))
+    return out
 
 
 @router.get("/completed", response_model=List[LearningRecordWithMaterialResponse])
@@ -1439,8 +1450,10 @@ async def get_completed_learning(
         .limit(limit)
     )
     records = result.all()
-
-    return [_build_record_with_material(record, material) for record, material in records]
+    out = []
+    for record, material in records:
+        out.append(await _build_record_with_material(record, material))
+    return out
 
 
 @router.get("/records", response_model=LearningRecordListResponse)
@@ -1478,8 +1491,9 @@ async def get_learning_records(
         .limit(page_size)
     )
     records = result.all()
-
-    items = [_build_record_with_material(record, material) for record, material in records]
+    items = []
+    for record, material in records:
+        items.append(await _build_record_with_material(record, material))
 
     return LearningRecordListResponse(
         items=items,
@@ -1620,7 +1634,10 @@ async def get_dashboard(
             .order_by(LearningRecord.updated_at.desc())
             .limit(10)
         )
-        recent = [_build_record_with_material(r, m) for r, m in result.all()]
+        recent_records = result.all()
+        recent = []
+        for r, m in recent_records:
+            recent.append(await _build_record_with_material(r, m))
 
         # 4. completed (10 条已完成)
         result = await db.execute(
@@ -1633,7 +1650,10 @@ async def get_dashboard(
             .order_by(LearningRecord.updated_at.desc())
             .limit(10)
         )
-        completed = [_build_record_with_material(r, m) for r, m in result.all()]
+        completed_records = result.all()
+        completed = []
+        for r, m in completed_records:
+            completed.append(await _build_record_with_material(r, m))
 
         # 5. records (第一页 10 条)
         result = await db.execute(
@@ -1649,8 +1669,12 @@ async def get_dashboard(
             .order_by(LearningRecord.updated_at.desc())
             .limit(10)
         )
+        records_records = result.all()
+        records_items = []
+        for r, m in records_records:
+            records_items.append(await _build_record_with_material(r, m))
         records = LearningRecordListResponse(
-            items=[_build_record_with_material(r, m) for r, m in result.all()],
+            items=records_items,
             total=total,
             page=1,
             page_size=10
