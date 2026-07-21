@@ -9,7 +9,7 @@
   - sticky top-0 + z-[1000] + backdrop-blur (SpeakVlog 毛玻璃)
 -->
 <template>
-  <header v-if="!isAuthRoute" class="h5-header">
+  <header class="h5-header">
     <div class="h5-header-inner">
       <!-- 左: 返回箭头 (showBack 时) -->
       <button v-if="showBack" class="h5-header-btn" aria-label="返回" @click="onBack">
@@ -37,10 +37,9 @@
       <!-- 右: 右侧操作插槽 + 历史/筛选 icon -->
       <div class="h5-header-actions">
         <slot name="actions" />
-        <!-- Phase 24 P0: 登录 + 会员 CTA (speakvlog 范式), 已登录态隐藏 -->
+        <!-- Phase 24 P0: 登录 CTA (speakvlog 范式), 已登录态隐藏 -->
         <template v-if="!isLoggedIn">
           <button class="h5-header-cta h5-header-cta--ghost" aria-label="登录" @click="$router.push('/login')">登录</button>
-          <button class="h5-header-cta h5-header-cta--primary" aria-label="会员" @click="$router.push('/pricing')">会员</button>
         </template>
         <button v-if="showFilter" class="h5-header-btn" aria-label="历史" @click="$emit('filter')">
           <Clock :size="20" />
@@ -52,11 +51,10 @@
 
 <script setup>
 import { ArrowLeft, GraduationCap, Menu, Clock } from 'lucide-vue-next'
-import { useRouter, useRoute } from 'vue-router'
-import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
 
 const router = useRouter()
-const route = useRoute()
 
 const props = defineProps({
   title: { type: String, default: '' },
@@ -72,9 +70,6 @@ const isLoggedIn = ref(false)
 onMounted(() => {
   try { isLoggedIn.value = !!localStorage.getItem('token') } catch {}
 })
-
-// 2026-07-21: 登录/注册/忘记密码 等认证流程页不显示 H5Header (避免顶 nav 跟登录页重复)
-const isAuthRoute = computed(() => ['/login', '/register', '/forgot-password'].includes(route.path))
 
 function onBack() {
   emit('back')
@@ -174,7 +169,7 @@ function goHome() {
   flex-shrink: 0;
 }
 
-/* Phase 24 P0: 登录 + 会员 CTA pill */
+/* Phase 24 P0: 登录 CTA pill */
 .h5-header-cta {
   font-size: 13px;
   font-weight: 600;
@@ -193,10 +188,4 @@ function goHome() {
   border-color: rgba(15, 23, 42, 0.12);
 }
 .h5-header-cta--ghost:hover { border-color: var(--color-brand); color: var(--color-brand); }
-.h5-header-cta--primary {
-  background: var(--color-brand);
-  color: #fff;
-  border-color: var(--color-brand);
-}
-.h5-header-cta--primary:hover { background: var(--color-brand-hover); border-color: var(--color-brand-hover); }
 </style>

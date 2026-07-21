@@ -1,20 +1,13 @@
 <template>
   <div class="login-page">
-    <!-- Phase 6 (H5): 极简 header — 对标 speakvlog: 文字按钮"返回首页" (不是纯箭头) -->
-    <header v-if="isMobileView" class="sf-h5-header">
-      <button class="sf-h5-back" type="button" @click="goHome" aria-label="返回首页">
-        <ArrowLeft :size="14" />
-        <span class="sf-h5-back-text">返回首页</span>
-      </button>
-    </header>
-    <!-- 装饰背景 -->
+    <!-- 装饰背景: H5 下用 CSS 隐藏 (改用 .login-page 背景渐变) -->
     <div class="login-decor">
       <div class="login-glow login-glow-1" />
       <div class="login-glow login-glow-2" />
       <div class="login-grid" />
     </div>
 
-    <div class="login-card">
+    <main class="login-main">
       <!-- Header -->
       <div class="login-header">
         <div class="login-logo">
@@ -73,14 +66,13 @@
         还没有账号？
         <router-link to="/register" class="login-link">去注册</router-link>
       </div>
-    </div>
+    </main>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowLeft } from 'lucide-vue-next'
 import { toast } from '@/composables/useToast'
 import { useUserStore } from '@/stores/user'
 import SfButton from '@/components/ui/SfButton.vue'
@@ -89,31 +81,6 @@ import SfInput from '@/components/ui/SfInput.vue'
 const router = useRouter()
 const userStore = useUserStore()
 const loading = ref(false)
-
-// Phase 6 (H5): 移动端检测
-const isMobileView = ref(typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches)
-const updateIsMobile = () => {
-  isMobileView.value = window.matchMedia('(max-width: 768px)').matches
-}
-onMounted(() => window.addEventListener('resize', updateIsMobile))
-onUnmounted(() => window.removeEventListener('resize', updateIsMobile))
-
-// Phase 6 (H5): 返回按钮 — 优先回 redirect, 否则 history.back, 否则去首页
-const goBack = () => {
-  const redirect = router.currentRoute.value.query.redirect
-  if (typeof redirect === 'string' && redirect.startsWith('/')) {
-    router.push(redirect)
-  } else if (window.history.length > 1) {
-    router.back()
-  } else {
-    router.push('/')
-  }
-}
-
-// 2026-07-21: 对标 speakvlog H5 登录页"返回首页"按钮 — 直接 push /
-const goHome = () => {
-  router.push('/')
-}
 
 const form = reactive({
   phone: '',
@@ -172,7 +139,7 @@ const handleLogin = async () => {
   font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* ── 装饰背景 ── */
+/* ── 装饰背景 (PC 专用, H5 不渲染 DOM) ── */
 .login-decor {
   position: fixed;
   inset: 0;
@@ -222,8 +189,8 @@ const handleLogin = async () => {
   50% { transform: translate(16px, -12px) scale(1.03); }
 }
 
-/* ── 卡片 ── */
-.login-card {
+/* ── 主区: PC 卡片居中 ── */
+.login-main {
   position: relative;
   width: 100%;
   max-width: 480px;
@@ -255,7 +222,7 @@ const handleLogin = async () => {
   justify-content: center;
   margin: 0 auto 20px;
   background: var(--color-brand);
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.25);
+  box-shadow: 0 6px 20px rgba(77, 160, 108, 0.25);
 }
 
 .login-title {
@@ -300,14 +267,14 @@ const handleLogin = async () => {
   background: var(--sf-cta-gradient, linear-gradient(#60A5FA 0%, #3B82F6 100%)) !important;
   border: none;
   border-radius: var(--radius-full, 9999px);
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 6px 20px rgba(77, 160, 108, 0.28);
   transition: transform var(--sf-duration-normal) cubic-bezier(0.34, 1.56, 0.64, 1),
               box-shadow 0.25s ease;
 }
 
 .login-submit:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 10px 28px rgba(77, 160, 108, 0.38);
 }
 
 .login-submit:active {
@@ -347,96 +314,76 @@ const handleLogin = async () => {
   color: var(--color-border);
 }
 
-/* ── Mobile ── */
-@media (max-width: 480px) {
-  /* H5 header: 对标 speakvlog — 文字按钮"返回首页" (圆角矩形 + icon + text, fixed 浮 viewport 左上角, 不压卡片) */
-  .sf-h5-header {
-    position: fixed;
-    top: 12px;
-    left: 12px;
-    z-index: 60;
-    display: flex;
-    align-items: center;
-  }
-
-  .sf-h5-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    height: 32px;
-    min-height: 32px;
-    line-height: 1;
-    padding: 0 12px;
-    box-sizing: border-box;
-    background: rgba(255, 255, 255, 0.25);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    color: var(--color-brand);
-    border-radius: 16px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(15, 76, 58, 0.08);
-    transition: background 0.15s ease, transform 0.15s ease;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .sf-h5-back:hover {
-    background: rgba(255, 255, 255, 0.7);
-  }
-
-  .sf-h5-back:active {
-    transform: scale(0.96);
-  }
-
-  .sf-h5-back-text {
-    line-height: 1;
-  }
-
+/* ── H5 原生 App 形态 (≤768px) ── */
+@media (max-width: 768px) {
   .login-page {
-    padding: 24px 16px;
-    align-items: flex-start;
-    min-height: calc(100vh - 64px);
-    margin: -24px;  /* 跟 PC 一致, 抵消 App layout 边距 */
+    display: block;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    background: radial-gradient(
+      ellipse at top,
+      rgba(77, 160, 108, 0.06) 0%,
+      var(--color-bg-base) 55%
+    );
   }
 
-  .login-card {
-    padding: 28px 20px 24px;
-    border-radius: var(--radius-md);
+  /* H5 隐藏 PC 装饰背景, 用 .login-page 的径向渐变代替 */
+  .login-decor {
+    display: none;
+  }
+
+  .login-main {
+    max-width: none;
+    padding: 48px 20px 28px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    animation: none;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;            /* 整体垂直居中 */
   }
 
   .login-header {
-    margin-bottom: 24px;  /* 紧凑 */
+    text-align: center;                 /* logo + 标题 + 副标题居中 */
+    margin-bottom: 28px;
   }
-
   .login-logo {
-    width: 48px;
-    height: 48px;
-    margin-bottom: 14px;
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 20px;                /* 水平居中 */
+    border-radius: var(--radius-lg);
   }
-
   .login-title {
-    font-size: 22px;  /* H5: 24 → 22, 卡片标题够清晰 */
+    font-size: 26px;
+    margin: 0 0 6px 0;
   }
-
   .login-subtitle {
-    font-size: 13px;
+    font-size: 14px;
   }
 
   .login-form {
-    gap: 14px;  /* 紧凑 */
-  }
-
-  .login-submit {
-    height: 44px !important;  /* 48 → 44, 移动端更省空间 */
-    font-size: 15px;
-    margin-top: 4px;
+    gap: 16px;
   }
 
   .login-footer {
-    margin-top: 20px;
+    margin-top: 28px;
+    padding-top: 0;
     font-size: 13px;
+  }
+
+  .login-submit {
+    height: 48px !important;            /* 满足 --touch-target-min: 44px */
+  }
+}
+
+/* ── 超小屏微调 (<481px) ── */
+@media (max-width: 480px) {
+  .login-main {
+    padding: 32px 16px 24px;
   }
 }
 </style>

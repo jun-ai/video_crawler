@@ -1,12 +1,6 @@
 <template>
   <div class="forgot-page">
-    <!-- Phase 6 (H5): 极简 header + 返回按钮 -->
-    <header v-if="isMobileView" class="sf-h5-header">
-      <button class="sf-h5-back" type="button" @click="goBack" aria-label="返回">
-        <ArrowLeft :size="22" />
-      </button>
-      <h1 class="sf-h5-title">忘记密码</h1>
-    </header>
+    <!-- 装饰背景: H5 下用 CSS 隐藏 -->
     <div class="forgot-decor">
       <div class="forgot-glow forgot-glow-1" />
       <div class="forgot-glow forgot-glow-2" />
@@ -63,7 +57,7 @@
         </div>
 
         <div class="forgot-tip">
-          忘记激活码？请联系客服或在小红书私信我们
+          忘记激活码？请联系客服
         </div>
 
         <SfButton
@@ -88,32 +82,14 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowLeft } from 'lucide-vue-next'
 import { authAPI } from '@/api'
 import SfButton from '@/components/ui/SfButton.vue'
 import SfInput from '@/components/ui/SfInput.vue'
 
 const router = useRouter()
 const loading = ref(false)
-
-// Phase 6 (H5): 移动端检测
-const isMobileView = ref(typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches)
-const updateIsMobile = () => {
-  isMobileView.value = window.matchMedia('(max-width: 768px)').matches
-}
-onMounted(() => window.addEventListener('resize', updateIsMobile))
-onUnmounted(() => window.removeEventListener('resize', updateIsMobile))
-
-// Phase 6 (H5): 返回按钮
-const goBack = () => {
-  if (window.history.length > 1) {
-    router.back()
-  } else {
-    router.push('/login')
-  }
-}
 
 const form = reactive({
   phone: '',
@@ -266,7 +242,7 @@ const handleReset = async () => {
   justify-content: center;
   margin: 0 auto 18px;
   background: var(--color-brand);
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.22);
+  box-shadow: 0 6px 20px rgba(77, 160, 108, 0.22);
 }
 
 .forgot-title {
@@ -320,14 +296,14 @@ const handleReset = async () => {
   border: none;
   border-radius: var(--radius-full, 9999px);
   width: 100%;
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 6px 20px rgba(77, 160, 108, 0.28);
   transition: transform var(--sf-duration-normal) cubic-bezier(0.34, 1.56, 0.64, 1),
               box-shadow 0.25s ease;
 }
 
 .forgot-submit:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 10px 28px rgba(77, 160, 108, 0.38);
 }
 
 .forgot-submit:active {
@@ -357,19 +333,87 @@ const handleReset = async () => {
   color: var(--color-border);
 }
 
-@media (max-width: 480px) {
+/* ── H5 原生 App 形态 (≤768px) ── */
+@media (max-width: 768px) {
   .forgot-page {
-    padding: 24px 16px;
-    align-items: flex-start;
-    padding-top: 40px;
+    display: block;
+    align-items: initial;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    background: radial-gradient(
+      ellipse at top,
+      rgba(77, 160, 108, 0.06) 0%,
+      var(--color-bg-base) 55%
+    );
+    overflow-y: auto;                   /* 字段多, 允许滚动 */
   }
+
+  /* H5 隐藏 PC 装饰背景 */
+  .forgot-decor {
+    display: none;
+  }
+
   .forgot-card {
-    padding: 28px 20px 24px;
-    border-radius: var(--radius-md);
-    max-width: 100%;
+    max-width: none;
+    padding: 48px 20px 32px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    animation: none;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;            /* 整体垂直居中, 内容多时自动滚动 */
+  }
+
+  .forgot-header {
+    text-align: center;                 /* logo + 标题 + 副标题居中 */
+    margin-bottom: 28px;
+  }
+  .forgot-logo {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 16px;
+    border-radius: var(--radius-lg);
   }
   .forgot-title {
     font-size: 22px;
+    margin: 0 0 6px 0;
+  }
+  .forgot-subtitle {
+    font-size: 13px;
+  }
+
+  .forgot-form {
+    gap: 16px;
+  }
+
+  .forgot-tip {
+    font-size: 12px;
+    padding: 10px 12px;
+  }
+
+  .forgot-footer {
+    text-align: center;                 /* "返回登录 | 去注册" 居中 */
+    margin-top: 28px;
+    font-size: 13px;
+  }
+
+  .forgot-submit {
+    height: 48px !important;            /* 满足 --touch-target-min: 44px */
+  }
+}
+
+/* ── 超小屏微调 (<481px) ── */
+@media (max-width: 480px) {
+  .forgot-card {
+    padding: 32px 16px 24px;
+    justify-content: flex-start;        /* 字段多, 改为顶对齐避免遮挡 */
+  }
+  .forgot-title {
+    font-size: 20px;
   }
 }
 </style>
