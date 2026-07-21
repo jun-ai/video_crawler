@@ -307,15 +307,6 @@
             </div>
             </div>
             <!-- home-main 结束 -->
-
-            <!-- 5. 底部（学习消息 / 学习指南 / 联系） — H5 端隐藏 (核心 only) -->
-      <!-- 5. 底部（学习消息 / 学习指南 / 联系） — H5 端隐藏 (核心 only) -->
-      <footer class="home-footer home-footer--h5-hide">
-        <div class="footer-col">
-          <div class="footer-col-title">学习消息</div>
-          <p class="footer-text">坚持每天 15 分钟，三个月看到进步。</p>
-        </div>
-      </footer>
     </div>
   </div>
 </template>
@@ -1633,26 +1624,6 @@ onMounted(async () => {
 }
 
 /* ====== 5. 底部 ====== */
-.home-footer {
-  display: block;
-  padding: 28px 0 8px;
-  border-top: 1px solid var(--color-border);
-}
-
-.footer-col-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin-bottom: 8px;
-}
-
-.footer-text {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  line-height: 1.6;
-  margin: 0;
-}
-
 /* ====== 响应式 ====== */
 @media (max-width: 1100px) {
   .home-main {
@@ -1673,9 +1644,6 @@ onMounted(async () => {
   }
   .video-grid {
     grid-template-columns: repeat(2, 1fr);
-  }
-  .home-footer {
-    display: block;
   }
 }
 
@@ -1734,10 +1702,6 @@ onMounted(async () => {
   .home-main {
     grid-template-columns: 1fr;
   }
-  /* 隐藏底部"学习消息/学习指南/联系我们" — H5 端不要这堆引导内容 */
-  .home-footer--h5-hide {
-    display: none;
-  }
 }
 
 @media (max-width: 640px) {
@@ -1773,10 +1737,9 @@ onMounted(async () => {
     padding-top: 8px;
   }
   /* 桌面端 stats-side / home-main / activation-banner / video-grid-section
-     / filter-row / home-footer 等在 H5 时全部隐藏 */
+     / filter-row 等在 H5 时全部隐藏 */
   .stats-side,
   .home-main,
-  .home-footer,
   .filter-row,
   .video-grid-section,
   .activation-banner {

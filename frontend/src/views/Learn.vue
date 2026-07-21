@@ -276,8 +276,8 @@
       </div>
     </template>
 
-    <!-- 快捷键帮助按钮 -->
-    <button class="sf-shortcut-trigger" @click="showShortcutPanel = !showShortcutPanel" :class="{ active: showShortcutPanel }">
+    <!-- 快捷键帮助按钮 (PC only, H5 端不需要) -->
+    <button v-if="!isMobileView" class="sf-shortcut-trigger" @click="showShortcutPanel = !showShortcutPanel" :class="{ active: showShortcutPanel }">
       <HelpCircle :size="18" />
     </button>
 
@@ -651,15 +651,10 @@ const playModeLabels = {
 const playModeLabel = computed(() => playModeLabels[playMode.value] || '单次播放')
 
 // Phase 33+: H5 主工具栏状态 (对标 SpeakVlog)
-const H5_TOOLBAR_KEY = 'h5-mobile-toolbar-expanded'
+// Phase 33+: H5 工具栏默认展开 — 每次进入页面都强制可见 (不持久化, 避免用户上次收起后下次进来还看不到 3 个按钮)
 const h5ToolbarExpanded = ref(true)
-try {
-  const saved = localStorage.getItem(H5_TOOLBAR_KEY)
-  if (saved === '0') h5ToolbarExpanded.value = false
-} catch {}
 const toggleH5Toolbar = () => {
   h5ToolbarExpanded.value = !h5ToolbarExpanded.value
-  try { localStorage.setItem(H5_TOOLBAR_KEY, h5ToolbarExpanded.value ? '1' : '0') } catch {}
   try { document.body.dataset.h5ToolbarCollapsed = h5ToolbarExpanded.value ? 'false' : 'true' } catch {}
 }
 const togglePlayFromToolbar = () => {
@@ -3245,35 +3240,53 @@ onUnmounted(() => {
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
   }
   .sf-mobile-primary-toolbar {
-    position: relative; display: flex; align-items: center;
+    position: relative; display: flex;
+    align-items: center; justify-content: center;
+    gap: 56px;
     height: 64px; padding: 0 16px; width: 100%; box-sizing: border-box;
   }
   .sf-mp-btn {
-    position: absolute; top: 50%;
-    transform: translate(-50%, -50%);
+    position: static;
     display: flex; align-items: center; justify-content: center;
     background: transparent; border: none;
-    color: rgba(255, 255, 255, 0.95);
+    color: var(--color-text-primary);
     cursor: pointer; -webkit-tap-highlight-color: transparent;
-    transition: opacity 0.15s ease;
+    transition: opacity 0.15s ease, transform 0.15s ease, background 0.15s ease;
   }
   .sf-mp-btn:disabled { opacity: 0.35; cursor: not-allowed; }
   .sf-mp-btn:not(:disabled):active { opacity: 0.7; }
-  .sf-mp-btn--prev { width: 56px; height: 48px; right: calc(50% + 36px); transform: translateY(-50%); }
-  .sf-mp-btn--next { width: 56px; height: 48px; left: calc(50% + 36px); transform: translateY(-50%); }
+  .sf-mp-btn--prev,
+  .sf-mp-btn--next {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+  }
+  .sf-mp-btn--prev:not(:disabled):active,
+  .sf-mp-btn--next:not(:disabled):active {
+    background: var(--color-bg-elevated);
+    opacity: 1;
+  }
   .sf-mp-btn--play {
-    left: 50%; width: 64px; height: 64px;
+    width: 64px; height: 64px;
+    flex-shrink: 0;
     border-radius: 999px;
     background: rgba(56, 189, 148, 1);
     color: #FFFFFF;
     box-shadow: 0 4px 12px rgba(47, 61, 53, 0.35);
-    transform: translate(-50%, -50%);
+  }
+  .sf-mp-btn--play:active {
+    transform: scale(0.94);
+    opacity: 1;
   }
   .sf-mp-btn--toggle {
-    width: 48px; height: 48px;
-    color: rgba(255, 255, 255, 0.95);
-    left: auto; right: 16px;
-    transform: translateY(-50%);
+    position: absolute;
+    top: 8px; right: 12px;
+    width: 28px; height: 28px;
+    color: var(--color-text-secondary);
+    border-radius: 50%;
+  }
+  .sf-mp-btn--toggle:active {
+    background: var(--color-bg-elevated);
+    opacity: 1;
   }
   .sf-mp-fab-show {
     position: fixed;
