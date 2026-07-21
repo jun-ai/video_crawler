@@ -1,11 +1,11 @@
 <template>
   <div class="login-page">
-    <!-- Phase 6 (H5): 极简 header + 返回按钮 -->
+    <!-- Phase 6 (H5): 极简 header — 对标 speakvlog: 文字按钮"返回首页" (不是纯箭头) -->
     <header v-if="isMobileView" class="sf-h5-header">
-      <button class="sf-h5-back" type="button" @click="goBack" aria-label="返回">
-        <ArrowLeft :size="22" />
+      <button class="sf-h5-back" type="button" @click="goHome" aria-label="返回首页">
+        <ArrowLeft :size="14" />
+        <span class="sf-h5-back-text">返回首页</span>
       </button>
-      <h1 class="sf-h5-title">登录</h1>
     </header>
     <!-- 装饰背景 -->
     <div class="login-decor">
@@ -108,6 +108,11 @@ const goBack = () => {
   } else {
     router.push('/')
   }
+}
+
+// 2026-07-21: 对标 speakvlog H5 登录页"返回首页"按钮 — 直接 push /
+const goHome = () => {
+  router.push('/')
 }
 
 const form = reactive({
@@ -344,17 +349,94 @@ const handleLogin = async () => {
 
 /* ── Mobile ── */
 @media (max-width: 480px) {
+  /* H5 header: 对标 speakvlog — 文字按钮"返回首页" (圆角矩形 + icon + text, fixed 浮 viewport 左上角, 不压卡片) */
+  .sf-h5-header {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+  }
+
+  .sf-h5-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 32px;
+    min-height: 32px;
+    line-height: 1;
+    padding: 0 12px;
+    box-sizing: border-box;
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: var(--color-brand);
+    border-radius: 16px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(15, 76, 58, 0.08);
+    transition: background 0.15s ease, transform 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .sf-h5-back:hover {
+    background: rgba(255, 255, 255, 0.7);
+  }
+
+  .sf-h5-back:active {
+    transform: scale(0.96);
+  }
+
+  .sf-h5-back-text {
+    line-height: 1;
+  }
+
   .login-page {
     padding: 24px 16px;
+    align-items: flex-start;
+    min-height: calc(100vh - 64px);
+    margin: -24px;  /* 跟 PC 一致, 抵消 App layout 边距 */
   }
 
   .login-card {
-    padding: 32px 20px 28px;
+    padding: 28px 20px 24px;
     border-radius: var(--radius-md);
   }
 
+  .login-header {
+    margin-bottom: 24px;  /* 紧凑 */
+  }
+
+  .login-logo {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 14px;
+  }
+
   .login-title {
-    font-size: 24px;
+    font-size: 22px;  /* H5: 24 → 22, 卡片标题够清晰 */
+  }
+
+  .login-subtitle {
+    font-size: 13px;
+  }
+
+  .login-form {
+    gap: 14px;  /* 紧凑 */
+  }
+
+  .login-submit {
+    height: 44px !important;  /* 48 → 44, 移动端更省空间 */
+    font-size: 15px;
+    margin-top: 4px;
+  }
+
+  .login-footer {
+    margin-top: 20px;
+    font-size: 13px;
   }
 }
 </style>

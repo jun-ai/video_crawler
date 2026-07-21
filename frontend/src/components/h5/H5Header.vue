@@ -9,7 +9,7 @@
   - sticky top-0 + z-[1000] + backdrop-blur (SpeakVlog 毛玻璃)
 -->
 <template>
-  <header class="h5-header">
+  <header v-if="!isAuthRoute" class="h5-header">
     <div class="h5-header-inner">
       <!-- 左: 返回箭头 (showBack 时) -->
       <button v-if="showBack" class="h5-header-btn" aria-label="返回" @click="onBack">
@@ -52,10 +52,11 @@
 
 <script setup>
 import { ArrowLeft, GraduationCap, Menu, Clock } from 'lucide-vue-next'
-import { useRouter } from 'vue-router'
-import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
 
 const router = useRouter()
+const route = useRoute()
 
 const props = defineProps({
   title: { type: String, default: '' },
@@ -71,6 +72,9 @@ const isLoggedIn = ref(false)
 onMounted(() => {
   try { isLoggedIn.value = !!localStorage.getItem('token') } catch {}
 })
+
+// 2026-07-21: 登录/注册/忘记密码 等认证流程页不显示 H5Header (避免顶 nav 跟登录页重复)
+const isAuthRoute = computed(() => ['/login', '/register', '/forgot-password'].includes(route.path))
 
 function onBack() {
   emit('back')

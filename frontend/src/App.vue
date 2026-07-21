@@ -153,8 +153,9 @@
       </footer>
 
       <!-- 移动端底部导航 — Phase 22 升级为 H5TabBar 组件 (4 入口: 首页/学习/卡片/我的)
-           在 /learn/* 视频学习页隐藏, 因为 Learn.vue 内部有自己的 5-icon 视频工具栏 -->
-      <H5TabBar v-if="!isLearnRoute" />
+           在 /learn/* 视频学习页隐藏, 因为 Learn.vue 内部有自己的 5-icon 视频工具栏
+           登录/注册/忘记密码/激活页也隐藏 (让登录流程独立呈现, 不被应用导航侵入) -->
+      <H5TabBar v-if="!isLearnRoute && !isAuthRoute" />
     </div>
   </SfProvider>
 </template>
@@ -209,6 +210,9 @@ const isActiveRoute = (path) => {
 
 // 视频学习页 (/learn/:id) 用 Learn.vue 自己的 5-icon 工具栏, 不显示 App 全局 tab bar
 const isLearnRoute = computed(() => route.path.startsWith('/learn/'))
+
+// 登录/注册/忘记密码 等认证流程页: H5 底 tab 不显示 (跟 PC 一样, App 全局 nav 都已 v-show=!isMobileView 隐藏)
+const isAuthRoute = computed(() => ['/login', '/register', '/forgot-password'].includes(route.path))
 
 // 记住最近学习路径 (供移动端 "学习" tab 入口使用)
 watch(() => route.path, (p) => {
