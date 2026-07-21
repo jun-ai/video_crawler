@@ -92,8 +92,8 @@
             @loadedmetadata="onVideoLoaded"
             @seeked="onSeeked"
             @ended="onVideoEnded"
-            @play="startWatchDurationTimer"
-            @pause="stopWatchDurationTimer"
+            @play="onVideoPlay"
+            @pause="onVideoPause"
             @update:playback-rate="playbackRate = $event; setPlaybackRate()"
             @update:loop-current="loopCurrent = $event"
             />
@@ -314,6 +314,23 @@
       </nav>
     </div>
 
+    <!-- Phase 33+: H5 主工具栏 (primary toolbar) — 对标 SpeakVlog -->
+    <div class="sf-mobile-primary-toolbar-wrap" v-if="!loading">
+      <div class="sf-mobile-primary-toolbar" v-show="h5ToolbarExpanded">
+        <button class="sf-mp-btn sf-mp-btn--prev" :disabled="currentIndex <= 0" @click="prevSubtitle" aria-label="上一句"><SkipBack :size="22" /></button>
+        <button class="sf-mp-btn sf-mp-btn--play" @click="togglePlayFromToolbar" :aria-label="isVideoPlaying ? '暂停' : '播放'">
+          <Pause v-if="isVideoPlaying" :size="28" /><Play v-else :size="28" />
+        </button>
+        <button class="sf-mp-btn sf-mp-btn--next" :disabled="currentIndex >= subtitles.length - 1" @click="nextSubtitle" aria-label="下一句"><SkipForward :size="22" /></button>
+        <button class="sf-mp-btn sf-mp-btn--toggle" @click="toggleH5Toolbar" :aria-label="h5ToolbarExpanded ? '隐藏工具栏' : '显示工具栏'">
+          <ChevronDown v-if="h5ToolbarExpanded" :size="20" /><ChevronUp v-else :size="20" />
+        </button>
+      </div>
+      <button v-if="!h5ToolbarExpanded" class="sf-mp-fab-show" @click="toggleH5Toolbar" aria-label="显示工具栏">
+        <ChevronUp :size="22" />
+      </button>
+    </div>
+
     <!-- 解读面板 Sheet — desktop right side, H5 bottom 全屏 (phase 10: 不被 toolbar/AI bar 覆盖)
          phase 11: 移除重复 SheetHeader (Drawer 自带 "视频解读" h3) + shadcn 默认 X 隐藏 (Drawer 自带大 X) -->
     <Sheet v-model:open="interpretationSheetOpen">
@@ -343,41 +360,45 @@
     <!-- Phase 2 (H5): 移动端 字幕设置 Sheet (双语/英文/中文/字号) -->
     <Sheet v-model:open="showSubtitleSettings">
       <SheetContent side="bottom" class="sf-subtitle-settings-sheet">
-        <SheetHeader>
-          <SheetTitle>字幕设置</SheetTitle>
-        </SheetHeader>
-        <div class="sf-subtitle-settings">
-          <!-- 字幕模式单选 -->
-          <div class="sf-subtitle-row">
-            <span class="sf-subtitle-label">字幕模式</span>
-            <div class="sf-subtitle-options">
-              <button
-                v-for="opt in [
+        <div class="sf-playmode-list">
+          <div class="sf-subtitle-card">
+            <div class="sf-subtitle-card-head">
+              <Languages :size="22" class="sf-playmode-opt-icon" />
+              <span class="sf-subtitle-card-label">字幕</span>
+            </div>
+            <div class="sf-subtitle-segments">
+              <button v-for="opt in [
                   { key: 'bilingual', label: '双语' },
-                  { key: 'en-only',   label: '仅英文' },
-                  { key: 'cn-only',   label: '仅中文' }
-                ]"
-                :key="opt.key"
-                :class="['sf-subtitle-opt', { active: subtitleMode === opt.key }]"
+                  { key: 'en-only',   label: '英文' },
+                  { key: 'cn-only',   label: '中文' }
+                ]" :key="opt.key"
+                :class="['sf-subtitle-segment', { active: subtitleMode === opt.key }]"
                 @click="setSubtitleMode(opt.key)"
               >{{ opt.label }}</button>
             </div>
           </div>
-          <!-- 字号滑块 -->
-          <div class="sf-subtitle-row">
-            <span class="sf-subtitle-label">字体大小</span>
-            <div class="sf-subtitle-size-row">
-              <button
-                v-for="size in [14, 16, 18, 20]"
-                :key="size"
-                :class="['sf-subtitle-opt', { active: subtitleFontSize === size }]"
-                @click="subtitleFontSize = size"
-              >{{ size }}</button>
+          <div class="sf-subtitle-card">
+            <div class="sf-subtitle-card-head">
+              <component :is="subtitleHidden ? EyeOff : Eye" :size="22" class="sf-playmode-opt-icon" />
+              <span class="sf-subtitle-card-label">{{ subtitleHidden ? '隐藏字幕' : '显示字幕' }}</span>
             </div>
+            <button :class="['sf-ios-toggle', { on: subtitleHidden }]"
+              @click="subtitleHidden = !subtitleHidden"
+              :aria-label="subtitleHidden ? '显示字幕' : '隐藏字幕'"
+            ><span class="sf-ios-toggle-knob"></span></button>
           </div>
-          <!-- 应用/关闭 -->
-          <div class="sf-subtitle-actions">
-            <button class="sf-subtitle-cancel" @click="showSubtitleSettings = false">关闭</button>
+          <div class="sf-subtitle-card">
+            <div class="sf-subtitle-card-head">
+              <Type :size="22" class="sf-playmode-opt-icon" />
+              <span class="sf-subtitle-card-label">字号</span>
+            </div>
+            <div class="sf-subtitle-slider-row">
+              <input type="range" min="12" max="24" step="1"
+                :value="subtitleFontSize"
+                @input="subtitleFontSize = Number($event.target.value)"
+                class="sf-subtitle-slider" />
+              <span class="sf-subtitle-size-value">{{ subtitleFontSize }}px</span>
+            </div>
           </div>
         </div>
       </SheetContent>
@@ -386,18 +407,17 @@
     <!-- Phase 2 (H5): 移动端 倍速选择 Sheet -->
     <Sheet v-model:open="showPlaybackRateSheet">
       <SheetContent side="bottom" class="sf-playback-rate-sheet">
-        <SheetHeader>
-          <SheetTitle>播放倍速</SheetTitle>
-        </SheetHeader>
-        <div class="sf-playback-rate-list">
+        <div class="sf-playmode-list">
+          <div class="sf-sheet-group">倍速</div>
           <button
             v-for="rate in [0.5, 0.75, 1.0, 1.25, 1.5, 2.0]"
             :key="rate"
-            :class="['sf-rate-opt', { active: playbackRate === rate }]"
+            :class="['sf-playmode-opt', { active: playbackRate === rate }]"
             @click="selectPlaybackRate(rate)"
           >
-            <span class="sf-rate-label">{{ rate }}x</span>
-            <span v-if="playbackRate === rate" class="sf-rate-check">✓</span>
+            <Gauge :size="22" class="sf-playmode-opt-icon" />
+            <span class="sf-playmode-opt-label">{{ rate }}x</span>
+            <span v-if="playbackRate === rate" class="sf-playmode-opt-check">✓</span>
           </button>
         </div>
       </SheetContent>
@@ -433,24 +453,30 @@
     <!-- Phase 8 (H5): 移动端 播放模式 Sheet (单次/循环/连续/单句) -->
     <Sheet v-model:open="showPlayModeSheet">
       <SheetContent side="bottom" class="sf-playmode-sheet">
-        <SheetHeader>
-          <SheetTitle>播放模式</SheetTitle>
-        </SheetHeader>
         <div class="sf-playmode-list">
-          <button
-            v-for="opt in [
-              { key: 'single',         label: '单次播放', desc: '播完当前视频就停' },
-              { key: 'single-loop',    label: '单集循环', desc: '当前视频循环播放' },
-              { key: 'continuous',     label: '连续播放', desc: '播完自动播下一个' },
-              { key: 'sentence-loop',  label: '单句循环', desc: '当前字幕循环' }
-            ]"
-            :key="opt.key"
+          <div class="sf-sheet-group">视频</div>
+          <button v-for="opt in [
+              { key: 'single',      label: '单集播放', icon: 'play' },
+              { key: 'single-loop', label: '单集循环', icon: 'repeat' }
+            ]" :key="opt.key"
             :class="['sf-playmode-opt', { active: playMode === opt.key }]"
             @click="selectPlayMode(opt.key)"
           >
-            <span class="sf-playmode-label">{{ opt.label }}</span>
-            <span class="sf-playmode-desc">{{ opt.desc }}</span>
-            <span v-if="playMode === opt.key" class="sf-playmode-check">✓</span>
+            <component :is="opt.icon === 'repeat' ? Repeat : Play" :size="22" class="sf-playmode-opt-icon" />
+            <span class="sf-playmode-opt-label">{{ opt.label }}</span>
+            <span v-if="playMode === opt.key" class="sf-playmode-opt-check">✓</span>
+          </button>
+          <div class="sf-sheet-group">句子</div>
+          <button v-for="opt in [
+              { key: 'continuous',    label: '连续播放', icon: 'list' },
+              { key: 'sentence-loop', label: '单句循环', icon: 'repeat' }
+            ]" :key="opt.key"
+            :class="['sf-playmode-opt', { active: playMode === opt.key }]"
+            @click="selectPlayMode(opt.key)"
+          >
+            <component :is="opt.icon === 'repeat' ? Repeat : ListVideo" :size="22" class="sf-playmode-opt-icon" />
+            <span class="sf-playmode-opt-label">{{ opt.label }}</span>
+            <span v-if="playMode === opt.key" class="sf-playmode-opt-check">✓</span>
           </button>
         </div>
       </SheetContent>
@@ -459,37 +485,36 @@
     <!-- Phase 8 (H5): 移动端 更多 Sheet (字幕模式 / 自动滚动 / 生成解读) -->
     <Sheet v-model:open="showMoreSheet">
       <SheetContent side="bottom" class="sf-more-sheet">
-        <SheetHeader>
-          <SheetTitle>更多</SheetTitle>
-        </SheetHeader>
-        <div class="sf-more-list">
-          <button
-            :class="['sf-more-opt', { active: subtitleMode === 'bilingual' }]"
+        <div class="sf-playmode-list">
+          <div class="sf-sheet-group">字幕</div>
+          <button :class="['sf-playmode-opt', { active: subtitleMode === 'bilingual' }]"
             @click="setSubtitleMode('bilingual'); showMoreSheet = false"
           >
-            <span class="sf-more-label">双语字幕</span>
-            <span v-if="subtitleMode === 'bilingual'" class="sf-more-check">✓</span>
+            <Languages :size="22" class="sf-playmode-opt-icon" />
+            <span class="sf-playmode-opt-label">双语字幕</span>
+            <span v-if="subtitleMode === 'bilingual'" class="sf-playmode-opt-check">✓</span>
           </button>
-          <button
-            :class="['sf-more-opt', { active: subtitleMode === 'en-only' }]"
+          <button :class="['sf-playmode-opt', { active: subtitleMode === 'en-only' }]"
             @click="setSubtitleMode('en-only'); showMoreSheet = false"
           >
-            <span class="sf-more-label">仅英文</span>
-            <span v-if="subtitleMode === 'en-only'" class="sf-more-check">✓</span>
+            <Type :size="22" class="sf-playmode-opt-icon" />
+            <span class="sf-playmode-opt-label">仅英文</span>
+            <span v-if="subtitleMode === 'en-only'" class="sf-playmode-opt-check">✓</span>
           </button>
-          <button
-            :class="['sf-more-opt', { active: subtitleMode === 'cn-only' }]"
+          <button :class="['sf-playmode-opt', { active: subtitleMode === 'cn-only' }]"
             @click="setSubtitleMode('cn-only'); showMoreSheet = false"
           >
-            <span class="sf-more-label">仅中文</span>
-            <span v-if="subtitleMode === 'cn-only'" class="sf-more-check">✓</span>
+            <Type :size="22" class="sf-playmode-opt-icon" />
+            <span class="sf-playmode-opt-label">仅中文</span>
+            <span v-if="subtitleMode === 'cn-only'" class="sf-playmode-opt-check">✓</span>
           </button>
-          <button
-            class="sf-more-opt"
+          <div class="sf-sheet-group">其他</div>
+          <button :class="['sf-playmode-opt', { active: autoScroll }]"
             @click="toggleAutoScroll()"
           >
-            <span class="sf-more-label">{{ autoScroll ? '关闭自动滚动' : '开启自动滚动' }}</span>
-            <span v-if="autoScroll" class="sf-more-check">✓</span>
+            <ListVideo :size="22" class="sf-playmode-opt-icon" />
+            <span class="sf-playmode-opt-label">自动滚动</span>
+            <span v-if="autoScroll" class="sf-playmode-opt-check">✓</span>
           </button>
         </div>
       </SheetContent>
@@ -551,7 +576,14 @@ import {
   PencilLine,
   Repeat,
   MoreHorizontal,
-  Sparkles
+  Sparkles,
+  SkipBack,
+  SkipForward,
+  ChevronDown,
+  ChevronUp,
+  ListVideo,
+  EyeOff,
+  Languages
 } from 'lucide-vue-next'
 import SfDialog from '@/components/ui/SfDialog.vue'
 import SfInput from '@/components/ui/SfInput.vue'
@@ -610,13 +642,33 @@ const vocabCount = computed(() => (interpretation.value?.words?.length || 0) + (
 const playMode = ref('single')
 
 const playModeLabels = {
-  single: '单次播放',
+  single: '单集播放',
   'single-loop': '单集循环',
   continuous: '连续播放',
   'sentence-loop': '单句循环'
 }
 
 const playModeLabel = computed(() => playModeLabels[playMode.value] || '单次播放')
+
+// Phase 33+: H5 主工具栏状态 (对标 SpeakVlog)
+const H5_TOOLBAR_KEY = 'h5-mobile-toolbar-expanded'
+const h5ToolbarExpanded = ref(true)
+try {
+  const saved = localStorage.getItem(H5_TOOLBAR_KEY)
+  if (saved === '0') h5ToolbarExpanded.value = false
+} catch {}
+const toggleH5Toolbar = () => {
+  h5ToolbarExpanded.value = !h5ToolbarExpanded.value
+  try { localStorage.setItem(H5_TOOLBAR_KEY, h5ToolbarExpanded.value ? '1' : '0') } catch {}
+  try { document.body.dataset.h5ToolbarCollapsed = h5ToolbarExpanded.value ? 'false' : 'true' } catch {}
+}
+const togglePlayFromToolbar = () => {
+  if (videoRef.value) {
+    if (videoRef.value.paused) videoRef.value.play().catch(() => {})
+    else videoRef.value.pause()
+  }
+}
+try { document.body.dataset.h5ToolbarCollapsed = h5ToolbarExpanded.value ? 'false' : 'true' } catch {}
 
 const setPlayMode = (mode) => {
   playMode.value = mode
@@ -787,6 +839,7 @@ const _savedFontSize = (() => {
   } catch { return 16 }
 })()
 const subtitleFontSize = ref(_savedFontSize)
+const subtitleHidden = ref(false)
 watch(subtitleFontSize, (v) => {
   try { localStorage.setItem(SUBTITLE_FONT_SIZE_KEY, String(v)) } catch {}
 })
@@ -1013,6 +1066,10 @@ const onVideoLoaded = () => {
 const onSeeked = () => {
   console.log('视频跳转完成, currentTime:', videoRef.value?.currentTime)
 }
+
+// 播放/暂停事件 — 同时同步 isVideoPlaying 给主工具栏
+const onVideoPlay = () => { isVideoPlaying.value = true; startWatchDurationTimer() }
+const onVideoPause = () => { isVideoPlaying.value = false; stopWatchDurationTimer() }
 
 // 视频播放结束事件
 const onVideoEnded = () => {
@@ -2998,49 +3055,116 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-top: 8px;
+  margin-top: 4px;
 }
+
+/* 对标 SpeakVlog: 独立白色卡片 + 1px 浅灰描边 + 圆角 12px */
 .sf-playmode-opt {
   position: relative;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  padding: 16px 20px;
-  background: var(--color-bg-base, #FAFAF7);
-  border: 1.5px solid var(--color-border);
-  border-radius: 14px;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: #FFFFFF;
+  border: 1px solid #E5E5EA;
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: background 0.18s ease, transform 0.12s ease;
   -webkit-tap-highlight-color: transparent;
   text-align: left;
+  width: 100%;
 }
-.sf-playmode-opt:active { transform: scale(0.98); }
+.sf-playmode-opt:active { background: #F8F8FA; transform: scale(0.99); }
 .sf-playmode-opt.active {
-  background: var(--color-brand);
+  background: #FFFFFF;
   border-color: var(--color-brand);
+  box-shadow: 0 0 0 1px var(--color-brand) inset;
 }
-.sf-playmode-label {
-  font-size: 17px;
-  font-weight: 600;
+.sf-playmode-opt-icon {
+  display: flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px;
   color: var(--color-text-primary);
+  flex-shrink: 0;
 }
-.sf-playmode-opt.active .sf-playmode-label {
-  color: var(--color-brand);
+.sf-playmode-opt-label {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  line-height: 1.3;
 }
-.sf-playmode-desc {
+.sf-playmode-opt-check {
+  width: 24px; height: 24px;
+  border-radius: 999px;
+  background: #34C759;
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700;
+  flex-shrink: 0;
+}
+.sf-playmode-opt-arrow {
+  width: 16px; height: 16px;
+  color: #C7C7CC;
+  flex-shrink: 0;
+}
+
+/* Sheet 分组标题 — 对标浅灰小字 */
+.sf-sheet-group {
   font-size: 13px;
+  color: #8E8E93;
+  font-weight: 400;
+  padding: 14px 4px 8px;
+  letter-spacing: 0.2px;
+}
+.sf-sheet-group:first-child { padding-top: 4px; }
+
+/* 字幕 Sheet 卡片 (3 行: segmented / toggle / slider) */
+.sf-subtitle-card {
+  display: flex; flex-direction: row; align-items: center; justify-content: space-between;
+  padding: 14px 16px;
+  background: #FFFFFF;
+  border: 1px solid #E5E5EA;
+  border-radius: 12px;
+  min-height: 56px;
+}
+.sf-subtitle-card-head { display: flex; flex-direction: row; align-items: center; gap: 14px; flex: 1; min-width: 0; }
+.sf-subtitle-card-label { font-size: 15px; font-weight: 500; color: var(--color-text-primary); }
+.sf-subtitle-segments { display: inline-flex; background: #F2F2F7; border-radius: 8px; padding: 2px; gap: 2px; }
+.sf-subtitle-segment {
+  padding: 6px 12px; font-size: 13px; font-weight: 500;
   color: var(--color-text-secondary);
-  line-height: 1.4;
+  background: transparent; border: none; border-radius: 6px;
+  cursor: pointer; transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
 }
-.sf-playmode-check {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  color: var(--color-brand);
-  font-size: 18px;
-  font-weight: 700;
+.sf-subtitle-segment.active {
+  background: #FFFFFF; color: var(--color-text-primary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
+.sf-ios-toggle {
+  position: relative; width: 50px; height: 30px;
+  background: #E5E5EA; border-radius: 999px; border: none;
+  cursor: pointer; transition: background 0.22s ease;
+  padding: 0; -webkit-tap-highlight-color: transparent; flex-shrink: 0;
+}
+.sf-ios-toggle.on { background: #34C759; }
+.sf-ios-toggle-knob {
+  position: absolute; top: 2px; left: 2px;
+  width: 26px; height: 26px; background: #FFFFFF;
+  border-radius: 999px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  transition: left 0.22s ease;
+}
+.sf-ios-toggle.on .sf-ios-toggle-knob { left: 22px; }
+.sf-subtitle-slider-row { display: flex; flex-direction: row; align-items: center; gap: 10px; flex: 1; max-width: 200px; }
+.sf-subtitle-slider { flex: 1; -webkit-appearance: none; appearance: none; height: 4px; background: #E5E5EA; border-radius: 2px; outline: none; }
+.sf-subtitle-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 22px; height: 22px;
+  background: #FFFFFF; border-radius: 999px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); cursor: pointer;
+}
+.sf-subtitle-size-value { font-size: 13px; color: var(--color-text-secondary); min-width: 36px; text-align: right; font-variant-numeric: tabular-nums; }
 
 /* ==================== Phase 8 (H5): 更多 Sheet ==================== */
 .sf-more-list {
@@ -3105,6 +3229,65 @@ onUnmounted(() => {
 }
 .sf-mobile-tab.active svg {
   stroke: var(--color-brand);
+}
+
+/* ==================== Phase 33+: H5 主工具栏 (primary toolbar) — 对标 SpeakVlog ==================== */
+.sf-mobile-primary-toolbar-wrap { display: none; }
+@media (max-width: 768px) {
+  .sf-mobile-primary-toolbar-wrap {
+    display: block; position: fixed;
+    left: 0; right: 0;
+    bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+    z-index: 200;
+    padding-bottom: 0;
+    background: var(--color-bg-card);
+    border-top: 1px solid var(--color-border);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
+  }
+  .sf-mobile-primary-toolbar {
+    position: relative; display: flex; align-items: center;
+    height: 64px; padding: 0 16px; width: 100%; box-sizing: border-box;
+  }
+  .sf-mp-btn {
+    position: absolute; top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex; align-items: center; justify-content: center;
+    background: transparent; border: none;
+    color: rgba(255, 255, 255, 0.95);
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.15s ease;
+  }
+  .sf-mp-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .sf-mp-btn:not(:disabled):active { opacity: 0.7; }
+  .sf-mp-btn--prev { width: 56px; height: 48px; right: calc(50% + 36px); transform: translateY(-50%); }
+  .sf-mp-btn--next { width: 56px; height: 48px; left: calc(50% + 36px); transform: translateY(-50%); }
+  .sf-mp-btn--play {
+    left: 50%; width: 64px; height: 64px;
+    border-radius: 999px;
+    background: rgba(56, 189, 148, 1);
+    color: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(47, 61, 53, 0.35);
+    transform: translate(-50%, -50%);
+  }
+  .sf-mp-btn--toggle {
+    width: 48px; height: 48px;
+    color: rgba(255, 255, 255, 0.95);
+    left: auto; right: 16px;
+    transform: translateY(-50%);
+  }
+  .sf-mp-fab-show {
+    position: fixed;
+    right: 16px; bottom: 73px;
+    width: 48px; height: 48px;
+    border-radius: 999px;
+    background: var(--color-bg-card);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    cursor: pointer; z-index: 210;
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
 /* ==================== 快捷键面板 ==================== */
@@ -3310,7 +3493,7 @@ onUnmounted(() => {
 @media (max-width: 768px) {
   .sf-learn-page {
     padding: 0;          /* H5 端视频通栏, 不要 12px 边距 */
-    padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px)); /* Phase 8: 给底 2 行 tab bar (40+64) 留空间 */
+    padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)); /* Phase 33+: sf-mobile-tabs (56px) + sf-mobile-primary-toolbar (64px) */
   }
   .sf-page-header {
     margin-bottom: 10px;
@@ -3704,6 +3887,19 @@ onUnmounted(() => {
     max-height: 90dvh !important;
     border-radius: 16px 16px 0 0 !important;
     /* z-index 250 继承, 在 toolbar 200 + AI bar 12 之上 */
+  }
+}
+
+/* ==================== Phase 33+: H5 Sheet 容器圆角 ==================== */
+@media (max-width: 768px) {
+  .sf-playmode-sheet, .sf-subtitle-settings-sheet, .sf-playback-rate-sheet, .sf-more-sheet, .sf-practice-sheet {
+    width: 100% !important; max-width: 100% !important;
+  }
+  .sf-playmode-sheet[data-state="open"], .sf-subtitle-settings-sheet[data-state="open"], .sf-playback-rate-sheet[data-state="open"], .sf-more-sheet[data-state="open"], .sf-practice-sheet[data-state="open"] {
+    border-radius: 18px 18px 0 0 !important;
+    max-height: 60vh !important;
+    padding: 8px 16px 24px !important;
+    background: #FFFFFF !important;
   }
 }
 </style>

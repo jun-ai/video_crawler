@@ -11,8 +11,8 @@
         @loadedmetadata="$emit('loadedmetadata')"
         @seeked="$emit('seeked')"
         @ended="$emit('ended')"
-        @play="playing = true"
-        @pause="playing = false"
+        @play="onPlay"
+        @pause="onPause"
       ></video>
 
       <!-- 视频封面图（未播放时显示） -->
@@ -75,7 +75,7 @@ const props = defineProps({
   currentSubtitle: { type: Object, default: null }
 })
 
-defineEmits([
+const emit = defineEmits([
   'timeupdate', 'loadedmetadata', 'seeked', 'ended', 'play', 'pause',
   'update:playbackRate', 'update:loopCurrent'
 ])
@@ -83,13 +83,38 @@ defineEmits([
 const playerRef = ref(null)
 const playing = ref(false)
 
+const onPlay = () => {
+  playing.value = true
+  emit('play')
+}
+
+const onPause = () => {
+  playing.value = false
+  emit('pause')
+}
+
 const startPlayback = () => {
   if (playerRef.value) {
     playerRef.value.play()
   }
 }
 
-defineExpose({ playerRef })
+const togglePlay = () => {
+  if (!playerRef.value) return
+  if (playerRef.value.paused) {
+    playerRef.value.play()
+  } else {
+    playerRef.value.pause()
+  }
+}
+
+const seekRelative = (deltaSec) => {
+  if (!playerRef.value) return
+  const cur = playerRef.value.currentTime || 0
+  playerRef.value.currentTime = Math.max(0, cur + deltaSec)
+}
+
+defineExpose({ playerRef, playing, togglePlay, seekRelative })
 </script>
 
 <style scoped>
