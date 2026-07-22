@@ -900,19 +900,29 @@ const formatVideoDuration = (seconds) => {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
+// 视频收藏加载 - race 保护
+let _videoAbortController = null
 const loadVideoFavorites = async () => {
   if (!userStore.isLoggedIn) return
+  if (_videoAbortController) _videoAbortController.abort()
+  const ac = new AbortController()
+  _videoAbortController = ac
   videoLoading.value = true
   try {
-    const res = await favoriteAPI.getList({ page: 1, page_size: 50 })
+    const res = await favoriteAPI.getList({ page: 1, page_size: 50 }, { signal: ac.signal })
+    if (ac.signal.aborted) return
     videoFavorites.value = res.items || []
     videoTotal.value = res.total || 0
   } catch (e) {
+    if (e?.name === 'CanceledError' || e?.code === 'ERR_CANCELED') return
     console.error('加载视频收藏失败', e)
     videoFavorites.value = []
     videoTotal.value = 0
   } finally {
-    videoLoading.value = false
+    if (_videoAbortController === ac) {
+      videoLoading.value = false
+      _videoAbortController = null
+    }
   }
 }
 
@@ -1176,8 +1186,14 @@ const filterMaterialById = (id) => {
   loadSubtitleBookmarks()
 }
 
+// 字幕收藏加载 - 带 race 保护 (新请求 abort 旧请求, 避免 count 与数据错位)
+let _subtitleAbortController = null
 const loadSubtitleBookmarks = async () => {
   if (!userStore.isLoggedIn) return
+  // 取消上一次未完成的请求, 防止后返回的旧响应覆盖新数据
+  if (_subtitleAbortController) _subtitleAbortController.abort()
+  const ac = new AbortController()
+  _subtitleAbortController = ac
   subtitleLoading.value = true
   try {
     // 4-P1-4: 传 search + material_id 参数
@@ -1187,7 +1203,9 @@ const loadSubtitleBookmarks = async () => {
     if (filterMaterialId.value) params.material_id = filterMaterialId.value
     if (filterFolderId.value !== null) params.folder_id = filterFolderId.value
     if (filterTagId.value !== null) params.tag_id = filterTagId.value
-    const res = await subtitleBookmarkAPI.getAll(params)
+    const res = await subtitleBookmarkAPI.getAll(params, { signal: ac.signal })
+    // 响应回来后, 如果本次请求已经被新请求 abort 掉, 直接丢弃不写 state
+    if (ac.signal.aborted) return
     const items = Array.isArray(res) ? res : (res.items || [])
     // 字段映射：后端 subtitle_text_en → 前端 text_en
     subtitleBookmarks.value = items.map(item => ({
@@ -1209,9 +1227,15 @@ const loadSubtitleBookmarks = async () => {
     }))
     subtitleTotal.value = items.length
   } catch (e) {
+    // AbortError 是用户主动取消/新请求抢占, 不当作错误处理
+    if (e?.name === 'CanceledError' || e?.code === 'ERR_CANCELED') return
     console.error('加载字幕收藏失败', e)
   } finally {
-    subtitleLoading.value = false
+    // 只在本次请求还是"当前最新"时才清 loading (避免新请求 loading 被旧请求清掉)
+    if (_subtitleAbortController === ac) {
+      subtitleLoading.value = false
+      _subtitleAbortController = null
+    }
   }
 }
 
@@ -1241,20 +1265,30 @@ const handleSubtitleCommand = async (command, item) => {
 
 // ====== 词汇操作 ======
 
+// 词汇列表加载 - race 保护
+let _vocabAbortController = null
 const loadVocabList = async () => {
   if (!userStore.isLoggedIn) return
+  if (_vocabAbortController) _vocabAbortController.abort()
+  const ac = new AbortController()
+  _vocabAbortController = ac
   vocabLoading.value = true
   try {
     const res = await vocabularyAPI.getList({
       page: vocabPage.value,
       page_size: vocabPageSize.value
-    })
+    }, { signal: ac.signal })
+    if (ac.signal.aborted) return
     vocabList.value = res.items || []
     vocabTotal.value = res.total || 0
   } catch (e) {
+    if (e?.name === 'CanceledError' || e?.code === 'ERR_CANCELED') return
     console.error('加载词汇失败', e)
   } finally {
-    vocabLoading.value = false
+    if (_vocabAbortController === ac) {
+      vocabLoading.value = false
+      _vocabAbortController = null
+    }
   }
 }
 
@@ -1339,15 +1373,23 @@ const folderColors = [
   '#06b6d4', '#a855f7', '#ec4899'
 ]
 
-// 加载所有文件夹
+// 加载所有文件夹 - race 保护
+let _folderAbortController = null
 const loadFolders = async () => {
   if (!userStore.isLoggedIn) return
+  if (_folderAbortController) _folderAbortController.abort()
+  const ac = new AbortController()
+  _folderAbortController = ac
   try {
-    const res = await bookmarkFolderAPI.list()
+    const res = await bookmarkFolderAPI.list({ signal: ac.signal })
+    if (ac.signal.aborted) return
     allFolders.value = res || []
   } catch (e) {
+    if (e?.name === 'CanceledError' || e?.code === 'ERR_CANCELED') return
     console.error('加载文件夹失败', e)
     allFolders.value = []
+  } finally {
+    if (_folderAbortController === ac) _folderAbortController = null
   }
 }
 
@@ -1615,6 +1657,7 @@ onMounted(() => {
     loadVocabList()
     loadUserTags()
     loadFolders()
+    loadVideoFavorites()  // 5-P1-1: 视频收藏,之前漏了 → 切到视频 tab 是空状态
   }
 })
 </script>

@@ -343,6 +343,7 @@
           :learning-status="learningStatus"
           :loading="interpretationLoading"
           :is-generating="isGenerating"
+          :is-exporting="interpretationExporting"
           :generating-status="interpretationGeneratingStatus"
           @generate="generateInterpretation"
           @update:tab="interpretationTab = $event"
@@ -352,6 +353,7 @@
           @interpretation-click="handleInterpretationClick"
           @seek-subtitle="seekToSubtitle"
           @add-vocabulary="addToVocabulary"
+          @export="handleInterpretationExport"
           @close="interpretationSheetOpen = false"
         />
       </SheetContent>
@@ -1679,6 +1681,59 @@ const addToVocabulary = async (item) => {
   }
 }
 
+// 导出学习卡片 (PDF / Word)
+const interpretationExporting = ref(false)
+const handleInterpretationExport = async ({ format, fields }) => {
+  if (!userStore.isLoggedIn) {
+    toast.warning('请先登录')
+    requireLogin()
+    return
+  }
+  if (!material.value?.id) {
+    toast.warning('视频信息加载中, 请稍后再试')
+    return
+  }
+  if (interpretationExporting.value) return
+  interpretationExporting.value = true
+  try {
+    const res = await interpretationAPI.exportCard(material.value.id, format, fields)
+    // 解析文件名 (优先 RFC 5987 filename*=UTF-8''); 回退到简单 filename=; 最后兜底
+    const cd = res.headers['content-disposition'] || ''
+    let filename = ''
+    const starMatch = cd.match(/filename\*=UTF-8''([^;]+)/i)
+    if (starMatch) {
+      filename = decodeURIComponent(starMatch[1])
+    } else {
+      const plainMatch = cd.match(/filename="?([^";]+)"?/i)
+      if (plainMatch) filename = plainMatch[1]
+    }
+    if (!filename) {
+      const ext = format === 'pdf' ? 'pdf' : 'docx'
+      const today = new Date().toISOString().slice(0, 10)
+      filename = `${material.value.title || '视频'}-学习卡片-${today}.${ext}`
+    }
+    // 触发浏览器下载
+    const mime = format === 'pdf'
+      ? 'application/pdf'
+      : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    const blob = new Blob([res.data], { type: mime })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    toast.success('已开始下载')
+  } catch (e) {
+    console.error('导出学习卡片失败', e)
+    toast.error('导出失败, 请稍后重试')
+  } finally {
+    interpretationExporting.value = false
+  }
+}
+
 // ==================== 解读项学习状态 ====================
 
 const loadLearningStatus = async () => {
@@ -2861,27 +2916,8 @@ onUnmounted(() => {
   font-weight: 600;
 }
 
-.sf-interpretation-sheet {
-  width: 400px !important;
-  max-width: 90vw;
-}
 /* Phase 10: Sheet 用 Teleport 渲染到 body, 不在 Learn.vue DOM 树内, scoped [data-v-hash] 不命中
-   解: 把 z-index / H5 样式放非 scoped <style> 块 (文件末尾) */
-
-.sf-interpretation-sheet :deep(.sheet-content) {
-  height: 100%;
-  max-height: 100vh;
-}
-.sf-interpretation-sheet :deep(.sheet-header) {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.sf-interpretation-sheet :deep(.sheet-body) {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0;
-}
+   之前 .sf-interpretation-sheet 样式放这里全是死代码, 现在统一放非 scoped <style> 块 (文件末尾) */
 
 /* ==================== Phase 2 (H5): 字幕设置 Sheet ==================== */
 .sf-subtitle-settings-sheet :deep(.sheet-content) {
@@ -3884,7 +3920,22 @@ onUnmounted(() => {
 .sf-playbackrate-sheet,
 .sf-more-sheet,
 .sf-toolbox-sheet {
-  z-index: 250; /* 提到 toolbar (200) 之上, 避免被遮 */
+  z-index: 1100; /* Phase 27: 提到 App.vue 全局顶部导航 (z-1000) 之上, 否则 drawer header 被导航栏挡住 */
+}
+
+/* ==================== Task 5: InterpretationDrawer PC 高度贴满 ====================
+   Sheet Teleport 到 body, scoped 不命中 → 这里用非 scoped
+   - width:400 + max-width:90vw: 宽屏 400px,窄屏自动缩
+   - padding:0 + gap:0: 干掉 DialogContent 默认 p-6,让 panel 顶到 sheet 顶端
+   - top:64px: App.vue navbar h-16=64px fixed z-1000, sheet 必须从 navbar 下方开始
+                bottom 仍走 inset-y-0 自动贴浏览器视口底
+   - H5 (side="bottom") 在下方媒体查询里 top:auto !important override */
+.sf-interpretation-sheet {
+  width: 400px !important;
+  max-width: 90vw;
+  padding: 0 !important;
+  gap: 0 !important;
+  top: 64px !important;
 }
 /* Phase 26+5: 隐藏 shadcn SheetContent 默认 X (16px opacity 0.7, 几乎看不见)
    通用: 任何 sf-*-sheet 都不需要默认 X, 我们用显式大 X 或 drag handle */
@@ -3899,6 +3950,9 @@ onUnmounted(() => {
     height: 90dvh !important;
     max-height: 90dvh !important;
     border-radius: 16px 16px 0 0 !important;
+    /* H5 navbar v-show=false 不渲染, sheet 走 side="bottom" 默认 bottom 锚点,
+       上面 PC 的 top:64px !important 必须 override 掉, 否则底部 sheet 顶部空 64px */
+    top: auto !important;
     /* z-index 250 继承, 在 toolbar 200 + AI bar 12 之上 */
   }
 }
