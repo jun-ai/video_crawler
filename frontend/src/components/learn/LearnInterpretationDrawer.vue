@@ -11,6 +11,7 @@
       <div class="sf-interp-panel__header-actions">
         <button
           v-if="hasData"
+
           class="sf-btn sf-btn--ghost sf-btn--sm"
           :disabled="isGenerating"
           @click="$emit('generate')"
@@ -18,6 +19,51 @@
           <Loader2 class="is-loading" :size="16" v-if="isGenerating" /><RefreshCw v-else :size="16" />
           {{ isGenerating ? '生成中...' : '重新生成' }}
         </button>
+        <!-- 导出学习卡片: PDF / Word × 精简版 / 完整版
+             自包含 popover, 留在 drawer 内部 (不 Teleport).
+             原因: reka-ui Dialog modal=true 会把 Teleport 到 body 的元素当成 "dialog 外部",
+             点 menu → 触发 onPointerDownOutside → sheet 关闭 -->
+        <div class="sf-export-trigger" v-if="hasData">
+          <button
+            class="sf-btn sf-btn--ghost sf-btn--sm"
+            :disabled="isLocked"
+            aria-label="导出学习卡片"
+            aria-haspopup="menu"
+            :aria-expanded="exportMenuOpen"
+            @click="toggleExportMenu"
+            ref="exportTriggerRef"
+          >
+            <Loader2 class="is-loading" :size="16" v-if="isLocked" />
+            <Download v-else :size="16" />
+            导出
+          </button>
+          <div
+            v-if="exportMenuOpen"
+            class="sf-export-menu"
+            role="menu"
+            ref="exportMenuRef"
+          >
+            <div class="sf-export-menu__section" role="presentation">精简版</div>
+            <button class="sf-export-menu__item" role="menuitem" @click="onExport('pdf', 'compact')">
+              <span class="sf-export-menu__label">PDF</span>
+              <span class="sf-export-menu__hint">.pdf</span>
+            </button>
+            <button class="sf-export-menu__item" role="menuitem" @click="onExport('docx', 'compact')">
+              <span class="sf-export-menu__label">Word</span>
+              <span class="sf-export-menu__hint">.docx</span>
+            </button>
+            <div class="sf-export-menu__divider" role="separator"></div>
+            <div class="sf-export-menu__section" role="presentation">完整版 <span class="sf-export-menu__tag">+ 难度/词频/英英</span></div>
+            <button class="sf-export-menu__item" role="menuitem" @click="onExport('pdf', 'full')">
+              <span class="sf-export-menu__label">PDF</span>
+              <span class="sf-export-menu__hint">.pdf</span>
+            </button>
+            <button class="sf-export-menu__item" role="menuitem" @click="onExport('docx', 'full')">
+              <span class="sf-export-menu__label">Word</span>
+              <span class="sf-export-menu__hint">.docx</span>
+            </button>
+          </div>
+        </div>
         <!-- Phase 11: 显式大 X 关闭按钮, 替代 shadcn 默认看不见的 16px X -->
         <button
           class="sf-interp-panel__close"
@@ -337,10 +383,10 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, nextTick, onBeforeUnmount } from 'vue'
 import {
   Loader2, ArrowRight, RefreshCw, Headphones,
-  Eye, MessageCircle, Wand2, Plus, ChevronDown, X
+  Eye, MessageCircle, Wand2, Plus, ChevronDown, X, Download
 } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -354,14 +400,121 @@ const props = defineProps({
   learningStatus: { type: Object, default: () => ({}) },
   loading: Boolean,
   isGenerating: Boolean,
-  generatingStatus: { type: String, default: '' }
+  generatingStatus: { type: String, default: '' },
+  // 父组件控制下载进度: 网络慢时 (>800ms) 由父组件把 button 锁住, 避免重复点击
+  isExporting: { type: Boolean, default: false }
 })
 
 const emit = defineEmits([
   'generate', 'update:tab', 'update:filter',
   'update:hideCn', 'set-status', 'interpretation-click',
-  'seek-subtitle', 'add-vocabulary', 'close'
+  'seek-subtitle', 'add-vocabulary', 'close', 'export'
 ])
+
+// 导出学习卡片
+// 内部兜底锁 (800ms) + 父组件 isExporting: 任意一个为 true 都禁用按钮
+const exporting = ref(false)
+const isLocked = computed(() => exporting.value || props.isExporting)
+
+const onExport = async (format, fields) => {
+  if (isLocked.value) return
+  closeExportMenu()
+  exporting.value = true
+  try {
+    emit('export', { format, fields })
+  } finally {
+    // 800ms 兜底: 父组件没传 isExporting 时, 至少锁按钮一会儿避免双击
+    setTimeout(() => { exporting.value = false }, 800)
+  }
+}
+
+// 自定义 popover 开关 (不走 Teleport: reka-ui Dialog 会把 teleport 元素当 dialog 外部)
+// 位置走 CSS absolute (right:0; top:calc(100% + 6px)) — 跟随 trigger 滚动
+const exportMenuOpen = ref(false)
+const exportTriggerRef = ref(null)
+const exportMenuRef = ref(null)
+
+// 菜单项定义 (顺序对应渲染顺序), 用于键盘导航
+const MENU_ITEMS = [
+  { format: 'pdf',  fields: 'compact' },
+  { format: 'docx', fields: 'compact' },
+  { format: 'pdf',  fields: 'full' },
+  { format: 'docx', fields: 'full' },
+]
+const selectedIndex = ref(0)
+
+const focusMenuItem = (idx) => {
+  // 用 querySelectorAll 而非 ref, 因为按钮数量是固定的, 直接拿 DOM 顺序
+  const items = exportMenuRef.value?.querySelectorAll('.sf-export-menu__item')
+  const node = items?.[idx]
+  if (node) node.focus()
+  else exportTriggerRef.value?.focus()
+}
+
+const toggleExportMenu = async () => {
+  if (exportMenuOpen.value) {
+    closeExportMenu()
+    return
+  }
+  exportMenuOpen.value = true
+  await nextTick()
+  selectedIndex.value = 0
+  focusMenuItem(0)
+  document.addEventListener('click', onExportMenuClickOutside, true)
+  document.addEventListener('keydown', onExportMenuKeydown)
+  window.addEventListener('resize', closeExportMenu)
+  window.addEventListener('scroll', closeExportMenu, true)
+}
+
+const closeExportMenu = (restoreFocus = false) => {
+  exportMenuOpen.value = false
+  document.removeEventListener('click', onExportMenuClickOutside, true)
+  document.removeEventListener('keydown', onExportMenuKeydown)
+  window.removeEventListener('resize', closeExportMenu)
+  window.removeEventListener('scroll', closeExportMenu, true)
+  if (restoreFocus) {
+    // Esc 关闭时把焦点还给触发按钮, 符合 a11y 习惯
+    exportTriggerRef.value?.focus()
+  }
+}
+
+const onExportMenuClickOutside = (e) => {
+  // 用 closest 不依赖 ref (Teleport + v-if 时序下 ref 可能还没绑上)
+  if (e.target.closest && e.target.closest('.sf-export-menu')) return
+  if (e.target.closest && e.target.closest('.sf-export-trigger')) return
+  closeExportMenu()
+}
+
+const onExportMenuKeydown = (e) => {
+  if (e.key === 'Escape') {
+    e.preventDefault()
+    closeExportMenu(true)  // Esc 关闭后焦点回到触发按钮
+    return
+  }
+  const n = MENU_ITEMS.length
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    selectedIndex.value = (selectedIndex.value + 1) % n
+    focusMenuItem(selectedIndex.value)
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    selectedIndex.value = (selectedIndex.value - 1 + n) % n
+    focusMenuItem(selectedIndex.value)
+  } else if (e.key === 'Home') {
+    e.preventDefault()
+    selectedIndex.value = 0
+    focusMenuItem(0)
+  } else if (e.key === 'End') {
+    e.preventDefault()
+    selectedIndex.value = n - 1
+    focusMenuItem(n - 1)
+  }
+  // Enter / Space: 让浏览器原生 click on focused button 处理
+}
+
+onBeforeUnmount(() => {
+  closeExportMenu()
+})
 
 // 展开状态
 const expandedItems = ref(new Set())
@@ -1079,5 +1232,80 @@ const getStatusBarClass = (id) => {
   background: var(--color-danger);
   border-color: var(--color-danger);
   color: #fff;
+}
+</style>
+
+<!-- ==================== 导出学习卡片 dropdown ====================
+     非 scoped: 之前 Teleport 到 body, scoped [data-v-hash] 不命中 -->
+<style>
+/* 触发器 wrapper: 仅作为视觉定位参考, 菜单用 fixed 定位 (避免被父级 transform 截断) */
+.sf-export-trigger {
+  position: relative;
+  display: inline-flex;
+}
+
+/* 菜单本身: absolute 定位, 从触发器右下角往下展开 (跟随 trigger 滚动) */
+.sf-export-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 220px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  padding: 4px;
+  /* 1000 足以压制 drawer 内部任何兄弟 (sticky / scroll container) */
+  z-index: 1000;
+  font-family: inherit;
+}
+.sf-export-menu__section {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  padding: 8px 10px 4px;
+  letter-spacing: 0.02em;
+}
+.sf-export-menu__tag {
+  font-weight: 400;
+  color: var(--color-text-muted);
+  margin-left: 4px;
+}
+.sf-export-menu__divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 4px 0;
+}
+.sf-export-menu__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-family: inherit;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  gap: 16px;
+  /* 键盘导航: 焦点态可见 */
+  outline: none;
+}
+.sf-export-menu__item:hover,
+.sf-export-menu__item:focus-visible {
+  background: var(--color-bg-elevated);
+}
+.sf-export-menu__label {
+  font-weight: 500;
+}
+.sf-export-menu__hint {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  margin-left: auto;
 }
 </style>

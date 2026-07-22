@@ -104,13 +104,13 @@ export const favoriteAPI = {
   add: (materialId) => api.post(`/favorites/${materialId}`),
   remove: (materialId) => api.delete(`/favorites/${materialId}`),
   check: (materialId) => api.get(`/favorites/check/${materialId}`),
-  getList: (params) => api.get('/favorites', { params })
+  getList: (params, options) => api.get('/favorites', { ...options, params })
 }
 
 // ==================== 生词本 API ====================
 export const vocabularyAPI = {
   add: (data) => api.post('/learning/vocabulary', data),
-  getList: (params) => api.get('/learning/vocabulary', { params }),
+  getList: (params, options) => api.get('/learning/vocabulary', { ...options, params }),
   markMastered: (id) => api.put(`/learning/vocabulary/${id}/master`),
   unmarkMastered: (id) => api.put(`/learning/vocabulary/${id}/unmaster`), // 5-P0-1
   // 5-P2-5: 星标
@@ -137,7 +137,12 @@ export const vocabularyAPI = {
 // ==================== 解读项学习状态 API ====================
 export const interpretationAPI = {
   setStatus: (data) => api.post('/learning/interpretation/status', data),
-  getStatus: (materialId) => api.get(`/learning/interpretation/status/${materialId}`)
+  getStatus: (materialId) => api.get(`/learning/interpretation/status/${materialId}`),
+  // 导出学习卡片 (PDF/Word). 返回 Blob, 由调用方触发浏览器下载
+  exportCard: (materialId, format, fields) => api.get(
+    `/learning/material/${materialId}/interpretations/export`,
+    { params: { format, fields }, responseType: 'blob' }
+  )
 }
 
 // ==================== 学习统计 API ====================
@@ -189,8 +194,10 @@ export const subtitleBookmarkAPI = {
   check: (materialId) => api.get(`/learning/bookmarks/check/${materialId}`),
   getList: (materialId) => api.get(`/learning/bookmarks/${materialId}`),
   /** 单次获取所有字幕收藏（join Subtitle），替代循环 N+1
- *  4-P1-4: 支持 search + material_id 参数 */
-  getAll: (params) => api.get('/learning/bookmarks/all', { params }),
+ *  4-P1-4: 支持 search + material_id 参数
+ *  5-P1-2 (后缀): 支持 folder_id + tag_id 过滤
+ *  可传 { signal } 用于 race 保护 (Favorites.vue loadSubtitleBookmarks) */
+  getAll: (params, options) => api.get('/learning/bookmarks/all', { ...options, params }),
   incrementPractice: (bookmarkId) => api.post(`/learning/bookmarks/${bookmarkId}/practice`),
   // 4-P1-5: 批量删除
   batchDelete: (ids) => api.post('/learning/bookmarks/batch-delete', { ids }),
@@ -209,7 +216,7 @@ export const bookmarkTagAPI = {
 
 // ==================== 5-P1-2 (后缀): 收藏文件夹 API ====================
 export const bookmarkFolderAPI = {
-  list: () => api.get('/learning/bookmark-folders'),
+  list: (options) => api.get('/learning/bookmark-folders', { ...options }),
   create: (data) => api.post('/learning/bookmark-folders', data),
   update: (id, data) => api.patch(`/learning/bookmark-folders/${id}`, data),
   delete: (id) => api.delete(`/learning/bookmark-folders/${id}`),
