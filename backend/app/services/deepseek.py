@@ -1,7 +1,7 @@
 """
 AI 服务 - 多 provider fallback
 支持协议:
-  - OpenAI 兼容 (DeepSeek / 智谱 GLM paas / OpenAI 自身等)
+  - OpenAI 兼容 (智谱 GLM paas / OpenAI 等)
   - Anthropic 兼容 (智谱 GLM anthropic / MiniMax anthropic 等)
 
 按优先级顺序自动切换:401/402/429/5xx/timeout → 切下一个 provider
@@ -21,15 +21,6 @@ logger = logging.getLogger(__name__)
 # 顺序就是 fallback 顺序:第一个失败 → 第二个 → 第三个
 # 没配 api_key 的 provider 自动跳过
 PROVIDERS = [
-    {
-        "name": "deepseek",
-        "protocol": "openai",
-        "base_url": settings.deepseek_base_url,
-        "api_key": settings.deepseek_api_key,
-        "model": settings.deepseek_model,
-        "unavailable_until": 0.0,
-        "lock": asyncio.Lock(),
-    },
     {
         "name": "glm",
         "protocol": "anthropic",
@@ -76,14 +67,32 @@ def _trip_provider(provider: dict, reason: str):
 
 
 def _parse_json_response(content: str) -> Any:
-    """从 AI 返回中提取 JSON(支持 markdown 代码块)"""
+    """从 AI 返回中提取 JSON
+    支持:
+      - markdown ```json ... ``` 代码块
+      - 裸 JSON
+      - MiniMax-M3 等思考模型会把推理写在 <think>...</think> 里, 先剥掉
+    """
+    # 1. 剥掉 <think>...</think> (MiniMax-M3 / DeepSeek-R1 / GLM-thinking 都可能产生)
+    import re as _re
+    content = _re.sub(r"<think>.*?</think>\s*", "", content, flags=_re.DOTALL).strip()
+    # 2. 提取 JSON 代码块
     if "```json" in content:
         json_str = content.split("```json")[1].split("```")[0].strip()
     elif "```" in content:
         json_str = content.split("```")[1].split("```")[0].strip()
     else:
         json_str = content.strip()
-    return json.loads(json_str)
+    # DEBUG: 失败时打印 raw content 便于诊断
+    try:
+        return json.loads(json_str)
+    except json.JSONDecodeError as e:
+        logger.error(
+            f"[AI] JSON parse failed: {e}\n"
+            f"  --- raw content (前 1500 字符) ---\n{content[:1500]}\n"
+            f"  --- end ---"
+        )
+        raise
 
 
 # ==================== OpenAI 协议调用 ====================
@@ -111,6 +120,9 @@ async def _call_openai(provider: dict, system_prompt: str, user_prompt: str,
                         ],
                         "temperature": temperature,
                         "max_tokens": max_tokens,
+                        # MiniMax-M3 是 thinking model, 默认 reasoning 占大半 token 预算。
+                        # reasoning_effort=low 把 thinking 砍到 ~1/3, 给 JSON 输出留够空间。
+                        "reasoning_effort": "low",
                     },
                 )
             except (httpx.TimeoutException, httpx.NetworkError) as e:
@@ -216,7 +228,7 @@ async def _call_ai(system_prompt: str, user_prompt: str,
     if not available:
         raise Exception(
             "所有 AI provider 都不可用(未配置或全部熔断中)。"
-            "请检查 DEEPSEEK_API_KEY / GLM_API_KEY / MINIMAX_API_KEY 配置"
+            "请检查 GLM_API_KEY / MINIMAX_API_KEY 配置"
         )
 
     last_error: Optional[Exception] = None
@@ -278,7 +290,21 @@ async def generate_word_cards(subtitles: List[Dict[str, Any]]) -> List[Dict]:
 3. english_definition 写一句简单英文解释,只解释最常用意
 4. frequency_rank 估算词频排名(1-10000): 数字越小越常见(the=1, apple≈1500, ephemeral≈8000)
 5. 跳过基础词 (a/the/is/and/it 等),不要凑数
-6. 只返回 JSON 数组, 不要其他文字"""
+6. 只返回 JSON 数组, 不要其他文字
+
+【质量红线 - 必须遵守,否则数据不可用】
+7. **phonetic 必须匹配字幕里实际出现的形态**(单数 / 复数 / 进行时 / 过去式),
+   不能简单返回原形 (lemma) 的音标。
+   例: 字幕是 "we have been very slowly furnishing our space"
+   → phonetic 用名词复数 /ˈfɜːrnɪʃɪŋz/, 不是原形 furnishing /ˈfɜːrnɪʃɪŋ/
+   过去式 /ed/、现在分词 /ɪŋ/、复数 /s z ɪz/、第三人称单数 /s z ɪz/ 必须带。
+8. **content_cn / other_pos_definitions 严禁文学化 / 抽象大词 / 四字成语**:
+   用日常口语中文。形容家居 / 日常场景时,不要 "贫瘠 / 高光时刻 / 乱葬岗" 这种。
+   反例: barren → "空荡荡的;贫瘠的" / shine → "大显身手,高光时刻"
+   正例: barren → "空落落的;什么也没有" / shine → "发挥出来;展露头角"
+9. **优先从字幕里挑一句原句当 example 或 context**(单条或合并相邻字幕);
+   例句必须跟视频主题相关,不要 "I can't figure out how to use this machine"
+   这种跟视频无关的字典标准句。"""
 
     try:
         content = await _call_ai(
@@ -327,9 +353,13 @@ async def generate_phrase_cards(subtitles: List[Dict[str, Any]]) -> List[Dict]:
    - 反例(差,就是当前问题): get back into it → "phr. 重新投入;回到(某种状态)" (字典式 + 分号罗列 + 抽象)
    - 正例(对): get back into it → "回到正事,继续刚才的活儿" (结合视频里"refreshed, we're going to get back into it"这个语境)
 3. **不要用分号";" 罗列多个近义同义释义** — 这会让卡片看起来像词典不像口语教学
-4. **example_sentence 必填** — 造一个简单的英文句子 + 中文翻译, 帮学生记住短语的典型用法(1 行,60 字符以内)
+4. **example_sentence 必填 — 必须从上方字幕里挑一句原句当例句**(单条或相邻字幕合并),
+   严禁凭空写 "I can't figure out how to use this machine" 这种字典标准句。
+   如果字幕里没有合适的,可以基于视频场景造例句,但主题必须贴视频。
+   中文翻译直接用字幕对应 CN,不要额外润色。(1 行,60 字符以内)
 5. **synonyms 同义短语最多 1-2 个**,没有就不写; 列的是短语不是单词(列 "resume" 比列 "go back" 更典型)
 6. phonetic 用国际音标, /.../ 包起来
+7. **content_cn 严禁文学化 / 抽象大词 / 四字成语** — 用日常口语中文,不要 "贫瘠 / 高光时刻 / 乱葬岗 / 突如其来" 这种。
 7. subtitle_sequence 必须是上面字幕的序号 (这个短语出现的最早位置)
 8. difficulty 1-5: 1=基础短语, 3=中级, 5=地道母语级
 9. 只返回 JSON 数组, 不要其他文字"""
@@ -375,9 +405,9 @@ async def generate_grammar_points(subtitles: List[Dict[str, Any]]) -> List[Dict]
 
 【重要】不要在 JSON 里加 explanation 字段! 解释全部用下面的结构化字段表达,后端会自动按顺序拼成一段可读的解释:
 1. **structure_analysis (必填, 1 句话, 短公式)**: 讲清结构公式, 例 "have/has been + doing"。这是这张卡的"标题句"
-2. **similar_expressions (必填, 1-3 个, 用 \\n 分隔)**: 相关语法/用法对比。例如"现在完成进行时: 强调动作持续\\n一般过去时: 强调动作发生过"。每个对比 1 句话, 不要写很长的解释
+2. **similar_expressions (必填, 1-3 个, 用 \\n 分隔)**: 相关语法/用法对比。**严禁写 "现在完成时: 强调结果 / 现在进行时: 强调此时此刻" 这种抽象描述**,必须配上贴近视频主题的具体场景,例如 "I've been furnishing this room for hours" (Present Perfect Continuous, 强调一直在做)。
 3. **usage_scenario (必填, 1 句话)**: 讲常见使用场景 (日常对话 / 视频叙事 / 邮件回复 / 工作汇报 等)
-4. **alternative_phrasings (必填, 1-3 个, 用 \\n 分隔)**: 英文例句, 用 "I have done it. (现在完成时)" 这种格式直接给, 不需要详细解释
+4. **alternative_phrasings (必填, 1-3 个, 用 \\n 分隔)**: 英文例句,**严禁写 "I have been working. (我一直在工作)" "She has been sleeping. (她一直在睡觉)" 这种空 placeholder 句**。必须用视频里或贴近视频主题的具体场景句,每个表达不超过 15 词 + 简短中文。
 5. **example_sentence (必填)**: 带中文翻译的英文例句
 6. difficulty 1-5
 7. **JSON 格式注意**: 字段值要用真换行 ("\\n" 实际是 1 个字符), 不要写成字符串 "\\\\n" (2 个字符)
@@ -427,10 +457,11 @@ async def generate_idiom_cards(subtitles: List[Dict[str, Any]]) -> List[Dict]:
 翻译规则:
 1. **content_cn 写地道自然的中文,不要";"罗列多个近义词** (反例: "一针见血;说到点子上;切中要害" 词典罗列)
    - 正例: "一针见血,说得太准了" (口语 + 接地气)
+   - **严禁文学化 / 抽象大词 / 四字成语** — 用日常口语中文,不要 "贫瘠 / 高光时刻 / 乱葬岗" 这种。
 2. **subtitle_sequence (必填)**: 这个地道表达最早出现的字幕序号 (1-based, 对应上方字幕里 [N] 里的数字)。如果不填用户看不到具体出处
 3. **explanation (必填)**: 详细解释该表达的用法 + 中国学生怎么在日常聊天里替换它 (比方说 "形容说话非常准确,口语里你可以直接说'你说得太对了'")
 4. **origin (必填)**: 介绍文化背景 (1-2 句话讲来源 / 词根 / 历史典故)。没有明确来源的就写"民间口语流传,具体出处已不可考"
-5. **example_sentence (必填)**: 造一个地道的使用例句 (英文, 可附简短中文翻译)
+5. **example_sentence (必填)**: **优先从上方字幕里挑一句原句当例句**(单条或相邻字幕合并),严禁凭空写字典例句 (例 "You really hit the nail on the head with that analysis")。场景必须贴视频主题。中文翻译用字幕 CN,不要额外润色。
 6. **difficulty 1-5**: 1=日常常见 3=中等地道 5=非常口语化/罕见
 7. 只返回 JSON 数组, 不要其他文字"""
 
