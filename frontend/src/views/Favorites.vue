@@ -113,45 +113,23 @@
 
       <!-- 4-P1-4: 字幕 Tab 搜索 + 视频筛选 -->
       <div v-if="activeTab === 'subtitles'" class="fav-filter-bar">
-        <!-- 5-P1-2 (后缀): 文件夹 chip 行 (横向滚动, 默认显示全部/未分类) -->
-        <div class="fav-folder-chips">
-          <button
-            :class="['fav-folder-chip', { active: filterFolderId === null }]"
-            @click="filterFolderById(null)"
-            aria-label="显示全部"
-          >
-            <Inbox :size="13" />
-            <span>全部</span>
-            <span class="fav-folder-count">{{ subtitleBookmarks.length }}</span>
-          </button>
-          <button
-            :class="['fav-folder-chip', { active: filterFolderId === 0 }]"
-            @click="filterFolderById(0)"
-            aria-label="仅显示未分类"
-            v-if="uncategorizedCount > 0"
-          >
-            <FolderMinus :size="13" />
-            <span>未分类</span>
-            <span class="fav-folder-count">{{ uncategorizedCount }}</span>
-          </button>
-          <button
-            v-for="f in allFolders"
-            :key="f.id"
-            :class="['fav-folder-chip', { active: filterFolderId === f.id }]"
-            :style="{ '--folder-color': f.color || '#5c6ef5' }"
-            @click="filterFolderById(f.id)"
-            :aria-label="`筛选文件夹 ${f.name}`"
-          >
-            <Folder :size="13" />
-            <span>{{ f.name }}</span>
-            <span class="fav-folder-count">{{ f.bookmark_count }}</span>
-          </button>
-          <button class="fav-folder-chip fav-folder-add" @click="openCreateFolder" aria-label="新建文件夹">
-            <FolderPlus :size="13" />
+        <!-- 文件夹筛选下拉框 + 新建/管理动作 -->
+        <div class="fav-folder-row">
+          <div class="fav-folder-select">
+            <SfCombobox
+              v-model="filterFolderId"
+              :options="folderFilterOptions"
+              :display-value="filterFolderLabel"
+              placeholder="选择文件夹"
+              @change="filterFolderById"
+            />
+          </div>
+          <button class="fav-folder-action" @click="openCreateFolder" aria-label="新建文件夹">
+            <FolderPlus :size="14" />
             <span>新建</span>
           </button>
-          <button v-if="allFolders.length > 0" class="fav-folder-chip fav-folder-manage" @click="showManageFolders = true" aria-label="管理文件夹">
-            <Settings2 :size="13" />
+          <button v-if="allFolders.length > 0" class="fav-folder-action" @click="showManageFolders = true" aria-label="管理文件夹">
+            <Settings2 :size="14" />
             <span>管理</span>
           </button>
         </div>
@@ -187,52 +165,31 @@
         </div>
         <div class="fav-search-row">
           <div class="fav-search-wrap">
-            <Search :size="14" class="fav-search-icon" />
-            <input
+            <SfInput
               v-model="searchQuery"
-              type="text"
-              class="fav-search-input"
-              placeholder="搜索字幕 (英文/中文)..."
+              placeholder="搜索字幕 (英文/中文)"
+              clearable
+              :maxlength="100"
               aria-label="搜索字幕"
-              @input="onSearchInput"
-            />
-            <button v-if="searchQuery" class="fav-search-clear" @click="clearSearch" aria-label="清空搜索">
-              <X :size="14" />
-            </button>
+              @update:model-value="onSearchInput"
+            >
+              <template #prefix>
+                <Search :size="14" />
+              </template>
+            </SfInput>
           </div>
           <div class="fav-material-filter">
-            <!-- 5-P2-3: 语料 Combobox (可搜索, 替代下拉) -->
             <SfCombobox
               v-model="filterMaterialId"
               :options="availableMaterials.map(m => ({ value: m.id, label: m.title }))"
-              placeholder="全部视频 (可搜索)"
+              placeholder="按视频名称查询"
               :display-value="filterMaterialTitle"
-              class="filter-combobox"
+              :min-search-chars="1"
+              search-prompt="输入视频名称开始查询"
+              reset-search-on-open
+              @change="filterMaterialById"
             />
           </div>
-          <!-- 5-P2 (后缀): 导出当前筛选 -->
-          <SfDropdown>
-            <template #trigger>
-              <SfButton type="ghost" size="sm" :disabled="exporting" :loading="exporting">
-                <Download :size="14" />
-                导出
-              </SfButton>
-            </template>
-            <div class="dropdown-menu">
-              <div class="dropdown-item" @click="exportBookmarks('csv')">
-                <span>CSV (Anki/Excel)</span>
-              </div>
-              <div class="dropdown-item" @click="exportBookmarks('json')">
-                <span>JSON (完整备份)</span>
-              </div>
-              <div class="dropdown-divider"></div>
-              <div class="dropdown-item fav-export-hint">
-                <span class="fav-export-hint-text">
-                  当前筛选: {{ exportFilterSummary }}
-                </span>
-              </div>
-            </div>
-          </SfDropdown>
         </div>
       </div>
 
@@ -787,9 +744,7 @@ import {
   // 5-P2 (后缀): 文件夹拖拽排序
   GripVertical,
   ChevronUp,
-  ChevronDown,
-  // 5-P2 (后缀): 导出
-  Download
+  ChevronDown
 } from 'lucide-vue-next'
 import SfButton from '@/components/ui/SfButton.vue'
 import SfTag from '@/components/ui/SfTag.vue'
@@ -800,7 +755,7 @@ import SfInput from '@/components/ui/SfInput.vue'
 import SfPagination from '@/components/ui/SfPagination.vue'
 import SfCombobox from '@/components/ui/SfCombobox.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
-import { favoriteAPI, vocabularyAPI, subtitleBookmarkAPI, materialAPI, bookmarkTagAPI, bookmarkFolderAPI, bookmarkExportAPI } from '@/api'
+import { favoriteAPI, vocabularyAPI, subtitleBookmarkAPI, materialAPI, bookmarkTagAPI, bookmarkFolderAPI } from '@/api'
 import { useUserStore } from '@/stores/user'
 import { goLogin } from '@/lib/authRedirect'
 
@@ -1216,11 +1171,6 @@ const onSearchInput = () => {
   searchDebounce = setTimeout(() => loadSubtitleBookmarks(), 300)
 }
 
-const clearSearch = () => {
-  searchQuery.value = ''
-  loadSubtitleBookmarks()
-}
-
 const filterMaterialById = (id) => {
   filterMaterialId.value = id
   loadSubtitleBookmarks()
@@ -1358,6 +1308,29 @@ const filterTagId = ref(null)      // 5-P2 (后缀): null=全部, 0=无标签, �
 const uncategorizedCount = computed(() => {
   // 从当前已加载的 bookmarks 推断未分类数 (无 folder_id)
   return subtitleBookmarks.value.filter(b => !b.folder_id).length
+})
+
+// 文件夹下拉框 options: 全部 + 未分类 (如有) + 各文件夹, 每项带数量
+const folderFilterOptions = computed(() => {
+  const opts = [{ value: null, label: `全部 (${subtitleBookmarks.value.length})` }]
+  if (uncategorizedCount.value > 0) {
+    opts.push({ value: 0, label: `未分类 (${uncategorizedCount.value})` })
+  }
+  for (const f of allFolders.value) {
+    opts.push({ value: f.id, label: `${f.name} (${f.bookmark_count || 0})` })
+  }
+  return opts
+})
+// 下拉框收起时显示的当前选项文本
+const filterFolderLabel = computed(() => {
+  if (filterFolderId.value === null || filterFolderId.value === undefined) {
+    return `全部 (${subtitleBookmarks.value.length})`
+  }
+  if (filterFolderId.value === 0) {
+    return `未分类 (${uncategorizedCount.value})`
+  }
+  const f = allFolders.value.find(x => x.id === filterFolderId.value)
+  return f ? `${f.name} (${f.bookmark_count || 0})` : null
 })
 
 // 颜色选择器 (7 种主色, 跟用户标签配色一致)
@@ -1635,74 +1608,6 @@ const persistFolderOrder = async (orderedList) => {
   }
 }
 
-// ==================== 5-P2 (后缀): 导出当前筛选 ====================
-// 复用所有筛选条件 (search/material_id/folder_id/tag_id) 导成 csv/json
-// 浏览器自动下载, 文件名后端带时间戳
-const exporting = ref(false)
-
-const exportFilterSummary = computed(() => {
-  const parts = []
-  if (searchQuery.value.trim()) parts.push(`搜索"${searchQuery.value.trim()}"`)
-  if (filterMaterialId.value) {
-    const m = availableMaterials.value.find(x => x.id === filterMaterialId.value)
-    if (m) parts.push(`视频"${m.title}"`)
-  }
-  if (filterFolderId.value !== null) {
-    if (filterFolderId.value === 0) parts.push('未分类')
-    else {
-      const f = allFolders.value.find(x => x.id === filterFolderId.value)
-      parts.push(f ? `文件夹"${f.name}"` : '该文件夹')
-    }
-  }
-  if (filterTagId.value !== null) {
-    if (filterTagId.value === 0) parts.push('无标签')
-    else {
-      const t = allUserTags.value.find(x => x.id === filterTagId.value)
-      parts.push(t ? `标签"${t.name}"` : '该标签')
-    }
-  }
-  if (parts.length === 0) return '全部 (无筛选)'
-  return `${parts.join(' + ')} (${subtitleBookmarks.value.length} 项)`
-})
-
-const exportBookmarks = async (format) => {
-  if (exporting.value) return
-  exporting.value = true
-  try {
-    const params = { format }
-    if (searchQuery.value.trim()) params.search = searchQuery.value.trim()
-    if (filterMaterialId.value) params.material_id = filterMaterialId.value
-    if (filterFolderId.value !== null) params.folder_id = filterFolderId.value
-    if (filterTagId.value !== null) params.tag_id = filterTagId.value
-
-    const res = await bookmarkExportAPI.download(params)
-    // 从 Content-Disposition 拿文件名 (回退用)
-    const cd = res.headers['content-disposition'] || ''
-    const match = cd.match(/filename=([^;]+)/)
-    const filename = match ? match[1] : `bookmarks.${format}`
-
-    // 创建 Blob URL 触发下载
-    const blob = new Blob([res.data], {
-      type: format === 'json' ? 'application/json' : 'text/csv;charset=utf-8'
-    })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-
-    toast.success(`已导出 ${subtitleBookmarks.value.length} 项`)
-  } catch (e) {
-    console.error('导出失败', e)
-    toast.error('导出失败')
-  } finally {
-    exporting.value = false
-  }
-}
-
 onMounted(() => {
   preloadVoices()
   if (userStore.isLoggedIn) {
@@ -1930,7 +1835,53 @@ onMounted(() => {
 
 /* ==================== 5-P1-2 (后缀): 文件夹 ==================== */
 
-/* 文件夹 chip 行: 横向滚动 */
+/* 文件夹筛选行: 下拉框 + 新建/管理动作按钮 */
+.fav-folder-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0 8px;
+  flex-wrap: wrap;
+}
+.fav-folder-select {
+  flex: 1 1 240px;
+  min-width: 200px;
+  max-width: 360px;
+  display: flex;
+}
+.fav-folder-select :deep(.sf-combobox-input-wrap) {
+  min-height: 36px;
+  border-radius: 8px;
+  padding: 0 10px;
+}
+.fav-folder-select :deep(.sf-combobox-input) {
+  font-size: 13px;
+}
+.fav-folder-select :deep(.sf-combobox-dropdown) {
+  min-width: 260px;
+}
+.fav-folder-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 12px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #e5e7eb);
+  background: var(--color-bg-card, #fff);
+  color: var(--color-text-secondary, #6b7280);
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all var(--sf-duration-fast) var(--sf-ease-standard);
+  flex-shrink: 0;
+}
+.fav-folder-action:hover {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+}
+
+/* 标签 chip 行 (保留原 chip 铺开结构, 数量可控) */
 .fav-folder-chips {
   display: flex;
   align-items: center;
@@ -1996,32 +1947,50 @@ onMounted(() => {
   font-size: 11px;
   font-weight: 500;
 }
-.fav-folder-add {
-  border-style: dashed;
-  color: var(--color-text-tertiary, #9ca3af);
-}
-.fav-folder-add:hover {
-  border-style: solid;
-  color: var(--color-brand);
-  border-color: var(--color-brand);
-}
-.fav-folder-manage {
-  color: var(--color-text-tertiary, #9ca3af);
-}
-.fav-folder-manage:hover {
-  color: var(--color-text-primary, #111827);
-  border-color: var(--color-text-tertiary, #9ca3af);
-}
 
-/* 搜索 + 视频筛选行 (从原 .fav-filter-bar 平铺结构改为上下两行) */
+/* 搜索 + 视频筛选行: 两个等宽对称, 高度/圆角/字号统一 */
 .fav-filter-bar {
   margin-bottom: 12px;
 }
 .fav-search-row {
   display: flex;
   align-items: center;
-  gap: 8px;
   flex-wrap: wrap;
+  gap: 12px;
+}
+.fav-search-wrap,
+.fav-material-filter {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 50%;
+  display: flex;
+}
+
+/* 统一 SfInput 样式 (与 Vocabulary 一致) */
+.fav-search-wrap :deep(.sf-input-wrap) {
+  border-radius: 8px;
+}
+.fav-search-wrap :deep(.sf-input) {
+  width: 100%;
+  height: 36px;
+  font-size: 13px;
+  padding: 0 12px;
+}
+.fav-search-wrap :deep(.sf-input-prefix) {
+  padding: 0 0 0 10px;
+}
+
+/* 统一 SfCombobox 样式 */
+.fav-material-filter :deep(.sf-combobox-input-wrap) {
+  min-height: 36px;
+  border-radius: 8px;
+  padding: 0 10px;
+}
+.fav-material-filter :deep(.sf-combobox-input) {
+  font-size: 13px;
+}
+.fav-material-filter :deep(.sf-combobox-dropdown) {
+  min-width: 320px;
 }
 
 /* 文件夹徽章 (卡片内显示) */
@@ -2250,20 +2219,6 @@ onMounted(() => {
   font-size: 11px;
   color: var(--color-text-muted);
   margin: 6px 0 0 0;
-}
-
-/* 5-P2 (后缀): 导出提示 */
-.fav-export-hint {
-  cursor: default;
-  opacity: 0.75;
-}
-.fav-export-hint:hover {
-  background: transparent;
-}
-.fav-export-hint-text {
-  font-size: 11px;
-  color: var(--color-text-tertiary, #9ca3af);
-  white-space: nowrap;
 }
 
 /* 4-P1-5: 批量操作工具栏 */
