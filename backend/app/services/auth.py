@@ -24,8 +24,13 @@ def get_password_hash(password: str) -> str:
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    """创建 JWT Token"""
+    """创建 JWT Token
+    RFC 7519 规定 sub claim 必须是字符串, 我们这里强制 str() 兜底
+    避免某些 caller 传 int(比如 user.id), 导致下游 decode 失败/类型不一致
+    """
     to_encode = data.copy()
+    if 'sub' in to_encode and not isinstance(to_encode['sub'], str):
+        to_encode['sub'] = str(to_encode['sub'])
 
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
