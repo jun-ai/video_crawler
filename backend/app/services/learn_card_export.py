@@ -136,18 +136,25 @@ def _resolve_font_files() -> Tuple[str, Optional[str]]:
         if os.path.exists(simhei):
             return simhei, None
 
-    # 3. Linux 系统 (阿里云)
+    # 3. Linux 系统 (阿里云 ECS Debian 12)
+    # 注: Debian 12 的 fonts-noto-cjk 包字体是 CFF/PostScript 轮廓, reportlab TTFont 不支持,
+    #     所以 WQY (TrueType 轮廓) 优先级放在 Noto 前面
     else:
         linux_candidates = [
-            '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
-            '/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc',
-            '/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc',
-            '/usr/share/fonts/wqy-microhei/wqy-microhei.ttc',
-            '/usr/share/fonts/truetype/wqy/wqy-microhei.ttc',
+            # TrueType 轮廓, reportlab 兼容
+            ('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc',
+             '/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc'),
+            ('/usr/share/fonts/wqy-microhei/wqy-microhei.ttc',
+             '/usr/share/fonts/wqy-zenhei/wqy-zenhei.ttc'),
+            # CFF/PostScript 轮廓, reportlab 不支持 (fallback)
+            ('/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
+             '/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc'),
+            ('/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc',
+             '/usr/share/fonts/truetype/noto/NotoSansCJK-Bold.ttc'),
         ]
-        for path in linux_candidates:
-            if os.path.exists(path):
-                return path, None
+        for reg_path, bold_path in linux_candidates:
+            if os.path.exists(reg_path):
+                return reg_path, bold_path if os.path.exists(bold_path) else None
 
     raise RuntimeError(
         '未找到中文字体。请把 NotoSansSC-Regular.otf + NotoSansSC-Bold.otf '
