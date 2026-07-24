@@ -25,7 +25,7 @@ npm run storybook  # http://localhost:6006
 
 包含 **22 个 Sf* 组件 + 6 个 common 组件 + 7 个 design token 故事 = 35 个 categories, 199 个 stories**。
 
-详细规范见 [`frontend/docs/DESIGN_SYSTEM.md`](frontend/docs/DESIGN_SYSTEM.md)。
+详细规范见 [`frontend/docs/DESIGN_SYSTEM.md`](../frontend/docs/DESIGN_SYSTEM.md)。
 
 ## 项目结构
 
