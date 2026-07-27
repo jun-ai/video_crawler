@@ -2870,7 +2870,7 @@ async def get_all_user_bookmarks(
             subtitle_text_cn=subtitle.text_cn,
             subtitle_start_time=subtitle.start_time,
             material_title=material.title,
-            material_cover=get_file_url(material.cover_path) if material else None,
+            material_cover=await get_file_url_async(material.cover_path) if material else None,
             tags=tags_data,
             folder_id=bookmark.folder_id,
             folder_name=folder.name if folder else None,
