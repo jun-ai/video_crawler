@@ -115,15 +115,6 @@
       <div v-if="activeTab === 'subtitles'" class="fav-filter-bar">
         <!-- 文件夹筛选下拉框 + 新建/管理动作 -->
         <div class="fav-folder-row">
-          <div class="fav-folder-select">
-            <SfCombobox
-              v-model="filterFolderId"
-              :options="folderFilterOptions"
-              :display-value="filterFolderLabel"
-              placeholder="选择文件夹"
-              @change="filterFolderById"
-            />
-          </div>
           <button class="fav-folder-action" @click="openCreateFolder" aria-label="新建文件夹">
             <FolderPlus :size="14" />
             <span>新建</span>
@@ -838,6 +829,21 @@ const formatLastPracticed = (isoStr) => {
   return ` · ${date.getMonth() + 1}/${date.getDate()}`
 }
 
+// 格式化相对时间 (视频收藏时间显示)
+const formatRelativeTime = (dateStr) => {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diff = now - date
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+
+  if (days === 0) return '今天'
+  if (days === 1) return '昨天'
+  if (days < 7) return `${days} 天前`
+  if (days < 30) return `${Math.floor(days / 7)} 周前`
+  return `${Math.floor(days / 30)} 个月前`
+}
+
 // P2-1: 复制原句到剪贴板
 const copySubtitleText = async (item) => {
   const text = item.text_cn ? `${item.text_en}\n"${item.text_cn}"` : item.text_en
@@ -874,7 +880,7 @@ const videoLoading = ref(false)
 const videoTotal = ref(0)
 
 const goMaterial = (id) => {
-  router.push(`/materials/${id}`)
+  router.push(`/learn/${id}`)
 }
 
 const removeVideoFav = async (video) => {
@@ -1201,7 +1207,6 @@ const loadSubtitleBookmarks = async () => {
     const params = {}
     if (searchQuery.value.trim()) params.search = searchQuery.value.trim()
     if (filterMaterialId.value) params.material_id = filterMaterialId.value
-    if (filterFolderId.value !== null) params.folder_id = filterFolderId.value
     if (filterTagId.value !== null) params.tag_id = filterTagId.value
     const res = await subtitleBookmarkAPI.getAll(params, { signal: ac.signal })
     // 响应回来后, 如果本次请求已经被新请求 abort 掉, 直接丢弃不写 state
@@ -1218,8 +1223,10 @@ const loadSubtitleBookmarks = async () => {
       start_time: item.subtitle_start_time,
       practice_count: item.practice_count || 0,
       last_practiced_at: item.last_practiced_at,
+      created_at: item.created_at,
       note: item.note,
       tags: item.tags || [],
+      material_cover: item.material_cover || null,
       // 5-P1-2 (后缀): 文件夹信息
       folder_id: item.folder_id || null,
       folder_name: item.folder_name || null,
@@ -1337,35 +1344,7 @@ const refreshData = async () => {
 // ==================== 5-P1-2 (后缀): 收藏文件夹 ====================
 // 状态
 const allFolders = ref([])         // [{ id, name, color, icon, bookmark_count }]
-const filterFolderId = ref(null)   // null=全部, 0=未分类, 其他=该 folder
-const filterTagId = ref(null)      // 5-P2 (后缀): null=全部, 0=无标签, 其他=该 tag (跟 folder 可组合)
-const uncategorizedCount = computed(() => {
-  // 从当前已加载的 bookmarks 推断未分类数 (无 folder_id)
-  return subtitleBookmarks.value.filter(b => !b.folder_id).length
-})
-
-// 文件夹下拉框 options: 全部 + 未分类 (如有) + 各文件夹, 每项带数量
-const folderFilterOptions = computed(() => {
-  const opts = [{ value: null, label: `全部 (${subtitleBookmarks.value.length})` }]
-  if (uncategorizedCount.value > 0) {
-    opts.push({ value: 0, label: `未分类 (${uncategorizedCount.value})` })
-  }
-  for (const f of allFolders.value) {
-    opts.push({ value: f.id, label: `${f.name} (${f.bookmark_count || 0})` })
-  }
-  return opts
-})
-// 下拉框收起时显示的当前选项文本
-const filterFolderLabel = computed(() => {
-  if (filterFolderId.value === null || filterFolderId.value === undefined) {
-    return `全部 (${subtitleBookmarks.value.length})`
-  }
-  if (filterFolderId.value === 0) {
-    return `未分类 (${uncategorizedCount.value})`
-  }
-  const f = allFolders.value.find(x => x.id === filterFolderId.value)
-  return f ? `${f.name} (${f.bookmark_count || 0})` : null
-})
+const filterTagId = ref(null)      // 5-P2 (后缀): null=全部, 0=无标签, 其他=该 tag
 
 // 颜色选择器 (7 种主色, 跟用户标签配色一致)
 const folderColors = [
@@ -1391,12 +1370,6 @@ const loadFolders = async () => {
   } finally {
     if (_folderAbortController === ac) _folderAbortController = null
   }
-}
-
-// 按文件夹筛选
-const filterFolderById = (id) => {
-  filterFolderId.value = id
-  loadSubtitleBookmarks()
 }
 
 // 5-P2 (后缀): 按标签筛选
@@ -1570,11 +1543,6 @@ const deleteFolderConfirm = async (f) => {
         bm.folder_name = null
         bm.folder_color = null
       }
-    }
-    // 如果当前正在筛选该 folder, 切回"全部"
-    if (filterFolderId.value === f.id) {
-      filterFolderId.value = null
-      loadSubtitleBookmarks()
     }
     toast.success(`已删除 "${f.name}"`)
   } catch (e) {
