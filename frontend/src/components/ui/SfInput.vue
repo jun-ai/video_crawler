@@ -12,6 +12,8 @@
       :disabled="disabled"
       :readonly="readonly"
       :maxlength="maxlength"
+      :name="name"
+      :autocomplete="autocomplete"
       class="sf-input"
       @input="$emit('update:modelValue', $event.target.value)"
       @focus="focused = true"
@@ -26,6 +28,8 @@
       :disabled="disabled"
       :readonly="readonly"
       :maxlength="maxlength"
+      :name="name"
+      :autocomplete="autocomplete"
       :rows="rows"
       class="sf-input sf-textarea"
       @input="$emit('update:modelValue', $event.target.value)"
@@ -58,6 +62,9 @@ defineProps({
   maxlength: { type: Number, default: undefined },
   textarea: { type: Boolean, default: false },
   rows: { type: Number, default: 3 },
+  // 6: 表单字段名 + 自动填充提示 (Chrome 缺这些会在 devtools 警告"明文密码")
+  name: { type: String, default: '' },
+  autocomplete: { type: String, default: 'off' },
 })
 
 const emit = defineEmits(['update:modelValue', 'enter', 'clear'])

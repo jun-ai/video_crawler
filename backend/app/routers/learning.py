@@ -173,7 +173,9 @@ async def get_material_progress(
     current_user: Annotated[User, Depends(get_current_user)],
     db: AsyncSession = Depends(get_db)
 ):
-    """获取某个语料的学习进度"""
+    """获取某个语料的学习进度
+    6: 没学过时返回 200 + 默认空记录, 避免控制台 404 报错噪音
+    """
     result = await db.execute(
         select(LearningRecord).where(
             LearningRecord.user_id == current_user.id,
@@ -182,10 +184,17 @@ async def get_material_progress(
     )
     record = result.scalar_one_or_none()
 
-    if not record:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="暂无学习记录"
+    if record is None:
+        # 没学过 — 返回默认空记录
+        return LearningRecordResponse(
+            id=0,
+            user_id=current_user.id,
+            material_id=material_id,
+            progress=0,
+            last_position=0,
+            watch_duration=0,
+            completed=False,
+            total_watch_duration=0,
         )
 
     return record
