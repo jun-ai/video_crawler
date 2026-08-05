@@ -5,10 +5,14 @@ from app.config import settings
 # 创建异步引擎
 # echo=False: SQL 日志改由 logging 控制（setup_logging 里设 level），
 # 避免 echo=True 导致每条 SQL 打印两遍
+# pool_pre_ping=True: 借连接前先 SELECT 1 探活, 死了就重连
+# pool_recycle=3600: 1 小时强制回收 (< MySQL wait_timeout 8h, 避免被服务端单方面 kill)
 engine = create_async_engine(
     settings.database_url,
     echo=False,
-    future=True
+    future=True,
+    pool_pre_ping=True,
+    pool_recycle=3600,
 )
 
 # 创建异步会话工厂
