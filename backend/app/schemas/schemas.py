@@ -213,7 +213,8 @@ class LearningRecordResponse(LearningRecordBase):
     total_watch_duration: int = 0  # 累计观看秒数
     completed_at: Optional[datetime] = None
     last_watched_at: Optional[datetime] = None
-    created_at: datetime
+    # 6: 让 created_at 可空 — 没学过的素材默认记录无创建时间, 前端不会用到
+    created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
     class Config:
