@@ -459,7 +459,9 @@ const onColumnResize = ({ key, width }) => {
 
 const categoryOptions = computed(() => {
   const opts = categories.value.map(cat => ({ label: cat.name, value: cat.name }))
-  return [{ label: '全部分类', value: '' }, ...opts]
+  // Reka UI SelectItem 不允许空字符串 value (空串是 placeholder 保留)
+  // 用 'all' 作为"全部分类"sentinel, 走 filter 时转 undefined 不发后端
+  return [{ label: '全部分类', value: 'all' }, ...opts]
 })
 
 const difficultyOptions = [
@@ -471,14 +473,15 @@ const difficultyOptions = [
 ]
 
 const statusOptions = [
-  { label: '全部状态', value: null },
+  // 同样: 不允许 null/'' value, 用 'all' sentinel
+  { label: '全部状态', value: 'all' },
   { label: '已发布', value: true },
   { label: '待审核', value: false }
 ]
 
 // 时长筛选 (秒) — 跟"分类/状态"同样的预设档位
 const durationOptions = [
-  { label: '全部时长', value: '' },
+  { label: '全部时长', value: 'all' },
   { label: '短视频 (< 60s)', value: 'short' },
   { label: '中等 (60-180s)', value: 'medium' },
   { label: '中长 (180-600s)', value: 'long' },
@@ -499,9 +502,9 @@ function durationToRange(value) {
 
 const filters = reactive({
   keyword: '',
-  category: '',
-  is_active: null,
-  duration: ''  // 全部时长 / short / medium / long / extra (映射 min/max_duration)
+  category: 'all',  // 'all' = 不筛选 (Reka UI SelectItem 不允许 ''/null value)
+  is_active: 'all',
+  duration: 'all'  // 'all' / short / medium / long / extra (映射 min/max_duration)
 })
 
 const pagination = reactive({
@@ -514,11 +517,17 @@ const loadMaterials = async (page = null) => {
   if (page) pagination.page = page
   loading.value = true
   try {
+    // 'all' sentinel 是不发后端的占位 (Reka UI SelectItem 不允许 ''/null value)
+    const category = filters.category === 'all' ? undefined : filters.category || undefined
+    const is_active = filters.is_active === 'all' ? undefined : filters.is_active
+    const duration = filters.duration === 'all' ? undefined : filters.duration
     const res = await adminAPI.getMaterials({
       page: pagination.page,
       page_size: pagination.pageSize,
-      ...filters,
-      ...durationToRange(filters.duration)  // duration enum → min/max query params
+      keyword: filters.keyword || undefined,
+      category,
+      is_active,
+      ...durationToRange(duration)  // duration enum → min/max query params
     })
     materials.value = res.items.map(m => ({ ...m, statusLoading: false }))
     pagination.total = res.total
@@ -572,9 +581,9 @@ const goToUpload = () => {
 
 const resetFilters = () => {
   filters.keyword = ''
-  filters.category = ''
-  filters.is_active = null
-  filters.duration = ''
+  filters.category = 'all'
+  filters.is_active = 'all'
+  filters.duration = 'all'
   pagination.page = 1
   loadMaterials()
 }
