@@ -56,12 +56,7 @@ class Settings(BaseSettings):
     max_video_size_mb: int = 500
 
     # ==================== AI API配置 ====================
-    # 多个 provider,按优先级 fallback(OpenAI 兼容协议)
-    # DeepSeek (默认)
-    deepseek_api_key: str = ""
-    deepseek_base_url: str = "https://api.deepseek.com"
-    deepseek_model: str = "deepseek-chat"
-
+    # 多个 provider,按优先级 fallback(OpenAI 兼容 / Anthropic 兼容)
     # 智谱 GLM — Anthropic 兼容协议(https://open.bigmodel.cn/api/anthropic)
     # 用 ccswitch 同款 5.1 key 直连也可(实测 200 OK)
     glm_api_key: str = ""

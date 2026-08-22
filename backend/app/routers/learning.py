@@ -173,7 +173,9 @@ async def get_material_progress(
     current_user: Annotated[User, Depends(get_current_user)],
     db: AsyncSession = Depends(get_db)
 ):
-    """获取某个语料的学习进度"""
+    """获取某个语料的学习进度
+    6: 没学过时返回 200 + 默认空记录, 避免控制台 404 报错噪音
+    """
     result = await db.execute(
         select(LearningRecord).where(
             LearningRecord.user_id == current_user.id,
@@ -182,10 +184,17 @@ async def get_material_progress(
     )
     record = result.scalar_one_or_none()
 
-    if not record:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="暂无学习记录"
+    if record is None:
+        # 没学过 — 返回默认空记录
+        return LearningRecordResponse(
+            id=0,
+            user_id=current_user.id,
+            material_id=material_id,
+            progress=0,
+            last_position=0,
+            watch_duration=0,
+            completed=False,
+            total_watch_duration=0,
         )
 
     return record
@@ -1079,6 +1088,87 @@ async def get_material_interpretation_status(
         ))
 
     return response
+
+
+# ==================== 词汇解读导出 (学习卡片 PDF/Word) ====================
+
+@router.get("/material/{material_id}/interpretations/export")
+async def export_material_interpretations(
+    material_id: int,
+    format: str = Query(..., description="导出格式: pdf | docx"),
+    fields: str = Query("compact", description="字段范围: compact | full"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """导出视频词汇解读为学习卡片 (PDF/Word)
+
+    - format=pdf  → reportlab 生成的 PDF (对标谷爱凌学习卡版式)
+    - format=docx → python-docx 生成的 Word 文档
+    - fields=compact → 对标参考 PDF (一页约 7 条)
+    - fields=full    → 加难度/词频/英英释义/其他词性
+    """
+    from urllib.parse import quote
+    from app.services.learn_card_export import (
+        export_pdf, export_docx, build_filename,
+    )
+
+    # 1. 校验 material 存在
+    mat_result = await db.execute(
+        select(Material).where(Material.id == material_id)
+    )
+    material = mat_result.scalars().first()
+    if not material:
+        raise HTTPException(status_code=404, detail="视频不存在")
+
+    # 2. 取该视频所有解读项
+    result = await db.execute(
+        select(VideoInterpretation)
+        .where(VideoInterpretation.material_id == material_id)
+        .order_by(VideoInterpretation.category, VideoInterpretation.sequence)
+    )
+    interpretations = result.scalars().all()
+    if not interpretations:
+        raise HTTPException(status_code=400, detail="该视频暂无解读数据, 请先生成")
+
+    # 3. 参数校验
+    format = (format or '').lower()
+    fields = (fields or 'compact').lower()
+    if format not in ('pdf', 'docx'):
+        raise HTTPException(status_code=400, detail="format 只支持 pdf 或 docx")
+    if fields not in ('compact', 'full'):
+        raise HTTPException(status_code=400, detail="fields 只支持 compact 或 full")
+
+    # 4. 生成
+    material_title = material.title or '视频'
+    try:
+        if format == 'pdf':
+            file_bytes = export_pdf(material_title, interpretations, fields=fields)
+            media_type = 'application/pdf'
+            ext = 'pdf'
+        else:
+            file_bytes = export_docx(material_title, interpretations, fields=fields)
+            media_type = (
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            )
+            ext = 'docx'
+    except RuntimeError as e:
+        # 字体缺失等服务层错误
+        logger.exception("学习卡片导出失败")
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        logger.exception("学习卡片导出失败")
+        raise HTTPException(status_code=500, detail="导出失败, 请稍后重试")
+
+    # 5. 文件名 (RFC 5987 编码, 中文不乱码)
+    filename = build_filename(material_title, ext)
+    quoted = quote(filename, safe='')
+    disposition = f"attachment; filename*=UTF-8''{quoted}"
+
+    return StreamingResponse(
+        io.BytesIO(file_bytes),
+        media_type=media_type,
+        headers={"Content-Disposition": disposition},
+    )
 
 
 # ==================== 学习统计 ====================
@@ -2789,7 +2879,7 @@ async def get_all_user_bookmarks(
             subtitle_text_cn=subtitle.text_cn,
             subtitle_start_time=subtitle.start_time,
             material_title=material.title,
-            material_cover=get_file_url(material.cover_path) if material else None,
+            material_cover=await get_file_url_async(material.cover_path) if material else None,
             tags=tags_data,
             folder_id=bookmark.folder_id,
             folder_name=folder.name if folder else None,

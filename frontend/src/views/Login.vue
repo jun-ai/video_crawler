@@ -24,6 +24,8 @@
         <div class="login-field">
           <SfInput
             v-model="form.phone"
+            name="phone"
+            autocomplete="username"
             placeholder="请输入手机号"
             maxlength="11"
           >
@@ -37,6 +39,8 @@
         <div class="login-field">
           <SfInput
             v-model="form.password"
+            name="password"
+            autocomplete="current-password"
             type="password"
             placeholder="请输入密码"
           >

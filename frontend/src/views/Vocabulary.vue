@@ -45,13 +45,6 @@
             <Eye :size="14" />
             {{ showChinese ? '隐藏中文' : '显示中文' }}
           </div>
-          <div class="vocab-more-divider"></div>
-          <div class="vocab-more-item" @click="showExport = true">
-            <FileJson :size="14" /> 导出 JSON
-          </div>
-          <div class="vocab-more-item" @click="exportVocabulary('csv')">
-            <FileText :size="14" /> 导出 CSV (Anki)
-          </div>
         </SfDropdown>
       </template>
     </PageHeader>
@@ -80,10 +73,6 @@
           <button class="vocab-more-sheet__item" @click="onMoreAction('toggleChinese')">
             <span class="vocab-more-sheet__icon"><Eye :size="20" /></span>
             <span>{{ showChinese ? '隐藏中文' : '显示中文' }}</span>
-          </button>
-          <button class="vocab-more-sheet__item" @click="onMoreAction('export')">
-            <span class="vocab-more-sheet__icon"><Download :size="20" /></span>
-            <span>导出生词本</span>
           </button>
           <div class="vocab-more-sheet__divider"></div>
           <button class="vocab-more-sheet__item" @click="onMoreAction('batchMode')">
@@ -178,7 +167,6 @@
 
           <!-- 语料名称模糊查询：未输入时不展开整份语料清单 -->
           <div v-if="!isMobileView" class="filter-material-search">
-            <Film :size="14" class="filter-material-search__icon" />
             <SfCombobox
               v-model="filterMaterialId"
               :options="materialOptions"
@@ -190,26 +178,6 @@
               @change="onMaterialFilterChange"
             />
           </div>
-
-          <!-- 排序 dropdown -->
-          <SfDropdown v-if="!isMobileView" class="filter-tool-dropdown">
-            <template #trigger>
-              <button class="filter-tool-btn" type="button">
-                <ArrowUpDown :size="13" />
-                <span>{{ sortByLabel }}</span>
-                <ChevronDown :size="12" />
-              </button>
-            </template>
-            <div
-              v-for="opt in sortOptions"
-              :key="opt.value"
-              class="vocab-more-item"
-              @click="sortBy = opt.value"
-            >
-              <span :class="['vocab-more-check', { checked: sortBy === opt.value }]">✓</span>
-              {{ opt.label }}
-            </div>
-          </SfDropdown>
         </div>
 
         <!-- info bar: 总数 + 视图提示 -->
@@ -512,7 +480,7 @@ import { useRouter } from 'vue-router'
 import { toast } from '@/composables/useToast'
 import { useTTS } from '@/composables/useTTS'
 import { showConfirm } from '@/composables/useConfirm'
-import { Headphones, Play, Flame, Search, X, CheckSquare, Square, CheckCheck, Check, RotateCcw, Trash2, Download, FileJson, FileText, LayoutGrid, Rows3, Star, Infinity as InfinityIcon, ListOrdered, MoreVertical, ChevronDown, Film, ArrowUpDown, Eye } from 'lucide-vue-next'
+import { Headphones, Play, Flame, Search, X, CheckSquare, Square, CheckCheck, Check, RotateCcw, Trash2, LayoutGrid, Rows3, Star, Infinity as InfinityIcon, ListOrdered, MoreVertical, Eye } from 'lucide-vue-next'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import SfSelect from '@/components/ui/SfSelect.vue'
 import SfCombobox from '@/components/ui/SfCombobox.vue'
@@ -596,7 +564,6 @@ const focusedIndex = ref(-1)
 const loadMoreSentinel = ref(null)
 let loadMoreObserver = null
 const filterMaterialId = ref(null)
-const sortBy = ref('newest')
 const materialsList = ref([])
 const currentPage = ref(1)
 const pageSize = ref(20)
@@ -614,22 +581,6 @@ const searchKeyword = ref('')
 
 // 5-P0-5: 复习统计 (banner + 待复习 chip 都用)
 const reviewStats = ref({ total_due: 0, total_learning: 0, total_mastered: 0 })
-
-// Phase 12: 排序选项 (提取到 computed, dropdown 用)
-const sortOptions = [
-  { value: 'starred_first', label: '星标优先' },
-  { value: 'next_review_asc', label: '最该复习' },
-  { value: 'newest', label: '最近添加' },
-  { value: 'oldest', label: '最早添加' },
-  { value: 'word_asc', label: 'A → Z' },
-  { value: 'word_desc', label: 'Z → A' }
-]
-const sortByLabel = computed(() => {
-  return sortOptions.find(o => o.value === sortBy.value)?.label || '最近添加'
-})
-
-// Phase 12: 导出 modal
-const showExport = ref(false)
 
 const wordInfoCache = reactive({})
 const lookupLoading = reactive({})
@@ -665,8 +616,7 @@ const loadVocabularies = async ({ append = false } = {}) => {
   try {
     const params = {
       page: currentPage.value,
-      page_size: pageSize.value,
-      sort_by: sortBy.value
+      page_size: pageSize.value
     }
     if (filterStatus.value === 'mastered') {
       params.mastered = true
@@ -1045,49 +995,6 @@ const batchDelete = async () => {
   }
 }
 
-// ==================== 5-P1-4: 词汇导出 ====================
-const exportVocabulary = async (format) => {
-  // 共享当前 filter (与 /vocabulary 列表一致: 搜索/语料/掌握状态都带上)
-  const params = { format }
-  if (filterMaterialId.value) {
-    params.material_id = filterMaterialId.value
-  }
-  if (filterStatus.value === 'mastered') {
-    params.mastered = true
-  } else if (filterStatus.value === 'learning') {
-    params.mastered = false
-  } else if (filterStatus.value === 'new') {
-    params.is_new = true
-  } else if (filterStatus.value === 'due') {
-    params.is_due = true
-  }
-  const kw = searchKeyword.value.trim()
-  if (kw) params.keyword = kw
-
-  try {
-    const blob = await vocabularyAPI.export(params)
-    // 从 Content-Disposition 拿后端给的文件名
-    const disposition = blob.headers?.['content-disposition'] || ''
-    const match = disposition.match(/filename="?([^";]+)"?/)
-    const filename = match?.[1] || `vocabulary.${format}`
-
-    // 触发浏览器下载
-    const url = URL.createObjectURL(blob.data)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-
-    toast.success(`已导出 ${vocabularies.value.length} 词为 ${format.toUpperCase()}`)
-  } catch (e) {
-    console.error('导出失败', e)
-    toast.error('导出失败')
-  }
-}
-
 // ==================== 5-P2-6: 键盘快捷键 ====================
 const handleKeyboard = (e) => {
   // 输入框/textarea 中不拦截
@@ -1306,8 +1213,7 @@ onUnmounted(() => {
   gap: 10px;
 }
 
-.filter-bar--single .filter-chips-main,
-.filter-bar--single .filter-toolbar {
+.filter-bar--single .filter-chips-main {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -1342,69 +1248,47 @@ onUnmounted(() => {
   font-weight: 600;
 }
 
-/* 工具行: 搜索 + 来源/排序 (桌面) */
+/* 工具行: 单词搜索 + 语料名称 (桌面) — 两个等宽对称 */
 .filter-toolbar {
   display: flex;
   align-items: center;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
-.filter-search {
-  display: flex;
-  flex: 1;
+.filter-search,
+.filter-material-search {
+  flex: 1 1 0;
   min-width: 0;
-  max-width: 360px;
+  max-width: 50%;
+  display: flex;
+}
+
+/* 统一 SfInput 样式 (高度/圆角/字号) */
+.filter-search :deep(.sf-input-wrap) {
+  border-radius: 8px;
 }
 .filter-search :deep(.sf-input) {
   width: 100%;
+  height: 36px;
+  font-size: 13px;
+  padding: 0 12px;
+}
+.filter-search :deep(.sf-input-prefix) {
+  padding: 0 0 0 10px;
 }
 
-/* 语料名称模糊查询：固定宽度，空状态只给输入提示，不渲染全量名称 */
-.filter-material-search {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 240px;
-  min-width: 200px;
-}
-.filter-material-search__icon {
-  position: absolute;
-  left: 11px;
-  z-index: 2;
-  color: var(--color-text-muted);
-  pointer-events: none;
-}
+/* 统一 SfCombobox 样式 (与 SfInput 对齐) */
 .filter-material-search :deep(.sf-combobox-input-wrap) {
-  min-height: 34px;
-  padding-left: 30px;
+  min-height: 36px;
+  border-radius: 8px;
+  padding: 0 10px;
+}
+.filter-material-search :deep(.sf-combobox-input) {
+  font-size: 13px;
 }
 .filter-material-search :deep(.sf-combobox-dropdown) {
   min-width: 320px;
 }
-
-/* 来源/排序 dropdown 按钮 */
-.filter-tool-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 7px 12px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  -webkit-tap-highlight-color: transparent;
-  white-space: nowrap;
-  max-width: 180px;
-}
-.filter-tool-btn > span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.filter-tool-btn:hover { color: var(--color-text-primary); border-color: var(--color-text-muted); }
 
 /* info bar: 总数 + 视图提示 */
 .filter-info {
@@ -1421,7 +1305,6 @@ onUnmounted(() => {
 
 /* H5 隐藏 桌面专属 dropdown */
 @media (max-width: 768px) {
-  .filter-tool-dropdown,
   .filter-material-search { display: none !important; }
   .filter-toolbar { gap: 8px; }
   .filter-search { max-width: 100%; }
@@ -2316,20 +2199,6 @@ onUnmounted(() => {
   height: 1px;
   background: var(--color-border, #e2e8f0);
   margin: 4px 0;
-}
-.vocab-more-check {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  font-size: 12px;
-  color: transparent;
-  flex-shrink: 0;
-}
-.vocab-more-check.checked {
-  color: var(--color-brand, #10b981);
-  font-weight: 700;
 }
 .vocab-more-dot {
   display: inline-block;

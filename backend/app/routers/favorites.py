@@ -11,7 +11,7 @@ from app.database import get_db
 from app.models.models import User, Material, Favorite
 from app.schemas.schemas import MessageResponse
 from app.routers.auth import get_current_user
-from app.routers.materials import get_file_url
+from app.routers.materials import get_file_url, get_file_url_async
 
 router = APIRouter(prefix="/api/favorites", tags=["收藏"])
 
@@ -131,8 +131,8 @@ async def get_favorites(
             "id": material.id,
             "title": material.title,
             "description": material.description,
-            "cover_path": get_file_url(material.cover_path),
-            "video_path": get_file_url(material.video_path),
+            "cover_path": await get_file_url_async(material.cover_path),
+            "video_path": await get_file_url_async(material.video_path),
             "category": material.category,
             "difficulty": material.difficulty,
             "duration": material.duration,

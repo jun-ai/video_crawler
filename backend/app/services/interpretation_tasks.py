@@ -24,6 +24,63 @@ from app.services.deepseek import (
 logger = logging.getLogger(__name__)
 
 
+# ==================== P2: AI placeholder 例句兜底过滤 ====================
+# 详见 backend/docs/PROMPT_OPTIMIZATION.md #6
+# 即便 prompt 已要求 "例句用字幕原句", AI 仍可能输出标志性占位空句
+# 例: "I have been working." / "I've been sleeping." / "我在工作" / "(现在完成时)"
+# 在落库前做最后一道防线: example_sentence 命中 → 用 context_sentence (字幕原句) 替换
+
+_PLACEHOLDER_VERBS_CN = "工作|睡觉|吃饭|学习|休息|玩|上网|看书|做事"
+_PLACEHOLDER_PATTERNS = [
+    # 1) 纯中文括号占位: "(现在完成时)" / "（强调结果）" / "（抽象大词）"
+    re.compile(r"^\s*[(\uff08][\u4e00-\u9fff\s]+[)\uff09]\s*$"),
+    # 2) 标志性英文空句: "I have been working." / "I've been sleeping." / "She has been playing."
+    #    整句必须很短且主语+have been+动词ing 就结束, 后面不能跟其他内容
+    re.compile(r"^(I|She|They|He|You|We)(?:'ve|\s+have|\s+has)\s+been\s+[a-z]+ing\.?$", re.I),
+    # 3) 中式空句: "我在工作" / "他一直在学习" / "我们一直在吃饭。" / "她一直休息"
+    re.compile(
+        rf"^[我他她它你我们]{{1,2}}\s*(一直|正在|刚|已经)?\s*[在正]?\s*"
+        rf"({_PLACEHOLDER_VERBS_CN})\s*[。.]?\s*$"
+    ),
+]
+
+
+def _is_placeholder(s: str) -> bool:
+    """判断字符串是否为 AI 占位空句"""
+    if not s:
+        return False
+    s = s.strip()
+    if not s:
+        return False
+    return any(p.match(s) for p in _PLACEHOLDER_PATTERNS)
+
+
+def _sanitize_example_sentence(item: dict, log_prefix: str = "") -> None:
+    """例句 placeholder 兜底 (P2):
+    - example_sentence 命中占位 → 用 context_sentence 替换
+    - context_sentence 也空 → 置 None, 留 WARN 提示检查 subtitle_sequence
+
+    log_prefix 用于日志辨识 (例: f"material=42 word[{i}]")
+    """
+    example = item.get("example_sentence")
+    if not example or not _is_placeholder(example):
+        return
+
+    context = (item.get("context_sentence") or "").strip()
+    if context:
+        item["example_sentence"] = context
+        logger.info(
+            f"[InterpTask] {log_prefix} placeholder 例句 → context_sentence "
+            f"({len(context)} chars)"
+        )
+    else:
+        item["example_sentence"] = None
+        logger.warning(
+            f"[InterpTask] {log_prefix} placeholder 例句且 context 也空, "
+            f"建议检查 subtitle_sequence 是否合法"
+        )
+
+
 # ========== 实时进度跟踪 (供前端轮询展示) ==========
 # 6 个 stage 顺序: parse → translate → words → phrases → grammar → idioms
 # 写入 materials.progress (JSON 字符串) — 前端 GET /api/materials/{id}/progress 读取
@@ -311,8 +368,11 @@ async def generate_interpretations_for_material(material_id: int):
             )
 
             # 5. 保存单词卡片
-            def _resolve_subtitle(item: dict) -> dict:
-                """将 AI 返回的 subtitle_sequence 映射为实际 subtitle_id / first_appearance_time"""
+            def _resolve_subtitle(item: dict, log_prefix: str = "") -> dict:
+                """将 AI 返回的 subtitle_sequence 映射为实际 subtitle_id / first_appearance_time
+
+                同时做 placeholder 兜底 (P2): example_sentence 命中占位 → context_sentence 替换
+                """
                 seq = item.pop("subtitle_sequence", None)
                 if seq is not None and seq in seq_map:
                     sub = seq_map[seq]
@@ -328,10 +388,12 @@ async def generate_interpretations_for_material(material_id: int):
                         item["context_sentence"] = full_en or sub.text_en
                     if not item.get("context_translation") and sub.text_cn:
                         item["context_translation"] = full_cn or sub.text_cn
+                # P2 兜底: 落库前替换占位例句
+                _sanitize_example_sentence(item, log_prefix=log_prefix)
                 return item
 
             for i, item in enumerate(words_result):
-                item = _resolve_subtitle(item)
+                item = _resolve_subtitle(item, log_prefix=f"mat={material_id} word[{i}]")
                 interp = VideoInterpretation(
                     material_id=material_id,
                     category='word',
@@ -356,7 +418,7 @@ async def generate_interpretations_for_material(material_id: int):
 
             # 保存短语卡片
             for i, item in enumerate(phrases_result):
-                item = _resolve_subtitle(item)
+                item = _resolve_subtitle(item, log_prefix=f"mat={material_id} phrase[{i}]")
                 interp = VideoInterpretation(
                     material_id=material_id,
                     category='phrase',
@@ -378,7 +440,7 @@ async def generate_interpretations_for_material(material_id: int):
 
             # 保存语法点
             for i, item in enumerate(grammar_result):
-                item = _resolve_subtitle(item)
+                item = _resolve_subtitle(item, log_prefix=f"mat={material_id} grammar[{i}]")
                 # 兜底: 如果 AI 没返 explanation (新 prompt 删了,强制用结构化 4 字段),
                 # 用 4 个结构化字段拼成可读解释
                 if not item.get("explanation"):
@@ -405,7 +467,7 @@ async def generate_interpretations_for_material(material_id: int):
 
             # 保存地道表达卡片
             for i, item in enumerate(idioms_result):
-                item = _resolve_subtitle(item)
+                item = _resolve_subtitle(item, log_prefix=f"mat={material_id} idiom[{i}]")
                 interp = VideoInterpretation(
                     material_id=material_id,
                     category='idiom',
