@@ -150,7 +150,7 @@ let pollTimer = null
 
 const form = ref({
   model_size: 'base',
-  language: ''
+  language: 'auto'  // 'auto' = 后端自动检测 (sentinel, 不发后端)
 })
 
 const modelOptions = [
@@ -160,7 +160,8 @@ const modelOptions = [
 ]
 
 const languageOptions = [
-  { label: '自动检测', value: '' },
+  // Reka UI SelectItem 不允许空字符串 value, 用 'auto' sentinel
+  { label: '自动检测', value: 'auto' },
   { label: '英语 en', value: 'en' },
   { label: '中文 zh', value: 'zh' }
 ]
@@ -230,7 +231,8 @@ async function startTranscribe() {
   const fd = new FormData()
   fd.append('file', selectedFile.value)
   fd.append('model_size', form.value.model_size)
-  if (form.value.language) fd.append('language', form.value.language)
+  // 'auto' sentinel 不发后端 (后端默认自动检测)
+  if (form.value.language && form.value.language !== 'auto') fd.append('language', form.value.language)
 
   try {
     const data = await adminAPI.transcribe(fd)
