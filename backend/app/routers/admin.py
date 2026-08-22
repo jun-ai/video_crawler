@@ -1215,25 +1215,21 @@ async def get_admin_stats(
     current_admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db)
 ):
-    """获取管理后台统计数据（并行查询优化）"""
-    # 并行执行所有查询
-    total_task = db.execute(select(func.count(Material.id)))
-    active_task = db.execute(select(func.count(Material.id)).where(Material.is_active == True))
-    category_task = db.execute(
+    """获取管理后台统计数据（串行查询，单 async session 不允许并发）"""
+    # 单 AsyncSession 不允许并发多查询（共享同一 aiomysql 连接）
+    # 之前用 asyncio.gather 会触发 IllegalStateChangeError + SAWarning
+    total_materials = await db.execute(select(func.count(Material.id)))
+    active_materials = await db.execute(select(func.count(Material.id)).where(Material.is_active == True))
+    category_stats = await db.execute(
         select(Material.category, func.count(Material.id))
         .where(Material.category.isnot(None))
         .group_by(Material.category)
     )
-    storage_task = db.execute(
+    storage_stats = await db.execute(
         select(Material.storage_type, func.count(Material.id))
         .group_by(Material.storage_type)
     )
-    views_task = db.execute(select(func.sum(Material.view_count)))
-
-    # 等待所有查询完成
-    total_materials, active_materials, category_stats, storage_stats, total_views = await asyncio.gather(
-        total_task, active_task, category_task, storage_task, views_task
-    )
+    total_views = await db.execute(select(func.sum(Material.view_count)))
 
     return {
         "materials": {
